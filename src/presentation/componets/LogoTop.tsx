@@ -1,5 +1,3 @@
-// @flow
-import * as React from 'react';
 import Avatar from "@mui/material/Avatar";
 import Logo from "../../assets/images/DIGI-MENU.png";
 import Typography from "@mui/material/Typography";

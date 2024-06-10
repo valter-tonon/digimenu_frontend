@@ -12,6 +12,12 @@ interface TabPanelProps {
     value: number;
 }
 
+export type Category = {
+    id: string;
+    name: string;
+    url: string;
+}
+
 function TabPanel(props: TabPanelProps) {
     const { children, value, index, ...other } = props;
 
@@ -40,7 +46,7 @@ function a11yProps(index: number) {
 }
 
 export default function CategoriesTab() {
-    const [categories, setCategories] = React.useState([]);
+    const [categories, setCategories] = React.useState([] as Category[]);
 
     React.useEffect(() => {
         api.get('/categories', {
@@ -60,7 +66,7 @@ export default function CategoriesTab() {
 
     const [value, setValue] = React.useState(0);
 
-    const handleChange = (event: React.SyntheticEvent, newValue: number) => {
+    const handleChange = (_: React.SyntheticEvent, newValue: number) => {
         setValue(newValue);
     };
 
@@ -89,7 +95,7 @@ export default function CategoriesTab() {
                 </TabPanel>
             ))}
             <TabPanel index={0} value={value}>
-                <Products/>
+                <Products category={null}/>
             </TabPanel>
         </Box>
     );

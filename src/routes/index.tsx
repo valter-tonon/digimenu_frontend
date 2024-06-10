@@ -1,4 +1,3 @@
-import * as React from 'react';
 import {Login} from "../presentation/pages/Login.tsx";
 import {Route, Routes, BrowserRouter} from 'react-router-dom';
 import SignUp from "../presentation/pages/SignUp.tsx";

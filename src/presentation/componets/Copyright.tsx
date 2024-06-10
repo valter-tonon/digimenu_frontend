@@ -1,8 +1,10 @@
-import * as React from 'react';
 import Typography from "@mui/material/Typography";
 import Link from "@mui/material/Link";
 
-export const Copyright = (props) => {
+type Props = {
+    sx: { mt: number; };
+}
+export const Copyright = (props: Props) => {
     return (
         <Typography variant="body2" color="text.secondary" align="center" {...props}>
             {'Copyright © '}

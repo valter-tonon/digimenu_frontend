@@ -8,12 +8,22 @@ import {
     CardActions,
     Typography,
     Button,
-    Divider,
     Grow
 } from '@mui/material';
 import api from "../../services/api.ts";
-export const Products = ({category= null}) => {
-    const [products, setProducts] = React.useState([]);
+import {Category} from "./CategoriesTab.tsx";
+
+export type Product = {
+    id: string;
+    name: string;
+    description: string;
+    price: number;
+    image: string;
+    category: Category;
+}
+
+export const Products = ({category = null}: {category:Category|null}) => {
+    const [products, setProducts] = React.useState([] as Product[]);
 
     useEffect(() => {
         api.get('/products', {
@@ -50,7 +60,7 @@ export const Products = ({category= null}) => {
 
             <Grid container spacing={2}>
                 {products.map((product) => (
-                    <Grow     in={products}
+                    <Grow     in={products.length>0}
                               style={{ transformOrigin: '0 0 0' }}
                               {...(products.length ? { timeout: 1000 } : {})}>
                         <Grid item key={product.id} xs={12} sm={calculateWidth("sm")} md={calculateWidth("md")}>
