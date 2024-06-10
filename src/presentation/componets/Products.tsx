@@ -28,7 +28,7 @@ export const Products = ({category = null}: {category:Category|null}) => {
     useEffect(() => {
         api.get('/products', {
             params: {
-                token_company: "95393cb5-d5d0-4a50-9db0-d7474b9600a7",
+                token_company: "9635a58f-6198-4ba8-9772-20f6e24466c6",
                 categories: [category?.url]
             }
         })
