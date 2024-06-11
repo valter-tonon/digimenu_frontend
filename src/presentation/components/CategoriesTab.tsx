@@ -4,7 +4,7 @@ import Tab from '@mui/material/Tab';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import {Products} from "./Products.tsx";
-import api from "../../services/api.ts";
+import api from "../../infra/api.ts";
 
 interface TabPanelProps {
     children?: React.ReactNode;
@@ -47,7 +47,7 @@ function a11yProps(index: number) {
 
 export default function CategoriesTab() {
     const [categories, setCategories] = React.useState([] as Category[]);
-    const store = sessionStorage.getItem('store')
+    const store = localStorage.getItem('store')
     const storeId = store ? JSON.parse(store).data.uuid : null
     React.useEffect(() => {
         api.get('/categories', {

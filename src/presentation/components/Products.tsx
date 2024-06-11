@@ -10,8 +10,9 @@ import {
     Button,
     Grow
 } from '@mui/material';
-import api from "../../services/api.ts";
+import api from "../../infra/api.ts";
 import {Category} from "./CategoriesTab.tsx";
+import {CompanyInterface} from "../../domain/types/CompanyInterface.ts";
 
 export type Product = {
     id: string;
@@ -24,7 +25,7 @@ export type Product = {
 
 export const Products = ({category = null}: {category:Category|null}) => {
     const [products, setProducts] = React.useState([] as Product[]);
-    const store = sessionStorage.getItem('store')
+    const store = localStorage.getItem('store')
     const storeId = store ? JSON.parse(store).data.uuid : null
 
     useEffect(() => {

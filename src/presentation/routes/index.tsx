@@ -1,8 +1,9 @@
-import {Login} from "../presentation/pages/Login.tsx";
+import {Login} from "../pages/Login.tsx";
 import {Route, Routes, BrowserRouter} from 'react-router-dom';
-import SignUp from "../presentation/pages/SignUp.tsx";
-import {Menu} from "../presentation/pages/Menu.tsx";
-import LoadTableMenu from "../presentation/pages/LoadTableMenu.tsx";
+import SignUp from "../pages/SignUp.tsx";
+import {Menu} from "../pages/Menu.tsx";
+import LoadTableMenu from "../pages/LoadTableMenu.tsx";
+import NotFoundPage from "../pages/NotFoundPage.tsx";
 
 const ReactRoutes = () => {
     return (
@@ -12,6 +13,7 @@ const ReactRoutes = () => {
                 <Route path={'/:storeId/:tableId'} element={<LoadTableMenu/>}/>
                 <Route path='/login' element={<Login/>}/>
                 <Route path='/signup' element={<SignUp/>}/>
+                <Route path={"*"} element={<NotFoundPage/>}/>
             </Routes>
         </BrowserRouter>
     );
