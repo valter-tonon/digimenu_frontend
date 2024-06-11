@@ -9,9 +9,9 @@ import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import {createTheme, ThemeProvider} from '@mui/material/styles';
-import {LogoTop} from "../componets/LogoTop.tsx";
+import {LogoTop} from "../components/LogoTop.tsx";
 import {Link as ReactLink} from "react-router-dom";
-import {Copyright} from "../componets/Copyright.tsx";
+import {Copyright} from "../components/Copyright.tsx";
 
 // TODO remove, this demo shouldn't need to reset the theme.
 const defaultTheme = createTheme();

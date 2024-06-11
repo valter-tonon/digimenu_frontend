@@ -8,10 +8,10 @@ import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
 import {createTheme, ThemeProvider} from '@mui/material/styles';
 import LoginImage from '../../assets/images/login.jpeg';
-import {Copyright} from "../componets/Copyright.tsx";
+import {Copyright} from "../components/Copyright.tsx";
 import {Theme} from "@emotion/react";
 import {Link as LinkReact} from "react-router-dom";
-import {LogoTop} from "../componets/LogoTop.tsx";
+import {LogoTop} from "../components/LogoTop.tsx";
 
 
 const defaultTheme :Theme = createTheme();

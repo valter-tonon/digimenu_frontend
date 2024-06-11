@@ -1,6 +1,6 @@
 import Box from "@mui/material/Box";
-import Navigation from "../componets/Navigation.tsx";
-import CategoriesTab from "../componets/CategoriesTab.tsx";
+import Navigation from "../components/Navigation.tsx";
+import CategoriesTab from "../components/CategoriesTab.tsx";
 
 export const Menu = () => {
     return (

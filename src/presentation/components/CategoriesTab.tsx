@@ -47,11 +47,12 @@ function a11yProps(index: number) {
 
 export default function CategoriesTab() {
     const [categories, setCategories] = React.useState([] as Category[]);
-
+    const store = sessionStorage.getItem('store')
+    const storeId = store ? JSON.parse(store).data.uuid : null
     React.useEffect(() => {
         api.get('/categories', {
             params: {
-                token_company: "9635a58f-6198-4ba8-9772-20f6e24466c6"
+                token_company: storeId
             }
         })
             .then(response => {
@@ -61,8 +62,7 @@ export default function CategoriesTab() {
                 console.error(error);
             });
 
-        console.log('auqi')
-    }, []);
+    }, [storeId]);
 
     const [value, setValue] = React.useState(0);
 

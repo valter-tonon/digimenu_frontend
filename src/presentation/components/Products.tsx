@@ -24,11 +24,13 @@ export type Product = {
 
 export const Products = ({category = null}: {category:Category|null}) => {
     const [products, setProducts] = React.useState([] as Product[]);
+    const store = sessionStorage.getItem('store')
+    const storeId = store ? JSON.parse(store).data.uuid : null
 
     useEffect(() => {
         api.get('/products', {
             params: {
-                token_company: "9635a58f-6198-4ba8-9772-20f6e24466c6",
+                token_company: storeId,
                 categories: [category?.url]
             }
         })
@@ -38,7 +40,7 @@ export const Products = ({category = null}: {category:Category|null}) => {
             .catch(error => {
                 console.error(error);
             });
-    },[])
+    },[storeId])
 
     const calculateWidth = (size: string) => {
         const productsQuantity = products.length
