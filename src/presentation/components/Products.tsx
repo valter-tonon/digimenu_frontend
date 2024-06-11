@@ -1,18 +1,7 @@
 import React, {useEffect} from 'react';
-import {
-    Container,
-    Grid,
-    Card,
-    CardMedia,
-    CardContent,
-    CardActions,
-    Typography,
-    Button,
-    Grow
-} from '@mui/material';
+import {Button, Card, CardActions, CardContent, CardMedia, Container, Grid, Grow, Typography} from '@mui/material';
 import api from "../../infra/api.ts";
 import {Category} from "./CategoriesTab.tsx";
-import {CompanyInterface} from "../../domain/types/CompanyInterface.ts";
 
 export type Product = {
     id: string;
