@@ -15,7 +15,7 @@ export type Product = {
 export const Products = ({category = null}: {category:Category|null}) => {
     const [products, setProducts] = React.useState([] as Product[]);
     const store = localStorage.getItem('store')
-    const storeId = store ? JSON.parse(store).data.uuid : "9635a58f-6198-4ba8-9772-20f6e24466c6"
+    const storeId = store ? JSON.parse(store).data.uuid : null
 
     useEffect(() => {
         api.get('/products', {
