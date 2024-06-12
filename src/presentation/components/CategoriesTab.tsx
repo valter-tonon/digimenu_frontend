@@ -48,7 +48,7 @@ function a11yProps(index: number) {
 export default function CategoriesTab() {
     const [categories, setCategories] = React.useState([] as Category[]);
     const store = localStorage.getItem('store')
-    const storeId = store ? JSON.parse(store).data.uuid : null
+    const storeId = store ? JSON.parse(store).data.uuid : "9635a58f-6198-4ba8-9772-20f6e24466c6"
     React.useEffect(() => {
         api.get('/categories', {
             params: {
