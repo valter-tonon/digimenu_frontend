@@ -4,40 +4,61 @@ import Typography from "@mui/material/Typography";
 import {LogoTop} from "../components/LogoTop.tsx";
 import {GradientCircularProgress} from "../components/GradientCircularProgress.tsx";
 import {useNavigate, useParams} from "react-router-dom";
-import {useEffect} from "react";
+import {useContext, useEffect} from "react";
 import api from "../../infra/api.ts";
 import {CompanyInterface} from "../../domain/types/CompanyInterface.ts";
 import {TableInterface} from "../../domain/types/TableInterface.ts";
+import {StoreContext} from "../components/AppContextProvider.tsx";
 
 
 export default function LoadTableMenu() {
     const navigate = useNavigate()
     const {storeId, tableId} = useParams()
+    const context = useContext(StoreContext)
+
+
+    if (!context) {
+        throw new Error('StoreContext must be used within a StoreProvider');
+    }
+    const { store, table, setStore, setTable } = context;
 
     useEffect(() => {
-        api.get(`tables/${tableId}`,{
-            params: {
-                token_company: storeId
+        const asyncFunction = async () => {
+            try {
+                const storeData = store
+                const tableData = table
+                if (!storeData) {
+                    await api.get(`tenant/${storeId}`)
+                        .then(response => {
+                            const company: CompanyInterface = response.data.data
+                            setStore(company)
+                        })
+                        .catch(error => {
+                            console.error(error)
+                        })
+                }
+                if (!tableData || tableData.id !== tableId) {
+                    await api.get(`tables/${tableId}`, {
+                        params: {
+                            token_company: storeId
+                        }
+                    })
+                        .then(response => {
+                            const table: TableInterface = response.data.data
+                            setTable(table)
+                        })
+                        .catch(error => {
+                            console.error(error)
+                        })
+                }
+            } catch (error) {
+                console.error(error)
             }
-        })
-            .then(response => {
-                const table: TableInterface = response.data
-                localStorage.setItem('table', JSON.stringify(table))
-            })
-            .catch(error => {
-                console.error(error)
-            })
-        api.get(`tenant/${storeId}`)
-            .then(response => {
-                const company: CompanyInterface = response.data
-                localStorage.setItem('store', JSON.stringify(company))
-                navigate(`/`)
-            })
-            .catch(error => {
-                console.error(error)
-            })
-        navigate(`/`)
-    },[storeId])
+        }
+        setTimeout(() => {
+            asyncFunction().then(() => navigate('/'))
+        },1000)
+    },[store, table])
     return (
         <Box display={"flex"} justifyContent={"center"} alignItems={"center"} height={"100vh"}>
             <Box>

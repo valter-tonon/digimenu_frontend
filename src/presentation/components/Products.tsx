@@ -1,7 +1,8 @@
-import React, {useEffect} from 'react';
+import React, {useContext, useEffect} from 'react';
 import {Button, Card, CardActions, CardContent, CardMedia, Container, Grid, Grow, Typography} from '@mui/material';
 import api from "../../infra/api.ts";
 import {Category} from "./CategoriesTab.tsx";
+import {StoreContext} from "./AppContextProvider.tsx";
 
 export type Product = {
     id: string;
@@ -14,8 +15,9 @@ export type Product = {
 
 export const Products = ({category = null}: {category:Category|null}) => {
     const [products, setProducts] = React.useState([] as Product[]);
-    const store = localStorage.getItem('store')
-    const storeId = store ? JSON.parse(store).data.uuid : null
+    const context = useContext(StoreContext)
+    const storeContext = context?.store
+    const storeId = storeContext?.uuid
 
     useEffect(() => {
         api.get('/products', {
@@ -47,7 +49,7 @@ export const Products = ({category = null}: {category:Category|null}) => {
     return (
         <Container>
             <Typography variant="h4" component="p" gutterBottom color={"primary"}>
-                {category ? category.name : "Todos os produtos"}
+                {category ? category.name : "Todos os produtos"} - {context?.table?.identifier}
             </Typography>
 
             <Grid container spacing={2}>
