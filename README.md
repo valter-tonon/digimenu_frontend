@@ -136,17 +136,20 @@ O projeto está configurado para ser facilmente implantado no Netlify. Siga esta
      - `NEXT_PUBLIC_API_BASE_URL`: URL base do servidor backend
      - `NODE_VERSION`: `18`
 
-4. **Deploy manual**:
-   - Se preferir fazer deploy manualmente, você pode usar o Netlify CLI:
+4. **Deploy usando o script automatizado**:
+   - O projeto inclui um script para facilitar o deploy usando o Netlify CLI:
    ```bash
-   # Instalar o Netlify CLI
-   npm install -g netlify-cli
+   # Tornar o script executável (se ainda não estiver)
+   chmod +x deploy-netlify.sh
    
-   # Login no Netlify
-   netlify login
+   # Inicializar um novo site no Netlify (apenas na primeira vez)
+   ./deploy-netlify.sh --init
    
-   # Deploy do site
-   netlify deploy --prod
+   # Deploy para preview
+   ./deploy-netlify.sh
+   
+   # Deploy para produção
+   ./deploy-netlify.sh --prod
    ```
 
 O projeto já inclui os arquivos de configuração necessários para o Netlify:
@@ -200,3 +203,7 @@ npm run test:ui
 # Verificar cobertura de testes
 npm run test:coverage
 ```
+
+## Solução de Problemas
+
+Se você encontrar problemas durante o deploy, consulte o arquivo [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) para soluções comuns.

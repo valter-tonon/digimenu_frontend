@@ -3,6 +3,7 @@
 import { Product, Additional } from '@/domain/entities/Product';
 import { useMemo, useState, useEffect } from 'react';
 import { useMenu } from '@/infrastructure/context/MenuContext';
+import { useMenuParams } from '@/infrastructure/hooks/useMenuParams';
 
 // Função para formatar o preço com segurança
 const formatPrice = (price: any): string => {
@@ -34,24 +35,25 @@ interface ProductListProps {
 }
 
 export function ProductList({ products, selectedCategoryId, onCartItemsChange, searchTerm = '' }: ProductListProps) {
-  // Estado para controlar a modal de detalhes do produto
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  
-  // Estado para adicionais selecionados na modal
   const [selectedAdditionals, setSelectedAdditionals] = useState<Additional[]>([]);
-  
-  // Estado para o carrinho
+  const [isCartOpen, setIsCartOpen] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [internalSearchTerm, setInternalSearchTerm] = useState('');
   
-  // Usar o contexto do menu para o estado do carrinho
-  const { isCartOpen, setIsCartOpen } = useMenu();
+  // Obter os parâmetros do menu no nível do componente
+  const menuParams = useMenuParams();
   
-  // Estado para busca de produtos (local, caso não seja fornecido via props)
-  const [localSearchTerm, setLocalSearchTerm] = useState('');
-  
-  // Usar o termo de busca das props se fornecido, caso contrário usar o local
-  const effectiveSearchTerm = searchTerm !== undefined ? searchTerm : localSearchTerm;
+  // Adicionar estado para controlar o carregamento e feedback
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [orderSuccess, setOrderSuccess] = useState<{
+    success: boolean;
+    message: string;
+    orderIdentify?: string;
+  } | null>(null);
+
+  // Usar o termo de busca das props se fornecido, caso contrário usar o interno
+  const effectiveSearchTerm = searchTerm !== undefined ? searchTerm : internalSearchTerm;
 
   // Notificar o componente pai sobre mudanças no carrinho
   useEffect(() => {
@@ -73,22 +75,15 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
     );
   }, [products]);
   
-  // Filtrar produtos por categoria e termo de busca
+  // Filtrar produtos com base na categoria selecionada e termo de busca
   const filteredProducts = useMemo(() => {
-    let filtered = validProducts;
+    // Garantir que temos produtos válidos
+    const validProducts = products.filter(product => product && product.id);
     
     // Filtrar por categoria
-    if (selectedCategoryId !== null) {
-      if (selectedCategoryId === 0) {
-        // Categoria "Todos" - não filtra por categoria
-        filtered = validProducts;
-      } else {
-        // Filtra por categoria específica
-        filtered = validProducts.filter(product => {
-          // Verificar tanto category_id quanto category?.id
-          return product.category_id === selectedCategoryId || product.category?.id === selectedCategoryId;
-        });
-      }
+    let filtered = validProducts;
+    if (selectedCategoryId) {
+      filtered = filtered.filter(product => product.category_id === selectedCategoryId);
     }
     
     // Filtrar por termo de busca
@@ -101,18 +96,16 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
     }
     
     return filtered;
-  }, [validProducts, selectedCategoryId, effectiveSearchTerm]);
+  }, [products, selectedCategoryId, effectiveSearchTerm]);
 
   // Função para abrir a modal com os detalhes do produto
   const openProductDetails = (product: Product) => {
     setSelectedProduct(product);
     setSelectedAdditionals([]); // Limpar adicionais selecionados ao abrir nova modal
-    setIsModalOpen(true);
   };
 
   // Função para fechar a modal
   const closeModal = () => {
-    setIsModalOpen(false);
     setSelectedProduct(null);
     setSelectedAdditionals([]);
   };
@@ -262,6 +255,120 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
     }, 0);
   }, [cartItems]);
 
+  // Adicionar a função finishOrder antes do return final
+  const finishOrder = async () => {
+    try {
+      // Iniciar o processo de submissão
+      setIsSubmitting(true);
+      setOrderSuccess(null);
+      
+      // Fechar o carrinho
+      setIsCartOpen(false);
+      
+      // Usar os parâmetros do menu obtidos no nível do componente
+      const { tableId, storeSlug } = menuParams;
+      
+      if (!storeSlug) {
+        throw new Error('Identificador da loja não encontrado');
+      }
+      
+      // Preparar os dados do pedido
+      const orderData = {
+        token_company: storeSlug, // Identificador da empresa/loja
+        ...(tableId ? { table: tableId } : {}), // Adicionar mesa apenas se existir
+        products: cartItems.map(item => ({
+          identify: item.product.uuid || item.product.id.toString(), // Usar UUID ou ID do produto como string
+          quantity: item.quantity,
+          additionals: item.selectedAdditionals ? item.selectedAdditionals.map(add => add.id.toString()) : []
+        }))
+      };
+      
+      console.log('Enviando pedido:', orderData);
+      
+      // Enviar para a API
+      const baseURL = process.env.NEXT_PUBLIC_API_URL || '';
+      // A variável NEXT_PUBLIC_API_URL já inclui o prefixo 'api/v1'
+      const url = `${baseURL}/orders-kanban`;
+      console.log('URL da API:', url);
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(orderData)
+      });
+      
+      console.log('Resposta da API:', response.status, response.statusText);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Texto do erro:', errorText);
+        
+        let errorMessage = 'Erro ao finalizar o pedido';
+        
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.message || errorMessage;
+        } catch (e) {
+          console.error('Erro ao processar resposta de erro:', errorText);
+        }
+        
+        throw new Error(errorMessage);
+      }
+      
+      const data = await response.json();
+      console.log('Dados da resposta:', data);
+      
+      // Limpar o carrinho
+      setCartItems([]);
+      
+      // Definir sucesso
+      setOrderSuccess({
+        success: true,
+        message: 'Pedido finalizado com sucesso!',
+        orderIdentify: data.data?.identify || 'N/A'
+      });
+      
+    } catch (error: any) {
+      console.error('Erro ao finalizar pedido:', error);
+      
+      // Definir erro
+      setOrderSuccess({
+        success: false,
+        message: `Erro ao finalizar o pedido: ${error.message || 'Tente novamente mais tarde'}`
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Adicionar componente de feedback após o carrinho
+  const OrderFeedback = () => {
+    if (!orderSuccess) return null;
+    
+    return (
+      <div className={`fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50`}>
+        <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+          <div className={`text-2xl mb-4 ${orderSuccess.success ? 'text-green-600' : 'text-red-600'}`}>
+            {orderSuccess.success ? '✓ Sucesso!' : '✗ Erro!'}
+          </div>
+          <p className="text-gray-800 mb-4">{orderSuccess.message}</p>
+          {orderSuccess.success && orderSuccess.orderIdentify && (
+            <p className="text-gray-600 mb-4">Número do pedido: <span className="font-bold">{orderSuccess.orderIdentify}</span></p>
+          )}
+          <button
+            onClick={() => setOrderSuccess(null)}
+            className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+          >
+            Fechar
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   if (validProducts.length === 0) {
     return (
       <div className="text-center py-8">
@@ -276,18 +383,18 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
       {searchTerm === undefined && (
         <div className="mb-4">
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-              <svg className="w-4 h-4 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-                <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
+            <input
+              type="text"
+              value={internalSearchTerm}
+              onChange={(e) => setInternalSearchTerm(e.target.value)}
+              placeholder="Buscar produtos..."
+              className="w-full p-2 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <div className="absolute left-3 top-2.5 text-gray-400">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
-            <input 
-              type="search" 
-              className="block w-full p-2 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-amber-500 focus:border-amber-500" 
-              placeholder="Buscar produtos..." 
-              value={localSearchTerm}
-              onChange={(e) => setLocalSearchTerm(e.target.value)}
-            />
           </div>
         </div>
       )}
@@ -336,21 +443,15 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
                       R$ {formatPrice(product.price)}
                     </div>
                     <button 
-                      onClick={() => openProductDetails(product)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        addToCart(product);
+                      }}
                       className="text-amber-500 text-xs hover:text-amber-600 transition-colors"
                     >
-                      Ver detalhes
+                      Adicionar ao carrinho
                     </button>
                   </div>
-                  <button 
-                    onClick={() => openProductDetails(product)}
-                    className="mt-3 w-full py-2 bg-amber-500 text-white rounded-md hover:bg-amber-600 transition-colors text-sm font-medium"
-                  >
-                    {product.additionals && product.additionals.length > 0 
-                      ? 'Selecionar opções' 
-                      : 'Adicionar ao carrinho'
-                    }
-                  </button>
                 </div>
               </div>
             );
@@ -359,7 +460,7 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
       )}
 
       {/* Modal de detalhes do produto */}
-      {isModalOpen && selectedProduct && (
+      {selectedProduct && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
@@ -467,7 +568,8 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
                   Cancelar
                 </button>
                 <button 
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     addToCart(selectedProduct, selectedAdditionals);
                     closeModal();
                   }}
@@ -635,6 +737,10 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
                         <a
                           href="#"
                           className="flex justify-center items-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-amber-500 hover:bg-amber-600"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            finishOrder();
+                          }}
                         >
                           Finalizar pedido
                         </a>
@@ -659,6 +765,9 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
           </div>
         </div>
       )}
+
+      {/* Feedback de pedido */}
+      {orderSuccess && <OrderFeedback />}
     </div>
   );
 } 
