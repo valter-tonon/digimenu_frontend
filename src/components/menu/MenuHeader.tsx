@@ -6,12 +6,19 @@ import { useState, useEffect } from 'react';
 interface MenuHeaderProps {
   cartItemsCount: number;
   onCartClick: () => void;
+  storeName?: string;
 }
 
-export function MenuHeader({ cartItemsCount, onCartClick }: MenuHeaderProps) {
+export function MenuHeader({ cartItemsCount, onCartClick, storeName: propStoreName }: MenuHeaderProps) {
   const { tableId, storeSlug } = useMenu();
-  const [storeName, setStoreName] = useState<string>('FoodMenu');
+  const [storeName, setStoreName] = useState<string>(propStoreName || 'FoodMenu');
   const [storeLogo, setStoreLogo] = useState<string | null>(null);
+  
+  useEffect(() => {
+    if (propStoreName) {
+      setStoreName(propStoreName);
+    }
+  }, [propStoreName]);
   
   const handleCartClick = () => {
     onCartClick();

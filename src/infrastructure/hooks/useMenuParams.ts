@@ -23,10 +23,20 @@ export function useMenuParams() {
     const table = searchParams.get('table');
     const store = searchParams.get('store');
     
-    setTableId(table);
-    setStoreSlug(store);
-    setIsValid(!!table || !!store);
-  }, [searchParams, isClient]);
+    // Só atualiza os estados se os valores realmente mudaram
+    if (table !== tableId) {
+      setTableId(table);
+    }
+    
+    if (store !== storeSlug) {
+      setStoreSlug(store);
+    }
+    
+    const newIsValid = !!table || !!store;
+    if (newIsValid !== isValid) {
+      setIsValid(newIsValid);
+    }
+  }, [searchParams, isClient, tableId, storeSlug, isValid]);
   
   return {
     tableId,

@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMenuParams } from '@/infrastructure/hooks/useMenuParams';
 import { MenuProvider, useMenu } from '@/infrastructure/context/MenuContext';
 import { MenuHeader, CategoryList, ProductList } from '@/components/menu';
+import { TableActions } from '@/components/menu/TableActions';
+import { OrderSummary } from '@/components/menu/OrderSummary';
 import { NotFound } from '@/components/ui/NotFound';
 import { useContainer } from '@/infrastructure/di';
 import { Category } from '@/domain/entities/Category';
@@ -42,152 +44,156 @@ function MenuPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cartItemsCount, setCartItemsCount] = useState(0);
+  const [showOrderSummary, setShowOrderSummary] = useState(false);
+  const hasLoadedMenu = useRef(false);
   
   useEffect(() => {
-    if (!isValid) {
+    if (!isValid || hasLoadedMenu.current) {
       return;
     }
     
+    const loadMenu = async () => {
+      try {
+        setLoading(true);
+        
+        // Carregar menu completo
+        const menuData = await menuRepository.getMenu(params);
+        setCategories(menuData.categories || []);
+        setProducts(menuData.products || []);
+        
+        setLoading(false);
+        hasLoadedMenu.current = true;
+      } catch (error) {
+        console.error('Erro ao carregar o menu:', error);
+        setError('Não foi possível carregar o menu. Por favor, tente novamente mais tarde.');
+        setLoading(false);
+      }
+    };
+    
     loadMenu();
-  }, [isValid, tableId, storeSlug]);
+  }, [isValid, menuRepository, params]);
   
-  async function loadMenu() {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const data = await menuRepository.getMenu(params);
-      
-      setCategories(data.categories || []);
-      setProducts(data.products || []);
-    } catch (err) {
-      console.error('Erro ao carregar menu:', err);
-      setError('Não foi possível carregar o menu. Por favor, tente novamente.');
-    } finally {
-      setLoading(false);
-    }
+  // Se não for válido, mostrar página de erro
+  if (!isValid) {
+    return <NotFound message="Link inválido. Verifique se o QR code está correto." />;
   }
   
-  const handleSelectCategory = (categoryId: number) => {
-    setSelectedCategoryId(categoryId);
-  };
-  
+  // Atualizar contador de itens no carrinho
   const handleCartItemsChange = (count: number) => {
     setCartItemsCount(count);
   };
   
-  if (!isValid) {
-    return <NotFound />;
-  }
-  
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Carregando cardápio...</p>
-        </div>
-      </div>
-    );
-  }
-  
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-screen p-4">
-        <div className="text-center">
-          <div className="text-red-500 text-5xl mb-4">😕</div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Ops! Algo deu errado</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <button 
-            onClick={loadMenu}
-            className="px-4 py-2 bg-amber-500 text-white rounded-md hover:bg-amber-600 transition-colors"
-          >
-            Tentar novamente
-          </button>
-        </div>
-      </div>
-    );
-  }
-  
+  // Função para abrir o resumo do pedido
+  const openOrderSummary = () => {
+    setShowOrderSummary(true);
+  };
+
+  // Função para fechar o resumo do pedido
+  const closeOrderSummary = () => {
+    setShowOrderSummary(false);
+  };
+
+  // Adicionar botão de resumo do pedido no header
+  const handleCartClick = () => {
+    openOrderSummary();
+  };
+
   return (
     <MenuProvider initialTableId={tableId} initialStoreSlug={storeSlug}>
       <MenuContent 
-        categories={categories} 
-        products={products} 
+        categories={categories}
+        products={products}
         selectedCategoryId={selectedCategoryId}
-        onSelectCategory={handleSelectCategory}
-        onCartItemsChange={handleCartItemsChange}
+        setSelectedCategoryId={setSelectedCategoryId}
         cartItemsCount={cartItemsCount}
+        setCartItemsCount={setCartItemsCount}
+        showOrderSummary={showOrderSummary}
+        openOrderSummary={openOrderSummary}
+        closeOrderSummary={closeOrderSummary}
+        error={error}
+        storeSlug={storeSlug}
+        tableId={tableId}
       />
     </MenuProvider>
   );
 }
 
+// Componente que usa o contexto do Menu
 function MenuContent({
   categories,
   products,
   selectedCategoryId,
-  onSelectCategory,
-  onCartItemsChange,
-  cartItemsCount
+  setSelectedCategoryId,
+  cartItemsCount,
+  setCartItemsCount,
+  showOrderSummary,
+  openOrderSummary,
+  closeOrderSummary,
+  error,
+  storeSlug,
+  tableId
 }: {
   categories: Category[];
   products: Product[];
   selectedCategoryId: number | null;
-  onSelectCategory: (categoryId: number) => void;
-  onCartItemsChange: (count: number) => void;
+  setSelectedCategoryId: (id: number | null) => void;
   cartItemsCount: number;
+  setCartItemsCount: (count: number) => void;
+  showOrderSummary: boolean;
+  openOrderSummary: () => void;
+  closeOrderSummary: () => void;
+  error: string | null;
+  storeSlug: string | null;
+  tableId: string | null;
 }) {
-  const { setIsCartOpen } = useMenu();
-  const [searchTerm, setSearchTerm] = useState('');
+  // Agora podemos usar o hook useMenu com segurança
+  const { isCartOpen } = useMenu();
   
+  // Função para lidar com o clique no botão do carrinho
   const handleCartClick = () => {
-    setIsCartOpen(true);
+    openOrderSummary();
   };
-  
+
   return (
-    <div className="w-full">
-      <MenuHeader 
-        cartItemsCount={cartItemsCount} 
-        onCartClick={handleCartClick} 
-      />
-      
-      <div className="container mx-auto px-4 pb-20">
-        {/* Campo de busca de produtos */}
-        <div className="mt-6 mb-4">
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-              <svg className="w-4 h-4 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-                <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
-              </svg>
-            </div>
-            <input 
-              type="search" 
-              className="block w-full p-2 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-amber-500 focus:border-amber-500" 
-              placeholder="Buscar produtos..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+    <div className="min-h-screen bg-gray-50">
+      {error ? (
+        <NotFound message={error} />
+      ) : (
+        <>
+          <MenuHeader 
+            storeName={storeSlug || ''} 
+            cartItemsCount={cartItemsCount} 
+            onCartClick={handleCartClick}
+          />
+          
+          <div className="container mx-auto px-4 py-6">
+            <CategoryList 
+              categories={categories} 
+              selectedCategoryId={selectedCategoryId} 
+              onSelectCategory={setSelectedCategoryId} 
+            />
+            
+            <ProductList 
+              products={products} 
+              selectedCategoryId={selectedCategoryId}
+              onCartItemsChange={setCartItemsCount}
             />
           </div>
-        </div>
-        
-        <div className="mt-4">
-          <CategoryList 
-            categories={categories} 
-            onSelectCategory={onSelectCategory} 
-            selectedCategoryId={selectedCategoryId} 
-          />
-        </div>
-        
-        <div className="mt-6">
-          <ProductList 
-            products={products} 
-            selectedCategoryId={selectedCategoryId}
-            onCartItemsChange={onCartItemsChange}
-            searchTerm={searchTerm}
-          />
-        </div>
-      </div>
+          
+          {/* Componente de ações da mesa */}
+          {tableId && storeSlug && (
+            <TableActions 
+              storeId={storeSlug} 
+              tableId={tableId} 
+            />
+          )}
+          
+          {/* Modal de resumo do pedido */}
+          {showOrderSummary && (
+            <OrderSummary onClose={closeOrderSummary} />
+          )}
+        </>
+      )}
     </div>
   );
 } 
