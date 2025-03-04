@@ -1,27 +1,19 @@
-export interface Additional {
-  id: string;
-  name: string;
-  price: number;
-}
-
-export interface Product {
+export interface Category {
   id: number;
   uuid: string;
   name: string;
   description: string;
-  price: number;
   image: string | null;
   active: boolean;
-  category_id: number;
   tenant_id: number;
   created_at: string;
   updated_at: string;
-  category?: {
+  products?: Array<{
     id: number;
     uuid: string;
     name: string;
     description: string;
-  };
-  extras?: string[];
-  additionals?: Additional[];
+    price: number;
+    image: string | null;
+  }>;
 } 

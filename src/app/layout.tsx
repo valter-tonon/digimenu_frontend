@@ -1,25 +1,26 @@
-import { Header } from '@/components/layout/Header';
-import { Providers } from './providers';
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
 import './globals.css';
-import { Metadata } from 'next';
+import { AuthProvider } from '@/infrastructure/auth';
+
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: "Restaurante App",
-  description: "Aplicativo de delivery",
+  title: 'DigiMenu - Sistema de Pedidos',
+  description: 'Sistema de pedidos para restaurantes e estabelecimentos',
 };
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
     <html lang="pt-BR">
-      <body suppressHydrationWarning={true}>
-        <Providers>
-          <Header />
+      <body className={inter.className} suppressHydrationWarning={true}>
+        <AuthProvider>
           {children}
-        </Providers>
+        </AuthProvider>
       </body>
     </html>
   );
