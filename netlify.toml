@@ -1,5 +1,5 @@
 [build]
-  command = "npm run build"
+  command = "./netlify-build.sh"
   publish = ".next"
 
 [[plugins]]
@@ -7,4 +7,4 @@
 
 [build.environment]
   NEXT_USE_NETLIFY_EDGE = "true"
-  NODE_VERSION = "18" 
+  NODE_VERSION = "20" 
