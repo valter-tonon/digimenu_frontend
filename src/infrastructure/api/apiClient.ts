@@ -3,24 +3,45 @@ import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } f
 export class ApiClient {
   private api: AxiosInstance;
   private isServer: boolean;
+  private baseURL: string;
+  private retryCount: number = 0;
+  private maxRetries: number = 3;
 
   constructor() {
     this.isServer = typeof window === 'undefined';
-    const baseURL = process.env.NEXT_PUBLIC_API_URL;
-    console.log('ApiClient - Inicializando com URL:', baseURL, this.isServer ? '(servidor)' : '(cliente)');
+    this.baseURL = this.getBaseUrl();
+    console.log('ApiClient - Inicializando com URL:', this.baseURL, this.isServer ? '(servidor)' : '(cliente)');
     
     this.api = axios.create({
-      baseURL,
+      baseURL: this.baseURL,
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
       withCredentials: true,
+      timeout: 10000, // 10 segundos de timeout
     });
 
     if (!this.isServer) {
       this.setupInterceptors();
     }
+  }
+
+  private getBaseUrl(): string {
+    // Tenta obter a URL da API de várias fontes
+    let baseURL = process.env.NEXT_PUBLIC_API_URL;
+    
+    // Fallback para URL hardcoded se não encontrar nas variáveis de ambiente
+    if (!baseURL) {
+      console.warn('ApiClient - NEXT_PUBLIC_API_URL não encontrado, usando fallback');
+      if (typeof window !== 'undefined' && window.location.hostname === 'digimenu3.netlify.app') {
+        baseURL = 'https://digimenu.net.br/api/v1';
+      } else {
+        baseURL = 'http://localhost/api/v1';
+      }
+    }
+    
+    return baseURL;
   }
 
   private setupInterceptors(): void {
@@ -39,6 +60,7 @@ export class ApiClient {
         return config;
       },
       (error) => {
+        console.error('ApiClient - Erro na requisição:', error);
         return Promise.reject(error);
       }
     );
@@ -47,17 +69,30 @@ export class ApiClient {
     this.api.interceptors.response.use(
       (response) => {
         console.log('ApiClient - Resposta recebida:', response.status);
+        // Resetar contador de tentativas em caso de sucesso
+        this.retryCount = 0;
         return response;
       },
-      (error: AxiosError) => {
-        console.error('ApiClient - Erro na requisição:', error.message, error.response?.status);
+      async (error: AxiosError) => {
+        console.error('ApiClient - Erro na resposta:', error.message);
         
-        if (error.response?.status === 401 && !this.isServer) {
-          // Token expirado ou inválido (apenas no cliente)
-          localStorage.removeItem('token');
-          // Redirecionar para a página de login
-          window.location.href = '/login';
+        // Tentar novamente em caso de erro de rede ou timeout
+        if (
+          (error.code === 'ECONNABORTED' || !error.response) && 
+          this.retryCount < this.maxRetries
+        ) {
+          this.retryCount++;
+          console.log(`ApiClient - Tentando novamente (${this.retryCount}/${this.maxRetries})...`);
+          
+          // Esperar um tempo antes de tentar novamente (backoff exponencial)
+          const delay = Math.pow(2, this.retryCount) * 1000;
+          await new Promise(resolve => setTimeout(resolve, delay));
+          
+          // Tentar novamente com a mesma configuração
+          return this.api.request(error.config as AxiosRequestConfig);
         }
+        
+        // Se chegou aqui, não conseguiu recuperar do erro
         return Promise.reject(error);
       }
     );

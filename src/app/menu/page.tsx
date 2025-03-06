@@ -26,6 +26,7 @@ function MenuLoading() {
 
 // Componente principal envolvido em Suspense
 export default function MenuPageWrapper() {
+  console.log('Renderizando MenuPageWrapper');
   return (
     <Suspense fallback={<MenuLoading />}>
       <MenuPage />
@@ -34,9 +35,13 @@ export default function MenuPageWrapper() {
 }
 
 function MenuPage() {
+  console.log('Renderizando MenuPage - Início');
   const router = useRouter();
   const { tableId, storeSlug, isValid, params } = useMenuParams();
+  console.log('MenuPage - Parâmetros:', { tableId, storeSlug, isValid, params });
+  
   const { menuRepository } = useContainer();
+  console.log('MenuPage - Container carregado');
   
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);

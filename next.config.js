@@ -37,6 +37,14 @@ const nextConfig = {
   },
   // Configuração para o Netlify
   output: 'standalone',
+  // Desabilitar a compressão de imagens para evitar problemas no Netlify
+  swcMinify: true,
+  // Configuração para melhorar a compatibilidade com o Netlify
+  trailingSlash: false,
+  // Configuração para melhorar o desempenho
+  poweredByHeader: false,
+  // Configuração para melhorar a compatibilidade com o Netlify
+  productionBrowserSourceMaps: true,
 };
 
 module.exports = nextConfig; 
