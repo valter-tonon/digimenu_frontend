@@ -8,12 +8,18 @@ interface MenuHeaderProps {
   cartItemsCount: number;
   onCartClick: () => void;
   storeName?: string;
+  storeLogo?: string;
 }
 
-export function MenuHeader({ cartItemsCount, onCartClick, storeName: propStoreName }: MenuHeaderProps) {
+export function MenuHeader({ 
+  cartItemsCount, 
+  onCartClick, 
+  storeName: propStoreName,
+  storeLogo: propStoreLogo 
+}: MenuHeaderProps) {
   const { tableId, storeSlug } = useMenu();
   const [storeName, setStoreName] = useState<string>(propStoreName || 'FoodMenu');
-  const [storeLogo, setStoreLogo] = useState<string | null>(null);
+  const [storeLogo, setStoreLogo] = useState<string | null>(propStoreLogo || null);
   const [isCallingWaiter, setIsCallingWaiter] = useState(false);
   const [waiterCalled, setWaiterCalled] = useState(false);
   
@@ -21,7 +27,10 @@ export function MenuHeader({ cartItemsCount, onCartClick, storeName: propStoreNa
     if (propStoreName) {
       setStoreName(propStoreName);
     }
-  }, [propStoreName]);
+    if (propStoreLogo) {
+      setStoreLogo(propStoreLogo);
+    }
+  }, [propStoreName, propStoreLogo]);
   
   const handleCartClick = () => {
     onCartClick();
@@ -60,17 +69,18 @@ export function MenuHeader({ cartItemsCount, onCartClick, storeName: propStoreNa
             <img 
               src={storeLogo} 
               alt={storeName || 'Logo'} 
-              className="h-10 w-auto mr-3"
+              className="h-12 w-auto mr-3 rounded-full object-cover border-2 border-amber-500"
             />
           ) : (
-            <div className="text-2xl font-bold text-amber-500 mr-2">
-              FoodMenu
+            <div className="h-12 w-12 bg-amber-500 rounded-full flex items-center justify-center text-white font-bold mr-3">
+              {storeName ? storeName.charAt(0).toUpperCase() : 'F'}
             </div>
           )}
           
-          {storeName && (
+          <div>
             <h1 className="text-xl font-semibold text-gray-800">{storeName}</h1>
-          )}
+            <p className="text-xs text-gray-500">Cardápio Digital</p>
+          </div>
         </div>
         
         <div className="flex items-center gap-3">
@@ -114,19 +124,12 @@ export function MenuHeader({ cartItemsCount, onCartClick, storeName: propStoreNa
         </div>
       </div>
       
-      {/* Informações da loja e mesa */}
-      {(storeSlug || tableId) && (
+      {/* Informações da mesa */}
+      {tableId && (
         <div className="mt-2 flex items-center text-xs text-gray-500">
-          {storeSlug && (
-            <div className="bg-gray-100 px-2 py-1 rounded-md mr-2">
-              Loja: {storeSlug}
-            </div>
-          )}
-          {tableId && (
-            <div className="bg-gray-100 px-2 py-1 rounded-md">
-              Mesa: {tableId}
-            </div>
-          )}
+          <div className="bg-gray-100 px-2 py-1 rounded-md">
+            Mesa: {tableId}
+          </div>
         </div>
       )}
     </header>

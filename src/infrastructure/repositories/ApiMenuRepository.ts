@@ -4,9 +4,16 @@ import { MenuRepository } from '@/domain/repositories/MenuRepository';
 import { apiClient } from '../api/apiClient';
 
 export class ApiMenuRepository implements MenuRepository {
-  async getMenu(params: { store?: string, table?: string }): Promise<{
+  async getMenu(params: { store?: string, table?: string, isDelivery?: boolean }): Promise<{
     categories: Category[];
     products: Product[];
+    tenant?: {
+      id: number;
+      uuid: string;
+      name: string;
+      url: string;
+      logo: string | null;
+    };
   }> {
     try {
       const queryParams: any = {};
@@ -19,6 +26,10 @@ export class ApiMenuRepository implements MenuRepository {
         queryParams.table = params.table;
       }
       
+      if (params.isDelivery) {
+        queryParams.isDelivery = params.isDelivery;
+      }
+      
       // Verificar se temos parâmetros válidos
       if (Object.keys(queryParams).length === 0) {
         console.warn('Nenhum parâmetro válido fornecido para busca do menu');
@@ -29,6 +40,13 @@ export class ApiMenuRepository implements MenuRepository {
         data: {
           categories: any[];
           products: any[];
+          tenant?: {
+            id: number;
+            uuid: string;
+            name: string;
+            url: string;
+            logo: string | null;
+          };
         }
       }>('/menu', { params: queryParams });
       
@@ -42,9 +60,13 @@ export class ApiMenuRepository implements MenuRepository {
       const categories = this.transformCategories(response.data.categories);
       const products = this.transformProducts(response.data.products);
       
+      // Extrair os dados do tenant, se disponíveis
+      const tenant = response.data.tenant;
+      
       return { 
         categories, 
-        products 
+        products,
+        tenant
       };
     } catch (error: any) {
       console.error('Erro ao buscar menu:', error.message);

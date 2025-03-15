@@ -50,6 +50,13 @@ function MenuPage() {
   const [error, setError] = useState<string | null>(null);
   const [cartItemsCount, setCartItemsCount] = useState(0);
   const [showOrderSummary, setShowOrderSummary] = useState(false);
+  const [tenantData, setTenantData] = useState<{
+    id?: number;
+    uuid?: string;
+    name?: string;
+    url?: string;
+    logo?: string | null;
+  } | null>(null);
   const hasLoadedMenu = useRef(false);
   
   useEffect(() => {
@@ -61,10 +68,22 @@ function MenuPage() {
       try {
         setLoading(true);
         
+        // Converter isDelivery de string para booleano
+        const menuParams = {
+          ...params,
+          isDelivery: params.isDelivery === 'true' || params.isDelivery === '1'
+        };
+        
         // Carregar menu completo
-        const menuData = await menuRepository.getMenu(params);
+        const menuData = await menuRepository.getMenu(menuParams);
         setCategories(menuData.categories || []);
         setProducts(menuData.products || []);
+        
+        // Armazenar dados do tenant, se disponíveis
+        if (menuData.tenant) {
+          setTenantData(menuData.tenant);
+          console.log('Dados do tenant carregados:', menuData.tenant);
+        }
         
         setLoading(false);
         hasLoadedMenu.current = true;
@@ -119,6 +138,7 @@ function MenuPage() {
         storeSlug={storeSlug}
         tableId={tableId}
         isDelivery={isDelivery}
+        tenantData={tenantData}
       />
     </MenuProvider>
   );
@@ -138,7 +158,8 @@ function MenuContent({
   error,
   storeSlug,
   tableId,
-  isDelivery
+  isDelivery,
+  tenantData
 }: {
   categories: Category[];
   products: Product[];
@@ -153,9 +174,40 @@ function MenuContent({
   storeSlug: string | null;
   tableId: string | null;
   isDelivery: boolean;
+  tenantData: {
+    id?: number;
+    uuid?: string;
+    name?: string;
+    url?: string;
+    logo?: string | null;
+  } | null;
 }) {
   // Agora podemos usar o hook useMenu com segurança
   const { cartItems, addToCart, removeFromCart, clearCart, updateCartItemQuantity } = useMenu();
+  
+  // Estados para armazenar os dados da loja
+  const [storeName, setStoreName] = useState<string>('');
+  const [storeLogo, setStoreLogo] = useState<string | null>(null);
+  
+  // Efeito para definir os dados da loja a partir do tenant
+  useEffect(() => {
+    // Usar os dados do tenant, se disponíveis
+    if (tenantData) {
+      if (tenantData.name) {
+        setStoreName(tenantData.name);
+      }
+      
+      if (tenantData.logo) {
+        setStoreLogo(tenantData.logo);
+      }
+      
+      console.log('Usando dados do tenant:', tenantData);
+    } else {
+      // Fallback para o storeSlug
+      setStoreName(storeSlug || '');
+      console.log('Usando storeSlug como nome da loja:', storeSlug);
+    }
+  }, [tenantData, storeSlug]);
   
   // Atualizar contador de itens no carrinho quando o carrinho mudar
   useEffect(() => {
@@ -183,7 +235,8 @@ function MenuContent({
       <MenuHeader 
         cartItemsCount={cartItemsCount} 
         onCartClick={handleCartClick}
-        storeName={storeSlug || ''}
+        storeName={storeName || storeSlug || 'Restaurante'}
+        storeLogo={storeLogo || undefined}
       />
       
       <main className="flex-grow container mx-auto px-4 py-6 pb-24">
@@ -204,9 +257,22 @@ function MenuContent({
       <footer className={`bg-gray-800 text-white py-8 mt-auto ${isDelivery ? 'pb-24' : ''}`}>
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="mb-4 md:mb-0">
-              <h3 className="text-xl font-bold mb-2">{storeSlug || 'Restaurante'}</h3>
-              <p className="text-gray-400">Cardápio digital</p>
+            <div className="mb-6 md:mb-0 flex items-center">
+              {storeLogo ? (
+                <img 
+                  src={storeLogo} 
+                  alt={storeName || storeSlug || 'Logo'} 
+                  className="h-16 w-16 mr-4 rounded-full object-cover border-2 border-amber-500"
+                />
+              ) : (
+                <div className="h-16 w-16 bg-amber-500 rounded-full flex items-center justify-center text-white text-2xl font-bold mr-4">
+                  {storeName ? storeName.charAt(0).toUpperCase() : storeSlug ? storeSlug.charAt(0).toUpperCase() : 'F'}
+                </div>
+              )}
+              <div>
+                <h3 className="text-xl font-bold mb-1">{storeName || storeSlug || 'Restaurante'}</h3>
+                <p className="text-gray-400">Cardápio digital</p>
+              </div>
             </div>
             
             <div className="flex flex-col items-center md:items-end">
@@ -227,7 +293,13 @@ function MenuContent({
                   </svg>
                 </a>
               </div>
-              <p className="text-sm text-gray-400">© {new Date().getFullYear()} Todos os direitos reservados</p>
+              <div className="flex flex-col items-center">
+                <div className="flex items-center mb-2">
+                  <span className="text-amber-500 font-bold text-lg mr-1">digi</span>
+                  <span className="text-white font-bold text-lg">menu</span>
+                </div>
+                <p className="text-sm text-gray-400">© {new Date().getFullYear()} Todos os direitos reservados</p>
+              </div>
             </div>
           </div>
         </div>
