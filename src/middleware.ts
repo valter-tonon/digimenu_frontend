@@ -31,6 +31,24 @@ export function middleware(request: NextRequest) {
     }
   }
   
+  // Caso para /:storeId (menu do restaurante sem mesa específica - delivery)
+  if (pathSegments.length === 1) {
+    const storeId = pathSegments[0];
+    
+    console.log('Middleware - Identificado padrão /:storeId (delivery):', { storeId });
+    
+    // Verificar se o ID parece válido
+    if (storeId && storeId !== 'menu' && storeId !== '404' && storeId !== 'not-found') {
+      // Redirecionar para a página de menu apenas com o parâmetro de loja
+      const menuUrl = new URL('/menu', url.origin);
+      menuUrl.searchParams.set('store', storeId);
+      menuUrl.searchParams.set('isDelivery', 'true');
+      
+      console.log('Middleware - Redirecionando para menu de delivery:', menuUrl.toString());
+      return NextResponse.redirect(menuUrl);
+    }
+  }
+  
   // Verificar se estamos na página de menu
   if (pathname === '/menu') {
     const hasTable = url.searchParams.has('table');
