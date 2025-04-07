@@ -10,27 +10,54 @@ export function useMenuParams() {
   const [isDelivery, setIsDelivery] = useState<boolean>(false);
   const [isValid, setIsValid] = useState<boolean>(false);
   const [isClient, setIsClient] = useState<boolean>(false);
+  const [paramsLoaded, setParamsLoaded] = useState<boolean>(false);
   
   // Marcar que estamos no cliente
   useEffect(() => {
     console.log('useMenuParams - Inicializando no cliente');
     setIsClient(true);
+    
+    // Forçar carregamento de parâmetros diretamente da URL durante a montagem
+    try {
+      console.log('useMenuParams - Carregando da URL diretamente durante a montagem');
+      const url = new URL(window.location.href);
+      const tableFromUrl = url.searchParams.get('table');
+      const storeFromUrl = url.searchParams.get('store');
+      const deliveryFromUrl = url.searchParams.get('isDelivery') === 'true';
+      
+      console.log('Parâmetros da URL inicial:', { 
+        table: tableFromUrl, 
+        store: storeFromUrl,
+        isDelivery: deliveryFromUrl
+      });
+      
+      if (tableFromUrl) setTableId(tableFromUrl);
+      if (storeFromUrl) setStoreSlug(storeFromUrl);
+      if (deliveryFromUrl) setIsDelivery(true);
+      
+      const hasValidParams = !!tableFromUrl || !!storeFromUrl;
+      setIsValid(hasValidParams);
+      setParamsLoaded(true);
+      
+      console.log('useMenuParams - Parâmetros iniciais definidos:', { 
+        tableId: tableFromUrl, 
+        storeSlug: storeFromUrl,
+        isDelivery: deliveryFromUrl,
+        isValid: hasValidParams
+      });
+    } catch (error) {
+      console.error('useMenuParams - Erro ao extrair parâmetros da URL inicial:', error);
+    }
   }, []);
   
+  // Atualizar parâmetros quando searchParams mudar
   useEffect(() => {
     try {
-      if (!isClient) {
-        console.log('useMenuParams - Ainda não está no cliente');
+      if (!isClient || !searchParams) {
         return;
       }
       
-      if (!searchParams) {
-        console.log('useMenuParams - searchParams não disponível');
-        return;
-      }
-      
-      console.log('useMenuParams - searchParams disponível:', 
-        Array.from(searchParams.entries()));
+      console.log('useMenuParams - searchParams disponível:', Array.from(searchParams.entries()));
       
       const table = searchParams.get('table');
       const store = searchParams.get('store');
@@ -38,40 +65,30 @@ export function useMenuParams() {
       
       console.log('useMenuParams - Parâmetros extraídos:', { table, store, delivery });
       
-      // Só atualiza os estados se os valores realmente mudaram
-      if (table !== tableId) {
-        setTableId(table);
-      }
+      const hasValidParams = !!table || !!store;
       
-      if (store !== storeSlug) {
-        setStoreSlug(store);
-      }
+      setTableId(table);
+      setStoreSlug(store);
+      setIsDelivery(delivery);
+      setIsValid(hasValidParams);
+      setParamsLoaded(true);
       
-      if (delivery !== isDelivery) {
-        setIsDelivery(delivery);
-      }
-      
-      const newIsValid = !!table || !!store;
-      if (newIsValid !== isValid) {
-        setIsValid(newIsValid);
-      }
-      
-      console.log('useMenuParams - Estados atualizados:', { 
+      console.log('useMenuParams - Estados atualizados via searchParams:', { 
         tableId: table, 
         storeSlug: store,
         isDelivery: delivery,
-        isValid: newIsValid 
+        isValid: hasValidParams
       });
     } catch (error) {
-      console.error('useMenuParams - Erro ao processar parâmetros:', error);
+      console.error('useMenuParams - Erro ao processar searchParams:', error);
     }
-  }, [searchParams, isClient, tableId, storeSlug, isDelivery, isValid]);
+  }, [searchParams, isClient]);
   
-  // Fallback para URL direta se os parâmetros não estiverem disponíveis
+  // Último fallback para URL direta
   useEffect(() => {
-    if (isClient && !tableId && !storeSlug && typeof window !== 'undefined') {
+    if (isClient && !paramsLoaded && typeof window !== 'undefined') {
       try {
-        console.log('useMenuParams - Tentando extrair parâmetros da URL diretamente');
+        console.log('useMenuParams - Fallback: extraindo parâmetros da URL diretamente');
         const url = new URL(window.location.href);
         const tableFromUrl = url.searchParams.get('table');
         const storeFromUrl = url.searchParams.get('store');
@@ -81,19 +98,21 @@ export function useMenuParams() {
         if (storeFromUrl) setStoreSlug(storeFromUrl);
         if (deliveryFromUrl) setIsDelivery(true);
         
-        if (tableFromUrl || storeFromUrl) {
-          setIsValid(true);
-          console.log('useMenuParams - Parâmetros extraídos da URL:', { 
-            table: tableFromUrl, 
-            store: storeFromUrl,
-            isDelivery: deliveryFromUrl
-          });
-        }
+        const hasValidParams = !!tableFromUrl || !!storeFromUrl;
+        setIsValid(hasValidParams);
+        setParamsLoaded(true);
+        
+        console.log('useMenuParams - Fallback: parâmetros definidos:', { 
+          tableId: tableFromUrl, 
+          storeSlug: storeFromUrl,
+          isDelivery: deliveryFromUrl,
+          isValid: hasValidParams
+        });
       } catch (error) {
-        console.error('useMenuParams - Erro ao extrair parâmetros da URL:', error);
+        console.error('useMenuParams - Erro no fallback:', error);
       }
     }
-  }, [isClient, tableId, storeSlug]);
+  }, [isClient, paramsLoaded]);
   
   return {
     tableId,
@@ -101,9 +120,9 @@ export function useMenuParams() {
     isDelivery,
     isValid: isClient && isValid,
     params: {
-      ...(tableId ? { table: tableId } : {}),
-      ...(storeSlug ? { store: storeSlug } : {}),
-      ...(isDelivery ? { isDelivery: 'true' } : {})
+      table: tableId || '',
+      store: storeSlug || '',
+      isDelivery: isDelivery ? 'true' : 'false'
     }
   };
 } 

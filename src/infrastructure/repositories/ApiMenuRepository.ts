@@ -13,6 +13,14 @@ export class ApiMenuRepository implements MenuRepository {
       name: string;
       url: string;
       logo: string | null;
+      opening_hours?: {
+        opens_at: string;
+        closes_at: string;
+        is_open: boolean;
+      };
+      min_order_value?: number;
+      delivery_fee?: number;
+      estimated_delivery_time?: string;
     };
   }> {
     try {
@@ -46,6 +54,14 @@ export class ApiMenuRepository implements MenuRepository {
             name: string;
             url: string;
             logo: string | null;
+            opening_hours?: {
+              opens_at: string;
+              closes_at: string;
+              is_open: boolean;
+            };
+            min_order_value?: number;
+            delivery_fee?: number;
+            estimated_delivery_time?: string;
           };
         }
       }>('/menu', { params: queryParams });
@@ -179,6 +195,13 @@ export class ApiMenuRepository implements MenuRepository {
         name: product.title || product.name || `Produto ${index + 1}`,
         description: product.description || '',
         price: price,
+        promotional_price: product.promotional_price || null,
+        is_on_promotion: product.is_on_promotion || false,
+        promotion_starts_at: product.promotion_starts_at || null,
+        promotion_ends_at: product.promotion_ends_at || null,
+        is_featured: product.is_featured || false,
+        is_popular: product.is_popular || false,
+        tags: product.tags || [],
         image: product.image || null,
         active: product.isAtivo !== false,  // Default para true se não especificado
         category_id: product.category_id || 0,

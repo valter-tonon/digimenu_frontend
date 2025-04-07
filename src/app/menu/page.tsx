@@ -56,6 +56,14 @@ function MenuPage() {
     name?: string;
     url?: string;
     logo?: string | null;
+    opening_hours?: {
+      opens_at: string;
+      closes_at: string;
+      is_open: boolean;
+    };
+    min_order_value?: number;
+    delivery_fee?: number;
+    estimated_delivery_time?: string;
   } | null>(null);
   const hasLoadedMenu = useRef(false);
   
@@ -117,11 +125,24 @@ function MenuPage() {
     setShowOrderSummary(false);
   };
 
-  // Adicionar botão de resumo do pedido no header
+  // Função para lidar com o clique no botão do carrinho
   const handleCartClick = () => {
-    openOrderSummary();
+    // Em vez de abrir o OrderSummary, vamos usar o ProductList para abrir o carrinho lateral
+    const productListElement = document.querySelector('.product-list-container');
+    if (productListElement) {
+      const event = new CustomEvent('toggleCart');
+      productListElement.dispatchEvent(event);
+    } else {
+      // Fallback para o método anterior se não encontrar o elemento
+      openOrderSummary();
+    }
   };
 
+  // Filtrar produtos pela categoria selecionada
+  const filteredProducts = selectedCategoryId === 0
+    ? products
+    : products.filter(product => product.category_id === selectedCategoryId);
+  
   return (
     <MenuProvider initialTableId={tableId} initialStoreSlug={storeSlug}>
       <MenuContent 
@@ -132,7 +153,7 @@ function MenuPage() {
         cartItemsCount={cartItemsCount}
         setCartItemsCount={setCartItemsCount}
         showOrderSummary={showOrderSummary}
-        openOrderSummary={openOrderSummary}
+        openOrderSummary={handleCartClick}
         closeOrderSummary={closeOrderSummary}
         error={error}
         storeSlug={storeSlug}
@@ -180,6 +201,14 @@ function MenuContent({
     name?: string;
     url?: string;
     logo?: string | null;
+    opening_hours?: {
+      opens_at: string;
+      closes_at: string;
+      is_open: boolean;
+    };
+    min_order_value?: number;
+    delivery_fee?: number;
+    estimated_delivery_time?: string;
   } | null;
 }) {
   // Agora podemos usar o hook useMenu com segurança
@@ -188,6 +217,24 @@ function MenuContent({
   // Estados para armazenar os dados da loja
   const [storeName, setStoreName] = useState<string>('');
   const [storeLogo, setStoreLogo] = useState<string | null>(null);
+  
+  // Função para lidar com o clique no botão do carrinho
+  const handleCartClick = () => {
+    // Em vez de abrir o OrderSummary, vamos usar o ProductList para abrir o carrinho lateral
+    const productListElement = document.querySelector('.product-list-container');
+    if (productListElement) {
+      const event = new CustomEvent('toggleCart');
+      productListElement.dispatchEvent(event);
+    } else {
+      // Fallback para o método anterior se não encontrar o elemento
+      openOrderSummary();
+    }
+  };
+
+  // Função para lidar com mudanças nos itens do carrinho
+  const handleCartItemsChange = (count: number) => {
+    setCartItemsCount(count);
+  };
   
   // Efeito para definir os dados da loja a partir do tenant
   useEffect(() => {
@@ -225,11 +272,6 @@ function MenuContent({
     return <NotFound message={error} />;
   }
   
-  // Função para lidar com o clique no botão do carrinho
-  const handleCartClick = () => {
-    openOrderSummary();
-  };
-  
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       <MenuHeader 
@@ -237,24 +279,43 @@ function MenuContent({
         onCartClick={handleCartClick}
         storeName={storeName || storeSlug || 'Restaurante'}
         storeLogo={storeLogo || undefined}
+        openingHours={tenantData?.opening_hours}
+        minOrderValue={tenantData?.min_order_value}
       />
       
-      <main className="flex-grow container mx-auto px-4 py-6 pb-24">
+      {/* Alerta quando a loja está fechada */}
+      {tenantData?.opening_hours && !tenantData.opening_hours.is_open && (
+        <div className="bg-red-50 border-t border-b border-red-100 px-4 py-3">
+          <div className="flex justify-center items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+            <p className="text-sm text-red-600">
+              Loja fechada no momento. Você pode ver o cardápio, mas só poderá fazer pedidos a partir das {tenantData.opening_hours.opens_at}.
+            </p>
+          </div>
+        </div>
+      )}
+      
+      {/* Conteúdo principal */}
+      <main className="container mx-auto px-4 py-6 mb-16 flex-1">
         <CategoryList 
           categories={categories} 
           selectedCategoryId={selectedCategoryId} 
-          onSelectCategory={setSelectedCategoryId}
+          onSelectCategory={setSelectedCategoryId} 
         />
         
-        <ProductList 
-          products={filteredProducts}
-          selectedCategoryId={selectedCategoryId}
-          onCartItemsChange={setCartItemsCount}
-        />
+        <div className="product-list-container">
+          <ProductList 
+            products={filteredProducts}
+            selectedCategoryId={selectedCategoryId}
+            onCartItemsChange={handleCartItemsChange}
+          />
+        </div>
       </main>
       
       {/* Footer */}
-      <footer className={`bg-gray-800 text-white py-8 mt-auto ${isDelivery ? 'pb-24' : ''}`}>
+      <footer className="bg-gray-800 text-white py-8 mt-auto">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="mb-6 md:mb-0 flex items-center">
@@ -262,7 +323,7 @@ function MenuContent({
                 <img 
                   src={storeLogo} 
                   alt={storeName || storeSlug || 'Logo'} 
-                  className="h-16 w-16 mr-4 rounded-full object-cover border-2 border-amber-500"
+                  className="h-16 w-auto mr-4 object-contain border-2 border-amber-500"
                 />
               ) : (
                 <div className="h-16 w-16 bg-amber-500 rounded-full flex items-center justify-center text-white text-2xl font-bold mr-4">
@@ -313,28 +374,12 @@ function MenuContent({
         />
       )}
       
-      {/* Mostrar ações de delivery apenas se for delivery */}
-      {isDelivery && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white shadow-lg p-4 z-20">
-          <button 
-            onClick={openOrderSummary}
-            className="w-full py-3 bg-amber-500 text-white font-semibold rounded-lg shadow-md hover:bg-amber-600 transition duration-300 flex items-center justify-center"
-            disabled={cartItemsCount === 0}
-          >
-            <span className="mr-2">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-            </span>
-            {cartItemsCount > 0 ? `Fazer Pedido (${cartItemsCount})` : 'Carrinho Vazio'}
-          </button>
-        </div>
-      )}
-      
       {showOrderSummary && (
         <OrderSummary 
           onClose={closeOrderSummary}
           isDelivery={isDelivery}
+          isStoreOpen={tenantData?.opening_hours?.is_open ?? false}
+          minOrderValue={tenantData?.min_order_value ?? 0}
         />
       )}
     </div>

@@ -6,6 +6,8 @@ import { useMenu } from '@/infrastructure/context/MenuContext';
 interface OrderSummaryProps {
   onClose: () => void;
   isDelivery?: boolean;
+  isStoreOpen?: boolean;
+  minOrderValue?: number;
 }
 
 interface CartItem {
@@ -22,7 +24,7 @@ interface CartItem {
   }>;
 }
 
-export function OrderSummary({ onClose, isDelivery = false }: OrderSummaryProps) {
+export function OrderSummary({ onClose, isDelivery = false, isStoreOpen = true, minOrderValue = 0 }: OrderSummaryProps) {
   const menu = useMenu();
   const { cartItems, formatPrice, removeFromCart } = menu;
   const [isRemoving, setIsRemoving] = useState<Record<string, boolean>>({});
@@ -33,11 +35,15 @@ export function OrderSummary({ onClose, isDelivery = false }: OrderSummaryProps)
     paymentMethod: 'money'
   });
   const [step, setStep] = useState(isDelivery ? 'cart' : 'confirmation');
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Calcular o total do pedido
   const total = cartItems.reduce((acc: number, item: CartItem) => {
     return acc + (item.price * item.quantity);
   }, 0);
+  
+  // Verificar se o valor mínimo foi atingido
+  const isMinOrderValueReached = total >= minOrderValue || minOrderValue === 0;
 
   // Remover item do carrinho
   const handleRemoveItem = async (itemId: string) => {
@@ -100,22 +106,39 @@ export function OrderSummary({ onClose, isDelivery = false }: OrderSummaryProps)
   };
 
   // Finalizar o pedido
-  const handleFinishOrder = () => {
-    // Aqui você implementaria a lógica para enviar o pedido
-    console.log('Pedido finalizado:', {
-      items: cartItems,
-      total,
-      isDelivery,
-      customerInfo: isDelivery ? customerInfo : null
-    });
+  const handleFinishOrder = async () => {
+    if (!isStoreOpen || !isMinOrderValueReached) {
+      return;
+    }
     
-    // Fechar o modal
-    onClose();
+    setIsProcessing(true);
+    
+    try {
+      // Aqui você implementaria a lógica para enviar o pedido
+      console.log('Pedido finalizado:', {
+        items: cartItems,
+        total,
+        isDelivery,
+        customerInfo: isDelivery ? customerInfo : null
+      });
+      
+      // Simular tempo de processamento (remover na implementação real)
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Fechar o modal
+      onClose();
+    } catch (error) {
+      console.error('Erro ao finalizar pedido:', error);
+      alert('Erro ao finalizar o pedido. Por favor, tente novamente.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+      
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">
             {step === 'cart' && 'Resumo do Pedido'}
@@ -199,6 +222,21 @@ export function OrderSummary({ onClose, isDelivery = false }: OrderSummaryProps)
                     <span>Total:</span>
                     <span>{formatPrice(total)}</span>
                   </div>
+                  
+                  {/* Alerta de valor mínimo não atingido */}
+                  {minOrderValue > 0 && !isMinOrderValueReached && (
+                    <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded text-sm text-amber-700">
+                      <div className="flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                        <span>
+                          Valor mínimo para pedido é {formatPrice(minOrderValue)}. 
+                          Adicione mais {formatPrice(minOrderValue - total)} para continuar.
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="mt-6 flex justify-end">
@@ -211,7 +249,12 @@ export function OrderSummary({ onClose, isDelivery = false }: OrderSummaryProps)
                   {isDelivery && (
                     <button
                       onClick={handleNextStep}
-                      className="px-4 py-2 bg-amber-500 hover:bg-amber-600 rounded-md text-white transition-colors"
+                      disabled={!isStoreOpen || !isMinOrderValueReached}
+                      className={`px-4 py-2 rounded-md text-white transition-colors ${
+                        isStoreOpen && isMinOrderValueReached
+                          ? 'bg-amber-500 hover:bg-amber-600' 
+                          : 'bg-gray-400 cursor-not-allowed'
+                      }`}
                     >
                       Continuar
                     </button>
@@ -219,9 +262,21 @@ export function OrderSummary({ onClose, isDelivery = false }: OrderSummaryProps)
                   {!isDelivery && (
                     <button
                       onClick={handleFinishOrder}
-                      className="px-4 py-2 bg-amber-500 hover:bg-amber-600 rounded-md text-white transition-colors"
+                      disabled={!isStoreOpen || isProcessing || !isMinOrderValueReached}
+                      className={`px-4 py-2 rounded-md text-white transition-colors ${
+                        isStoreOpen && !isProcessing && isMinOrderValueReached
+                          ? 'bg-amber-500 hover:bg-amber-600' 
+                          : 'bg-gray-400 cursor-not-allowed'
+                      }`}
                     >
-                      Finalizar Pedido
+                      {isProcessing ? (
+                        <span className="flex items-center">
+                          <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                          Processando...
+                        </span>
+                      ) : (
+                        'Finalizar Pedido'
+                      )}
                     </button>
                   )}
                 </div>
@@ -304,9 +359,9 @@ export function OrderSummary({ onClose, isDelivery = false }: OrderSummaryProps)
                   </button>
                   <button
                     onClick={handleNextStep}
-                    disabled={!isDeliveryFormValid()}
+                    disabled={!isDeliveryFormValid() || !isStoreOpen}
                     className={`px-4 py-2 rounded-md text-white transition-colors ${
-                      isDeliveryFormValid() 
+                      isDeliveryFormValid() && isStoreOpen
                         ? 'bg-amber-500 hover:bg-amber-600' 
                         : 'bg-gray-400 cursor-not-allowed'
                     }`}
@@ -355,6 +410,21 @@ export function OrderSummary({ onClose, isDelivery = false }: OrderSummaryProps)
                       <span>Total:</span>
                       <span>{formatPrice(total)}</span>
                     </div>
+                    
+                    {/* Alerta de valor mínimo não atingido */}
+                    {minOrderValue > 0 && !isMinOrderValueReached && (
+                      <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded text-sm text-amber-700">
+                        <div className="flex items-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
+                          <span>
+                            Valor mínimo para pedido é {formatPrice(minOrderValue)}. 
+                            Adicione mais {formatPrice(minOrderValue - total)} para continuar.
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
                 
@@ -367,9 +437,21 @@ export function OrderSummary({ onClose, isDelivery = false }: OrderSummaryProps)
                   </button>
                   <button
                     onClick={handleFinishOrder}
-                    className="px-4 py-2 bg-amber-500 hover:bg-amber-600 rounded-md text-white transition-colors"
+                    disabled={!isStoreOpen || isProcessing || !isMinOrderValueReached}
+                    className={`px-4 py-2 rounded-md text-white transition-colors ${
+                      isStoreOpen && !isProcessing && isMinOrderValueReached
+                        ? 'bg-amber-500 hover:bg-amber-600' 
+                        : 'bg-gray-400 cursor-not-allowed'
+                    }`}
                   >
-                    Finalizar Pedido
+                    {isProcessing ? (
+                      <span className="flex items-center">
+                        <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                        Processando...
+                      </span>
+                    ) : (
+                      'Finalizar Pedido'
+                    )}
                   </button>
                 </div>
               </>

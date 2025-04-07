@@ -4,9 +4,13 @@ import { Product, Additional } from '@/domain/entities/Product';
 import { useMemo, useState, useEffect } from 'react';
 import { useMenu } from '@/infrastructure/context/MenuContext';
 import { useMenuParams } from '@/infrastructure/hooks/useMenuParams';
+import { PlusIcon, MinusIcon } from 'lucide-react';
+import { AddToCartButton } from './AddToCartButton';
+import { formatPrice } from '@/utils/formatPrice';
+import Image from 'next/image';
 
 // Função para formatar o preço com segurança
-const formatPrice = (price: any): string => {
+const formatPriceLocal = (price: any): string => {
   // Se for null ou undefined, retorna "0.00"
   if (price == null) return "0.00";
   
@@ -20,8 +24,8 @@ const formatPrice = (price: any): string => {
   return numPrice.toFixed(2);
 };
 
-// Interface para itens do carrinho
-interface CartItem {
+// Interface para os dados do carrinho definidos no contexto local
+interface CartItemLocal {
   product: Product;
   quantity: number;
   selectedAdditionals?: Additional[];
@@ -38,7 +42,15 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedAdditionals, setSelectedAdditionals] = useState<Additional[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const { 
+    cartItems,
+    addToCart,
+    removeFromCart,
+    updateCartItemQuantity: updateQuantity,
+    formatPrice: formatPriceContext,
+    setIsCartOpen: setContextCartOpen,
+    clearCart
+  } = useMenu();
   const [internalSearchTerm, setInternalSearchTerm] = useState('');
   
   // Obter os parâmetros do menu no nível do componente
@@ -55,13 +67,56 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
   // Usar o termo de busca das props se fornecido, caso contrário usar o interno
   const effectiveSearchTerm = searchTerm !== undefined ? searchTerm : internalSearchTerm;
 
-  // Notificar o componente pai sobre mudanças no carrinho
+  // Inicializar o estado do carrinho quando o componente montar
   useEffect(() => {
+    // Atualizar o estado do carrinho baseado no contexto
+    const cartHasItems = cartItems && cartItems.length > 0;
+    
+    // Inicializar flags de debug
+    console.log("ProductList montado, cartItems:", cartItems.length);
+    
+    // Se tivermos itens armazenados no localStorage, mostrar o carrinho
+    if (cartHasItems && window.location.hash === "#cart") {
+      console.log("Abrindo carrinho automaticamente devido ao hash #cart");
+      setIsCartOpen(true);
+    }
+  }, []);
+  
+  // Sincronizar o estado do carrinho com o contexto
+  useEffect(() => {
+    // Notificar componentes pai sobre a mudança na quantidade de itens do carrinho
     if (onCartItemsChange) {
-      const itemCount = cartItems.reduce((total, item) => total + item.quantity, 0);
-      onCartItemsChange(itemCount);
+      const totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
+      onCartItemsChange(totalItems);
     }
   }, [cartItems, onCartItemsChange]);
+
+  // Adicionar efeito para escutar eventos de toggle do carrinho
+  useEffect(() => {
+    const handleToggleCart = () => {
+      setIsCartOpen(prev => !prev);
+    };
+
+    // Adicionar o evento ao componente atual
+    const element = document.querySelector('.product-list-container');
+    if (element) {
+      element.addEventListener('toggleCart', handleToggleCart);
+    }
+
+    return () => {
+      if (element) {
+        element.removeEventListener('toggleCart', handleToggleCart);
+      }
+    };
+  }, []);
+
+  // Verificar se há itens no carrinho quando a página carrega
+  useEffect(() => {
+    // Se temos itens no carrinho e a URL tem o hash #cart, abrir automaticamente
+    if (cartItems.length > 0 && typeof window !== 'undefined' && window.location.hash === '#cart') {
+      setIsCartOpen(true);
+    }
+  }, [cartItems]);
 
   // Garantir que temos produtos válidos
   const validProducts = useMemo(() => {
@@ -137,125 +192,55 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
   };
   
   // Função para adicionar produto ao carrinho
-  const addToCart = (product: Product, additionals: Additional[] = []) => {
-    setCartItems(prevItems => {
-      // Verificar se o produto já está no carrinho com os mesmos adicionais
-      const existingItemIndex = prevItems.findIndex(item => {
-        if (item.product.id !== product.id) return false;
-        
-        // Se não tem adicionais selecionados e o item também não tem, são iguais
-        if (!additionals.length && (!item.selectedAdditionals || !item.selectedAdditionals.length)) {
-          return true;
-        }
-        
-        // Se a quantidade de adicionais é diferente, são diferentes
-        if (additionals.length !== (item.selectedAdditionals?.length || 0)) {
-          return false;
-        }
-        
-        // Verificar se todos os adicionais são os mesmos
-        return additionals.every(additional => 
-          item.selectedAdditionals?.some(itemAdditional => itemAdditional.id === additional.id)
-        );
-      });
-      
-      if (existingItemIndex >= 0) {
-        // Se já existe, aumenta a quantidade
-        const updatedItems = [...prevItems];
-        updatedItems[existingItemIndex].quantity += 1;
-        return updatedItems;
-      } else {
-        // Se não existe, adiciona novo item
-        return [...prevItems, { 
-          product, 
-          quantity: 1,
-          selectedAdditionals: additionals.length > 0 ? [...additionals] : undefined
-        }];
-      }
+  const handleAddToCart = (product: Product, additionals: Additional[] = []) => {
+    // Converter o produto para o formato do CartItem esperado pelo context
+    addToCart({
+      id: product.id.toString(),
+      name: product.name,
+      price: Number(product.price) || 0,
+      quantity: 1,
+      additionals: additionals.map(add => ({
+        id: add.id.toString(),
+        name: add.name,
+        price: Number(add.price) || 0
+      }))
     });
     
     // Abre o carrinho automaticamente ao adicionar um item
     setIsCartOpen(true);
   };
   
-  // Função para remover item do carrinho
-  const removeFromCart = (productId: number, additionals?: Additional[]) => {
-    setCartItems(prevItems => {
-      if (!additionals || additionals.length === 0) {
-        // Se não tem adicionais, remove o item pelo ID do produto
-        return prevItems.filter(item => item.product.id !== productId);
-      } else {
-        // Se tem adicionais, remove apenas o item específico com esses adicionais
-        return prevItems.filter(item => {
-          if (item.product.id !== productId) return true;
-          
-          // Se o item não tem adicionais, mas estamos procurando por um com adicionais, manter
-          if (!item.selectedAdditionals) return true;
-          
-          // Verificar se os adicionais são os mesmos
-          const hasSameAdditionals = additionals.every(additional => 
-            item.selectedAdditionals?.some(itemAdditional => itemAdditional.id === additional.id)
-          );
-          
-          // Manter se não for o mesmo conjunto de adicionais
-          return !hasSameAdditionals;
-        });
-      }
-    });
+  // Função para remover item do carrinho - usar a do context
+  const handleRemoveFromCart = (productId: number) => {
+    removeFromCart(productId.toString());
   };
   
-  // Função para alterar a quantidade de um item
-  const updateQuantity = (productId: number, newQuantity: number, additionals?: Additional[]) => {
-    if (newQuantity <= 0) {
-      removeFromCart(productId, additionals);
-      return;
-    }
-    
-    setCartItems(prevItems => 
-      prevItems.map(item => {
-        // Se o ID do produto não corresponde, manter o item inalterado
-        if (item.product.id !== productId) return item;
-        
-        // Se não tem adicionais para verificar
-        if (!additionals || additionals.length === 0) {
-          // Se o item também não tem adicionais, atualizar a quantidade
-          if (!item.selectedAdditionals || item.selectedAdditionals.length === 0) {
-            return { ...item, quantity: newQuantity };
-          }
-          return item; // Manter inalterado se o item tem adicionais
-        }
-        
-        // Verificar se os adicionais são os mesmos
-        const hasSameAdditionals = additionals.every(additional => 
-          item.selectedAdditionals?.some(itemAdditional => itemAdditional.id === additional.id)
-        ) && item.selectedAdditionals?.length === additionals.length;
-        
-        // Atualizar apenas se for o mesmo conjunto de adicionais
-        return hasSameAdditionals ? { ...item, quantity: newQuantity } : item;
-      })
-    );
+  // Função para alterar a quantidade de um item - usar a do context
+  const handleUpdateQuantity = (productId: number, newQuantity: number) => {
+    updateQuantity(productId.toString(), newQuantity);
   };
   
   // Calcular o total do carrinho
   const cartTotal = useMemo(() => {
     return cartItems.reduce((total, item) => {
-      const basePrice = Number(item.product.price) || 0;
-      const additionalsPrice = item.selectedAdditionals?.reduce(
-        (sum, additional) => {
+      // Verificar o preço a ser utilizado
+      const price = item.price || 0;
+      
+      // Adicionais
+      const additionalsPrice = item.additionals?.reduce(
+        (sum: number, additional) => {
           // Garantir que o preço do adicional seja um número válido
           const additionalPrice = Number(additional.price) || 0;
           return sum + additionalPrice;
-        }, 
+        },
         0
       ) || 0;
       
-      // Calcular o preço total do item (preço base + adicionais) * quantidade
-      const itemTotal = (basePrice + additionalsPrice) * item.quantity;
-      return total + itemTotal;
+      return total + (price + additionalsPrice) * item.quantity;
     }, 0);
   }, [cartItems]);
 
-  // Adicionar a função finishOrder antes do return final
+  // Função para finalizar o pedido
   const finishOrder = async () => {
     try {
       // Iniciar o processo de submissão
@@ -277,9 +262,9 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
         token_company: storeSlug, // Identificador da empresa/loja
         ...(tableId ? { table: tableId } : {}), // Adicionar mesa apenas se existir
         products: cartItems.map(item => ({
-          identify: item.product.uuid || item.product.id.toString(), // Usar UUID ou ID do produto como string
+          identify: item.id,
           quantity: item.quantity,
-          additionals: item.selectedAdditionals ? item.selectedAdditionals.map(add => add.id.toString()) : []
+          additionals: item.additionals ? item.additionals.map(add => add.id) : []
         }))
       };
       
@@ -322,7 +307,7 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
       console.log('Dados da resposta:', data);
       
       // Limpar o carrinho
-      setCartItems([]);
+      clearCart();
       
       // Definir sucesso
       setOrderSuccess({
@@ -367,6 +352,24 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
         </div>
       </div>
     );
+  };
+
+  // Função para exibir o preço correto do produto
+  const displayProductPrice = (product: Product) => {
+    if (product.is_on_promotion && 
+        product.promotional_price != null && 
+        Number(product.promotional_price) > 0) {
+      // Produto com promoção válida
+      return (
+        <>
+          <span className="text-xs line-through text-gray-500">R$ {formatPrice(product.price)}</span>
+          <span className="text-base font-bold text-green-600">R$ {formatPrice(product.promotional_price)}</span>
+        </>
+      );
+    } else {
+      // Produto sem promoção ou com promoção zerada
+      return <span className="text-base font-bold">R$ {formatPrice(product.price)}</span>;
+    }
   };
 
   if (validProducts.length === 0) {
@@ -428,9 +431,53 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
                     className="w-full h-full object-cover"
                     onClick={() => openProductDetails(product)}
                   />
+                  {/* Badges de destaque e popular */}
+                  <div className="absolute top-2 left-2 flex flex-col gap-1">
+                    {product.is_featured && (
+                      <span className="bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                        Destaque
+                      </span>
+                    )}
+                    {product.is_popular && (
+                      <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                        Popular
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="p-3 flex flex-col justify-between">
-                  <h3 className="font-semibold text-gray-800 text-base line-clamp-1">{product.name || 'Produto sem nome'}</h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-gray-800 text-base line-clamp-1">{product.name || 'Produto sem nome'}</h3>
+                    {product.tags && product.tags.length > 0 && (
+                      <div className="flex items-center">
+                        {product.tags.includes('vegetariano') && (
+                          <span className="ml-1 bg-green-100 text-green-800 text-xs px-1.5 py-0.5 rounded flex items-center" title="Vegetariano">
+                            🌱
+                          </span>
+                        )}
+                        {product.tags.includes('vegano') && (
+                          <span className="ml-1 bg-green-100 text-green-800 text-xs px-1.5 py-0.5 rounded flex items-center" title="Vegano">
+                            🥬
+                          </span>
+                        )}
+                        {product.tags.includes('picante') && (
+                          <span className="ml-1 bg-red-100 text-red-800 text-xs px-1.5 py-0.5 rounded flex items-center" title="Picante">
+                            🌶️
+                          </span>
+                        )}
+                        {product.tags.includes('sem_gluten') && (
+                          <span className="ml-1 bg-yellow-100 text-yellow-800 text-xs px-1.5 py-0.5 rounded flex items-center" title="Sem Glúten">
+                            GF
+                          </span>
+                        )}
+                        {product.tags.includes('novo') && (
+                          <span className="ml-1 bg-blue-100 text-blue-800 text-xs px-1.5 py-0.5 rounded flex items-center" title="Novo">
+                            Novo
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
                   {product.category && (
                     <div className="text-xs text-gray-500 mt-1">
                       {product.additionals && product.additionals.length > 0 && (
@@ -438,19 +485,21 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
                       )}
                     </div>
                   )}
-                  <div className="mt-2 flex justify-between items-center">
-                    <div className="text-base font-bold text-green-600">
-                      R$ {formatPrice(product.price)}
+                  <div className="mt-auto">
+                    <div className="mt-2 flex justify-between items-center">
+                      <div className="text-base font-bold text-green-600">
+                        {displayProductPrice(product)}
+                      </div>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openProductDetails(product);
+                        }} 
+                        className="text-primary hover:text-primary-dark transition-colors text-sm flex items-center"
+                      >
+                        Ver detalhes
+                      </button>
                     </div>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        addToCart(product);
-                      }}
-                      className="text-amber-500 text-xs hover:text-amber-600 transition-colors"
-                    >
-                      Adicionar ao carrinho
-                    </button>
                   </div>
                 </div>
               </div>
@@ -482,6 +531,49 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
                   alt={selectedProduct.name} 
                   className="w-full h-64 object-cover rounded-lg"
                 />
+                {/* Badges de destaque e popular */}
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {selectedProduct.is_featured && (
+                    <span className="bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                      Destaque
+                    </span>
+                  )}
+                  {selectedProduct.is_popular && (
+                    <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                      Popular
+                    </span>
+                  )}
+                  {selectedProduct.tags && selectedProduct.tags.map(tag => {
+                    let badge = null;
+                    switch(tag) {
+                      case 'vegetariano':
+                        badge = <span key={tag} className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">🌱 Vegetariano</span>;
+                        break;
+                      case 'vegano':
+                        badge = <span key={tag} className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">🥬 Vegano</span>;
+                        break;
+                      case 'sem_gluten':
+                        badge = <span key={tag} className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">GF Sem Glúten</span>;
+                        break;
+                      case 'sem_lactose':
+                        badge = <span key={tag} className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">SL Sem Lactose</span>;
+                        break;
+                      case 'picante':
+                        badge = <span key={tag} className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">🌶️ Picante</span>;
+                        break;
+                      case 'organico':
+                        badge = <span key={tag} className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">🌿 Orgânico</span>;
+                        break;
+                      case 'promocao':
+                        badge = <span key={tag} className="bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded-full">🏷️ Promoção</span>;
+                        break;
+                      case 'novo':
+                        badge = <span key={tag} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">✨ Novo</span>;
+                        break;
+                    }
+                    return badge;
+                  })}
+                </div>
               </div>
               
               <div className="mb-4">
@@ -540,21 +632,26 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
               <div className="mb-6">
                 <h3 className="text-lg font-semibold text-gray-800">Preço</h3>
                 <div className="flex items-baseline mt-1">
-                  <p className="text-2xl font-bold text-amber-600">
-                    R$ {formatPrice(calculateTotalPrice(
-                      Number(selectedProduct.price) || 0, 
-                      selectedAdditionals
-                    ))}
-                  </p>
-                  
-                  {selectedAdditionals.length > 0 && (
-                    <p className="ml-2 text-sm text-gray-500">
-                      (R$ {formatPrice(selectedProduct.price)} + R$ {formatPrice(
-                        selectedAdditionals.reduce((sum, item) => {
-                          const additionalPrice = Number(item.price) || 0;
-                          return sum + additionalPrice;
-                        }, 0)
-                      )} em adicionais)
+                  {selectedProduct.is_on_promotion && 
+                   selectedProduct.promotional_price !== null &&
+                   Number(selectedProduct.promotional_price) > 0 ? (
+                    <div className="flex flex-col">
+                      <p className="text-sm line-through text-gray-500">
+                        R$ {formatPrice(selectedProduct.price)}
+                      </p>
+                      <p className="text-2xl font-bold text-amber-600">
+                        R$ {formatPrice(calculateTotalPrice(
+                          Number(selectedProduct.promotional_price) || 0,
+                          selectedAdditionals
+                        ))}
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-2xl font-bold text-amber-600">
+                      R$ {formatPrice(calculateTotalPrice(
+                        Number(selectedProduct.price) || 0, 
+                        selectedAdditionals
+                      ))}
                     </p>
                   )}
                 </div>
@@ -570,7 +667,7 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
                 <button 
                   onClick={(e) => {
                     e.stopPropagation();
-                    addToCart(selectedProduct, selectedAdditionals);
+                    handleAddToCart(selectedProduct, selectedAdditionals);
                     closeModal();
                   }}
                   className="px-4 py-2 bg-amber-500 text-white rounded-md hover:bg-amber-600 transition-colors"
@@ -599,7 +696,7 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
                     <div className="flex items-start justify-between">
                       <h2 className="text-lg font-medium text-gray-900">Seu carrinho</h2>
                       <div className="ml-3 h-7 flex items-center">
-                        <button
+                        <button 
                           onClick={() => setIsCartOpen(false)}
                           className="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none"
                         >
@@ -633,41 +730,38 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
                         <div className="flow-root">
                           <ul className="-my-6 divide-y divide-gray-200">
                             {cartItems.map((item, index) => {
-                              const basePrice = Number(item.product.price) || 0;
-                              const additionalsPrice = item.selectedAdditionals?.reduce(
-                                (sum, additional) => {
+                              const itemPrice = item.price || 0;
+                              const additionalsPrice = item.additionals?.reduce(
+                                (sum: number, additional) => {
                                   // Garantir que o preço do adicional seja um número válido
                                   const additionalPrice = Number(additional.price) || 0;
                                   return sum + additionalPrice;
                                 }, 
                                 0
                               ) || 0;
-                              const totalItemPrice = (basePrice + additionalsPrice) * item.quantity;
+                              const totalItemPrice = (itemPrice + additionalsPrice) * item.quantity;
                               
                               return (
-                                <li key={`${item.product.id}-${index}`} className="py-6 flex">
-                                  <div className="flex-shrink-0 w-24 h-24 border border-gray-200 rounded-md overflow-hidden">
-                                    <img
-                                      src={item.product.image || 'https://via.placeholder.com/150?text=Sem+Imagem'}
-                                      alt={item.product.name}
-                                      className="w-full h-full object-cover"
-                                    />
+                                <li key={`${item.id}-${index}`} className="py-6 flex">
+                                  <div className="flex-shrink-0 w-24 h-24 border border-gray-200 rounded-md overflow-hidden bg-gray-100 flex items-center justify-center">
+                                    <svg className="h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                                    </svg>
                                   </div>
 
                                   <div className="ml-4 flex-1 flex flex-col">
                                     <div>
                                       <div className="flex justify-between text-base font-medium text-gray-900">
-                                        <h3>{item.product.name}</h3>
+                                        <h3>{item.name}</h3>
                                         <p className="ml-4">R$ {formatPrice(totalItemPrice)}</p>
                                       </div>
-                                      <p className="mt-1 text-sm text-gray-500 line-clamp-1">{item.product.description}</p>
                                       
                                       {/* Mostrar adicionais selecionados */}
-                                      {item.selectedAdditionals && item.selectedAdditionals.length > 0 && (
+                                      {item.additionals && item.additionals.length > 0 && (
                                         <div className="mt-1">
                                           <p className="text-xs text-gray-500">Adicionais:</p>
                                           <ul className="mt-1 space-y-1">
-                                            {item.selectedAdditionals.map(additional => (
+                                            {item.additionals.map(additional => (
                                               <li key={additional.id} className="text-xs text-gray-600 flex justify-between">
                                                 <span>{additional.name}</span>
                                                 <span>+R$ {formatPrice(additional.price)}</span>
@@ -680,11 +774,7 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
                                     <div className="flex-1 flex items-end justify-between text-sm">
                                       <div className="flex items-center">
                                         <button
-                                          onClick={() => updateQuantity(
-                                            item.product.id, 
-                                            item.quantity - 1, 
-                                            item.selectedAdditionals
-                                          )}
+                                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
                                           className="text-gray-500 hover:text-gray-700 p-1"
                                         >
                                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -693,11 +783,7 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
                                         </button>
                                         <span className="mx-2 text-gray-700">{item.quantity}</span>
                                         <button
-                                          onClick={() => updateQuantity(
-                                            item.product.id, 
-                                            item.quantity + 1, 
-                                            item.selectedAdditionals
-                                          )}
+                                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
                                           className="text-gray-500 hover:text-gray-700 p-1"
                                         >
                                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -708,7 +794,7 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
 
                                       <div className="flex">
                                         <button
-                                          onClick={() => removeFromCart(item.product.id, item.selectedAdditionals)}
+                                          onClick={() => removeFromCart(item.id)}
                                           type="button"
                                           className="font-medium text-red-600 hover:text-red-500"
                                         >
@@ -724,41 +810,41 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
                         </div>
                       )}
                     </div>
-                  </div>
-
-                  {cartItems.length > 0 && (
-                    <div className="border-t border-gray-200 py-6 px-4 sm:px-6">
-                      <div className="flex justify-between text-base font-medium text-gray-900">
-                        <p>Subtotal</p>
-                        <p>R$ {formatPrice(cartTotal)}</p>
-                      </div>
-                      <p className="mt-0.5 text-sm text-gray-500">Frete e taxas calculados no checkout.</p>
-                      <div className="mt-6">
-                        <a
-                          href="#"
-                          className="flex justify-center items-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-amber-500 hover:bg-amber-600"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            finishOrder();
-                          }}
-                        >
-                          Finalizar pedido
-                        </a>
-                      </div>
-                      <div className="mt-6 flex justify-center text-sm text-center text-gray-500">
-                        <p>
-                          ou{' '}
-                          <button
-                            type="button"
-                            className="text-amber-600 font-medium hover:text-amber-500"
-                            onClick={() => setIsCartOpen(false)}
+                    
+                    {cartItems.length > 0 && (
+                      <div className="border-t border-gray-200 py-6 px-4 sm:px-6">
+                        <div className="flex justify-between text-base font-medium text-gray-900">
+                          <p>Subtotal</p>
+                          <p>R$ {formatPrice(cartTotal)}</p>
+                        </div>
+                        <p className="mt-0.5 text-sm text-gray-500">Frete e taxas calculados no checkout.</p>
+                        <div className="mt-6">
+                          <a
+                            href="#"
+                            className="flex justify-center items-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-amber-500 hover:bg-amber-600"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              finishOrder();
+                            }}
                           >
-                            Continuar comprando<span aria-hidden="true"> &rarr;</span>
-                          </button>
-                        </p>
+                            Finalizar pedido
+                          </a>
+                        </div>
+                        <div className="mt-6 flex justify-center text-sm text-center text-gray-500">
+                          <p>
+                            ou{' '}
+                            <button
+                              type="button"
+                              className="text-amber-600 font-medium hover:text-amber-500"
+                              onClick={() => setIsCartOpen(false)}
+                            >
+                              Continuar comprando<span aria-hidden="true"> &rarr;</span>
+                            </button>
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

@@ -9,13 +9,21 @@ interface MenuHeaderProps {
   onCartClick: () => void;
   storeName?: string;
   storeLogo?: string;
+  openingHours?: {
+    opens_at: string;
+    closes_at: string;
+    is_open: boolean;
+  };
+  minOrderValue?: number;
 }
 
 export function MenuHeader({ 
   cartItemsCount, 
   onCartClick, 
   storeName: propStoreName,
-  storeLogo: propStoreLogo 
+  storeLogo: propStoreLogo,
+  openingHours,
+  minOrderValue
 }: MenuHeaderProps) {
   const { tableId, storeSlug } = useMenu();
   const [storeName, setStoreName] = useState<string>(propStoreName || 'FoodMenu');
@@ -69,7 +77,7 @@ export function MenuHeader({
             <img 
               src={storeLogo} 
               alt={storeName || 'Logo'} 
-              className="h-12 w-auto mr-3 rounded-full object-cover border-2 border-amber-500"
+              className="h-12 w-auto mr-3 object-contain border-2 border-amber-500"
             />
           ) : (
             <div className="h-12 w-12 bg-amber-500 rounded-full flex items-center justify-center text-white font-bold mr-3">
@@ -80,6 +88,30 @@ export function MenuHeader({
           <div>
             <h1 className="text-xl font-semibold text-gray-800">{storeName}</h1>
             <p className="text-xs text-gray-500">Cardápio Digital</p>
+            
+            {/* Informações de horário de funcionamento */}
+            {openingHours && (
+              <p className="text-xs text-gray-600 mt-1">
+                {openingHours.is_open ? (
+                  <span className="flex items-center">
+                    <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
+                    <span>Aberto • Fecha às {openingHours.closes_at}</span>
+                  </span>
+                ) : (
+                  <span className="flex items-center">
+                    <span className="w-2 h-2 bg-red-500 rounded-full mr-1"></span>
+                    <span>Fechado • Abre às {openingHours.opens_at}</span>
+                  </span>
+                )}
+              </p>
+            )}
+            
+            {/* Valor mínimo do pedido */}
+            {minOrderValue && minOrderValue > 0 && (
+              <p className="text-xs text-gray-600">
+                Pedido mínimo: R$ {minOrderValue.toFixed(2)}
+              </p>
+            )}
           </div>
         </div>
         

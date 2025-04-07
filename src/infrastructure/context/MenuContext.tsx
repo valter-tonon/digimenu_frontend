@@ -1,6 +1,38 @@
 'use client';
 
-import { createContext, useContext, ReactNode, useState } from 'react';
+import { createContext, useContext, ReactNode, useState, useEffect, useRef } from 'react';
+import { useCartStore } from '@/store/cart-store';
+
+// =================== 1. Teste básico para validar o comportamento ==================
+// Este código é apenas para mostrar como testaríamos este componente 
+// Remove ou comente esta seção em produção
+/*
+// Exemplo de como este componente seria testado
+function testMenuContext() {
+  // Teste 1: Verificar se o contexto é inicializado corretamente
+  const { cartItems, addToCart } = useMenu();
+  expect(cartItems).toEqual([]);
+  
+  // Teste 2: Verificar se addToCart funciona
+  const testItem = { 
+    id: '1',
+    name: 'Test Product',
+    price: 10.0,
+    quantity: 1
+  };
+  addToCart(testItem);
+  
+  // O estado deveria ser atualizado e o store também
+  const { cartItems: updatedItems } = useMenu();
+  expect(updatedItems.length).toBe(1);
+  expect(updatedItems[0].name).toBe('Test Product');
+  
+  // Verificar se o store também foi atualizado
+  const storeItems = useCartStore.getState().items;
+  expect(storeItems.length).toBe(1);
+}
+*/
+// =================== Fim do teste ===================
 
 interface CartItem {
   id: string;
@@ -41,34 +73,72 @@ export function MenuProvider({ children, initialTableId, initialStoreSlug }: {
   const [tableId, setTableId] = useState<string | null>(initialTableId || null);
   const [storeSlug, setStoreSlug] = useState<string | null>(initialStoreSlug || null);
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  
+  // Flag para evitar loop infinito
+  const isInitialized = useRef(false);
+  
+  // Referência ao store
+  const store = useCartStore();
+  
+  // Este useEffect inicializa o contexto no store apenas uma vez
+  useEffect(() => {
+    if (!isInitialized.current && storeSlug) {
+      store.setContext(storeSlug, tableId || undefined);
+      isInitialized.current = true;
+      
+      // Aqui não precisamos mais carregar os itens, pois o store já faz isso automaticamente
+      console.log('Contexto inicializado:', { storeSlug, tableId });
+    }
+  }, [store, storeSlug, tableId]);
 
   // Função para formatar preço
   const formatPrice = (price: number): string => {
     return price.toFixed(2);
   };
 
+  // Mapeamento dos itens do store para o formato esperado pelo contexto
+  const mapStoreItemsToCartItems = (): CartItem[] => {
+    return store.items.map(item => ({
+      id: item.identify || item.id.toString(),
+      name: item.name,
+      price: item.price,
+      quantity: item.quantity,
+      observation: item.notes,
+      additionals: item.additionals?.map(add => ({
+        id: add.id.toString(),
+        name: add.name,
+        price: add.price
+      }))
+    }));
+  };
+
   // Função para adicionar item ao carrinho
   const addToCart = (item: CartItem) => {
-    setCartItems(prevItems => {
-      // Verificar se o item já existe no carrinho
-      const existingItemIndex = prevItems.findIndex(cartItem => cartItem.id === item.id);
-      
-      if (existingItemIndex >= 0) {
-        // Se já existe, aumenta a quantidade
-        const updatedItems = [...prevItems];
-        updatedItems[existingItemIndex].quantity += item.quantity;
-        return updatedItems;
-      } else {
-        // Se não existe, adiciona novo item
-        return [...prevItems, item];
-      }
+    // Usar apenas o store zustand
+    store.addItem({
+      productId: parseInt(item.id),
+      identify: item.id,
+      name: item.name,
+      price: item.price,
+      quantity: item.quantity,
+      notes: item.observation,
+      additionals: item.additionals?.map(add => ({
+        id: parseInt(add.id),
+        name: add.name,
+        price: add.price,
+        quantity: 1
+      }))
     });
   };
 
   // Função para remover item do carrinho
   const removeFromCart = async (itemId: string): Promise<void> => {
-    setCartItems(prevItems => prevItems.filter(item => item.id !== itemId));
+    // Remover apenas do store zustand
+    const storeItem = store.items.find(item => item.id.toString() === itemId || item.identify === itemId);
+    if (storeItem) {
+      store.removeItem(storeItem.id);
+    }
+    
     return Promise.resolve();
   };
 
@@ -79,16 +149,16 @@ export function MenuProvider({ children, initialTableId, initialStoreSlug }: {
       return;
     }
     
-    setCartItems(prevItems => 
-      prevItems.map(item => 
-        item.id === itemId ? { ...item, quantity } : item
-      )
-    );
+    // Atualizar apenas no store zustand
+    const storeItem = store.items.find(item => item.id.toString() === itemId || item.identify === itemId);
+    if (storeItem) {
+      store.updateItem(storeItem.id, { quantity });
+    }
   };
 
   // Função para limpar o carrinho
   const clearCart = () => {
-    setCartItems([]);
+    store.clearCart();
   };
 
   return (
@@ -97,7 +167,7 @@ export function MenuProvider({ children, initialTableId, initialStoreSlug }: {
         tableId,
         storeSlug,
         isCartOpen,
-        cartItems,
+        cartItems: mapStoreItemsToCartItems(),
         setTableId,
         setStoreSlug,
         setIsCartOpen,

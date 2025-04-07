@@ -4,12 +4,30 @@ export interface Additional {
   price: number;
 }
 
+export type ProductTag = 
+  | 'vegetariano'
+  | 'vegano'
+  | 'sem_gluten'
+  | 'sem_lactose'
+  | 'picante'
+  | 'organico'
+  | 'promocao'
+  | 'novo';
+
 export interface Product {
   id: number;
   uuid: string;
   name: string;
   description: string;
   price: number;
+  promotional_price?: number;
+  is_on_promotion?: boolean;
+  current_price?: number;
+  promotion_starts_at?: string;
+  promotion_ends_at?: string;
+  is_featured?: boolean;
+  is_popular?: boolean;
+  tags?: ProductTag[];
   image: string | null;
   active: boolean;
   category_id: number;

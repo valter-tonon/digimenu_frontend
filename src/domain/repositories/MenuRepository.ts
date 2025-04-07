@@ -11,6 +11,14 @@ export interface MenuRepository {
       name: string;
       url: string;
       logo: string | null;
+      opening_hours?: {
+        opens_at: string; // formato "HH:MM"
+        closes_at: string; // formato "HH:MM"
+        is_open: boolean;
+      };
+      min_order_value?: number; // valor mínimo do pedido
+      delivery_fee?: number; // taxa de entrega
+      estimated_delivery_time?: string; // tempo estimado de entrega
     };
   }>;
 } 
