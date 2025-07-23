@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ShoppingCart, Plus, Minus } from 'lucide-react';
 import { useCartStore } from '@/store/cart-store';
 import { toast } from 'react-hot-toast';
+import { useStoreStatus } from '@/infrastructure/context/StoreStatusContext';
 
 interface Product {
   id: number;
@@ -21,6 +22,7 @@ interface AddToCartButtonProps {
 }
 
 export function AddToCartButton({ product, className = '', onAddedToCart }: AddToCartButtonProps) {
+  const { isStoreOpen } = useStoreStatus();
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
   const { addItem } = useCartStore();
@@ -40,6 +42,11 @@ export function AddToCartButton({ product, className = '', onAddedToCart }: AddT
   };
 
   const handleAddToCart = () => {
+    if (!isStoreOpen) {
+      toast.error('Restaurante fechado. Não é possível adicionar itens ao carrinho no momento.');
+      return;
+    }
+
     setIsAdding(true);
     
     try {
@@ -74,8 +81,9 @@ export function AddToCartButton({ product, className = '', onAddedToCart }: AddT
     <div className={`flex items-center ${className}`}>
       <div className="flex items-center mr-2">
         <button
-          className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-l-md"
+          className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-l-md disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={() => handleQuantityChange(-1)}
+          disabled={!isStoreOpen}
         >
           <Minus className="w-4 h-4" />
         </button>
@@ -83,20 +91,25 @@ export function AddToCartButton({ product, className = '', onAddedToCart }: AddT
           {quantity}
         </span>
         <button
-          className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-r-md"
+          className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-r-md disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={() => handleQuantityChange(1)}
+          disabled={!isStoreOpen}
         >
           <Plus className="w-4 h-4" />
         </button>
       </div>
       
       <button
-        className="flex-1 bg-primary text-white py-2 px-4 rounded-md flex items-center justify-center"
+        className={`flex-1 py-2 px-4 rounded-md flex items-center justify-center transition-colors ${
+          isStoreOpen 
+            ? 'bg-primary text-white hover:bg-primary-dark' 
+            : 'bg-gray-400 text-white cursor-not-allowed'
+        }`}
         onClick={handleAddToCart}
-        disabled={isAdding}
+        disabled={isAdding || !isStoreOpen}
       >
         <ShoppingCart className="w-4 h-4 mr-2" />
-        <span>Adicionar</span>
+        <span>{isStoreOpen ? 'Adicionar' : 'Restaurante Fechado'}</span>
       </button>
     </div>
   );

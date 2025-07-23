@@ -16,6 +16,7 @@ import { StoreHeader } from '@/components/menu/StoreHeader';
 import { useContainer } from '@/infrastructure/di';
 import { Category } from '@/domain/entities/Category';
 import { Product } from '@/domain/entities/Product';
+import { StoreStatusProvider } from '@/infrastructure/context/StoreStatusContext';
 
 // Componente de carregamento para o Suspense
 function MenuLoading() {
@@ -156,22 +157,24 @@ function MenuPage() {
   return (
     <MenuProvider initialTableId={tableId} initialStoreSlug={storeSlug}>
       <LayoutProvider>
-        <MenuContent 
-          categories={categories}
-          products={products}
-          selectedCategoryId={selectedCategoryId}
-          setSelectedCategoryId={setSelectedCategoryId}
-          cartItemsCount={cartItemsCount}
-          setCartItemsCount={setCartItemsCount}
-          showOrderSummary={showOrderSummary}
-          openOrderSummary={handleCartClick}
-          closeOrderSummary={closeOrderSummary}
-          error={error}
-          storeSlug={storeSlug}
-          tableId={tableId}
-          isDelivery={isDelivery}
-          tenantData={tenantData}
-        />
+        <StoreStatusProvider isStoreOpen={tenantData?.opening_hours?.is_open ?? true}>
+          <MenuContent 
+            categories={categories}
+            products={products}
+            selectedCategoryId={selectedCategoryId}
+            setSelectedCategoryId={setSelectedCategoryId}
+            cartItemsCount={cartItemsCount}
+            setCartItemsCount={setCartItemsCount}
+            showOrderSummary={showOrderSummary}
+            openOrderSummary={handleCartClick}
+            closeOrderSummary={closeOrderSummary}
+            error={error}
+            storeSlug={storeSlug}
+            tableId={tableId}
+            isDelivery={isDelivery}
+            tenantData={tenantData}
+          />
+        </StoreStatusProvider>
       </LayoutProvider>
     </MenuProvider>
   );

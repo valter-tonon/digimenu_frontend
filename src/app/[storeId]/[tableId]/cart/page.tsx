@@ -10,6 +10,7 @@ import { BottomNavigation } from '@/components/layout/BottomNavigation';
 import { createOrder } from '@/services/api';
 import { toast } from 'react-hot-toast';
 import { Trash2, Plus, Minus, MapPin, ChevronRight, Loader2 } from 'lucide-react';
+import { useStoreStatus } from '@/infrastructure/context/StoreStatusContext';
 
 export default function CartPage() {
   const router = useRouter();
@@ -64,10 +65,18 @@ export default function CartPage() {
     updateItem(id, { quantity: newQuantity });
   };
 
+  const { isStoreOpen } = useStoreStatus();
+
   const handleSubmitOrder = async () => {
     // Verificar se o carrinho tem itens
     if (items.length === 0) {
       toast.error('Adicione itens ao carrinho para fazer um pedido');
+      return;
+    }
+
+    // Verificar se o restaurante está aberto
+    if (!isStoreOpen) {
+      toast.error('Restaurante fechado. Não é possível finalizar pedidos no momento.');
       return;
     }
     
@@ -123,100 +132,93 @@ export default function CartPage() {
     }
   };
 
-  return (
-    <div className="container mx-auto p-4 pb-20">
-      <h1 className="text-2xl font-bold mb-6">Seu carrinho</h1>
-      
-      {/* Alternância entre Local e Delivery */}
-      <div className="bg-white rounded-lg shadow mb-4 p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="font-medium">Tipo de pedido</h2>
-            <p className="text-sm text-gray-500">
-              {deliveryMode ? 'Entrega em seu endereço' : 'Retirada no local'}
-            </p>
+  // Inicializar rastreamento do usuário
+  useEffect(() => {
+    initializeTracking();
+  }, [initializeTracking]);
+
+  if (items.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="container mx-auto p-4">
+          <div className="flex items-center mb-6">
+            <button
+              onClick={() => router.back()}
+              className="mr-4 p-2 hover:bg-gray-100 rounded-full"
+            >
+              <ChevronRight className="w-6 h-6 rotate-180" />
+            </button>
+            <h1 className="text-2xl font-bold">Carrinho</h1>
           </div>
           
-          <div className="flex items-center">
-            <span className={`px-4 py-2 rounded-l-md ${!deliveryMode ? 'bg-primary text-white' : 'bg-gray-100 text-gray-700'}`}>
-              Local
-            </span>
+          <div className="bg-white rounded-lg shadow p-8 text-center">
+            <div className="text-gray-400 mb-4">
+              <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Carrinho vazio</h2>
+            <p className="text-gray-600 mb-6">Adicione alguns itens ao seu carrinho para começar.</p>
             <button
-              className={`px-4 py-2 rounded-r-md ${deliveryMode ? 'bg-primary text-white' : 'bg-gray-100 text-gray-700'}`}
-              onClick={handleDeliveryModeToggle}
+              onClick={() => router.push(`/${storeId}/${tableId}`)}
+              className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary-dark transition-colors"
             >
-              Delivery
+              Ver cardápio
             </button>
           </div>
+        </div>
+        <BottomNavigation storeId={storeId} tableId={tableId} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto p-4">
+        <div className="flex items-center mb-6">
+          <button
+            onClick={() => router.back()}
+            className="mr-4 p-2 hover:bg-gray-100 rounded-full"
+          >
+            <ChevronRight className="w-6 h-6 rotate-180" />
+          </button>
+          <h1 className="text-2xl font-bold">Carrinho</h1>
         </div>
         
-        {deliveryMode && isAuthenticated && customer && (
-          <div className="mt-3 pt-3 border-t flex items-center justify-between">
-            <div className="flex items-start">
-              <MapPin className="w-5 h-5 text-primary mr-2 mt-0.5" />
-              <div>
-                <p className="font-medium">{customer.name}</p>
-                <p className="text-sm text-gray-600">
-                  {customer.addresses && customer.addresses.length > 0
-                    ? customer.addresses[0].address
-                    : 'Nenhum endereço cadastrado'}
-                </p>
-              </div>
-            </div>
-            <button 
-              className="text-primary"
-              onClick={() => router.push(`/${storeId}/${tableId}/profile/addresses`)}
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          </div>
-        )}
-      </div>
-      
-      {/* Itens do carrinho */}
-      {items.length === 0 ? (
-        <div className="bg-white rounded-lg shadow p-6 text-center">
-          <p className="mb-4">Seu carrinho está vazio</p>
-          <button
-            className="bg-primary text-white py-2 px-4 rounded-md"
-            onClick={() => router.push(`/${storeId}/${tableId}`)}
-          >
-            Ver cardápio
-          </button>
-        </div>
-      ) : (
-        <div className="bg-white rounded-lg shadow overflow-hidden mb-4">
-          <ul className="divide-y divide-gray-100">
+
+        
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          {/* Lista de itens */}
+          <ul className="divide-y divide-gray-200">
             {items.map((item) => (
               <li key={item.id} className="p-4">
-                <div className="flex items-center">
+                <div className="flex items-start">
                   {item.image && (
-                    <div className="w-16 h-16 relative rounded overflow-hidden mr-3">
+                    <div className="flex-shrink-0 mr-4">
                       <Image
                         src={item.image}
                         alt={item.name}
-                        layout="fill"
-                        objectFit="cover"
+                        width={64}
+                        height={64}
+                        className="w-16 h-16 object-cover rounded-lg"
                       />
                     </div>
                   )}
                   
-                  <div className="flex-1">
-                    <h3 className="font-medium">{item.name}</h3>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg font-medium text-gray-900">{item.name}</h3>
                     {item.notes && (
-                      <p className="text-sm text-gray-500">{item.notes}</p>
+                      <p className="text-sm text-gray-500 mt-1">Obs: {item.notes}</p>
                     )}
-                    
-                    {/* Adicionais */}
                     {item.additionals && item.additionals.length > 0 && (
-                      <ul className="mt-1">
-                        {item.additionals.map((add) => (
-                          <li key={add.id} className="text-xs text-gray-500 flex justify-between">
-                            <span>{add.quantity}x {add.name}</span>
-                            <span>{formatPrice(add.price * add.quantity)}</span>
-                          </li>
-                        ))}
-                      </ul>
+                      <div className="mt-1">
+                        <p className="text-sm text-gray-500">Adicionais:</p>
+                        <ul className="text-sm text-gray-600">
+                          {item.additionals.map((add, index) => (
+                            <li key={index}>• {add.name}</li>
+                          ))}
+                        </ul>
+                      </div>
                     )}
                     
                     <div className="flex items-center justify-between mt-2">
@@ -297,9 +299,13 @@ export default function CartPage() {
               </button>
             ) : (
               <button
-                className="w-full py-3 bg-primary text-white rounded-md font-medium flex items-center justify-center"
+                className={`w-full py-3 rounded-md font-medium flex items-center justify-center transition-colors ${
+                  isStoreOpen 
+                    ? 'bg-primary text-white hover:bg-primary-dark' 
+                    : 'bg-gray-400 text-white cursor-not-allowed'
+                }`}
                 onClick={handleSubmitOrder}
-                disabled={submitting}
+                disabled={submitting || !isStoreOpen}
               >
                 {submitting ? (
                   <>
@@ -307,7 +313,7 @@ export default function CartPage() {
                     Processando...
                   </>
                 ) : (
-                  'Finalizar pedido'
+                  isStoreOpen ? 'Finalizar pedido' : 'Restaurante Fechado'
                 )}
               </button>
             )}
@@ -325,23 +331,26 @@ export default function CartPage() {
       {/* Modal de login para delivery */}
       {showLoginModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-modal p-4">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h2 className="text-xl font-bold mb-4">Identificação necessária</h2>
-            <p className="mb-4">
-              Para pedidos de delivery, é necessário fazer login para identificarmos seu endereço de entrega.
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+            <h3 className="text-lg font-semibold mb-4">Login necessário</h3>
+            <p className="text-gray-600 mb-4">
+              Para fazer pedidos de delivery, você precisa estar logado.
             </p>
             <div className="flex space-x-3">
               <button
-                className="flex-1 py-2 border border-gray-300 rounded-md"
                 onClick={() => setShowLoginModal(false)}
+                className="flex-1 py-2 px-4 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
               >
                 Cancelar
               </button>
               <button
-                className="flex-1 py-2 bg-primary text-white rounded-md"
-                onClick={() => router.push(`/${storeId}/${tableId}/login?redirect=cart`)}
+                onClick={() => {
+                  setShowLoginModal(false);
+                  router.push(`/${storeId}/login?redirect=checkout`);
+                }}
+                className="flex-1 py-2 px-4 bg-primary text-white rounded-md hover:bg-primary-dark"
               >
-                Fazer login
+                Fazer Login
               </button>
             </div>
           </div>

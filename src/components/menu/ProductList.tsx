@@ -5,6 +5,7 @@ import { useMemo, useState, useEffect } from 'react';
 import { useMenu } from '@/infrastructure/context/MenuContext';
 import { useMenuParams } from '@/infrastructure/hooks/useMenuParams';
 import { PlusIcon, MinusIcon } from 'lucide-react';
+import { useStoreStatus } from '@/infrastructure/context/StoreStatusContext';
 import { AddToCartButton } from './AddToCartButton';
 import { formatPrice } from '@/utils/formatPrice';
 import Image from 'next/image';
@@ -34,11 +35,12 @@ interface CartItemLocal {
 interface ProductListProps {
   products: Product[];
   selectedCategoryId: number | null;
-  onCartItemsChange?: (count: number) => void;
+  onCartItemsChange: (count: number) => void;
   searchTerm?: string;
 }
 
 export function ProductList({ products, selectedCategoryId, onCartItemsChange, searchTerm = '' }: ProductListProps) {
+  const { isStoreOpen } = useStoreStatus();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedAdditionals, setSelectedAdditionals] = useState<Additional[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -211,6 +213,11 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
   
   // Função para adicionar produto ao carrinho
   const handleAddToCart = (product: Product, additionals: Additional[] = []) => {
+    if (!isStoreOpen) {
+      toast.error('Restaurante fechado. Não é possível adicionar itens ao carrinho no momento.');
+      return;
+    }
+
     // Converter o produto para o formato do CartItem esperado pelo context
     addToCart({
       id: product.id.toString(),
@@ -260,6 +267,11 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
 
   // Função para finalizar o pedido
   const finishOrder = async () => {
+    if (!isStoreOpen) {
+      toast.error('Restaurante fechado. Não é possível finalizar pedidos no momento.');
+      return;
+    }
+
     try {
       // Iniciar o processo de submissão
       setIsSubmitting(true);
@@ -688,9 +700,14 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
                     handleAddToCart(selectedProduct, selectedAdditionals);
                     closeModal();
                   }}
-                  className="px-4 py-2 bg-amber-500 text-white rounded-md hover:bg-amber-600 transition-colors"
+                  disabled={!isStoreOpen}
+                  className={`px-4 py-2 rounded-md transition-colors ${
+                    isStoreOpen 
+                      ? 'bg-amber-500 text-white hover:bg-amber-600' 
+                      : 'bg-gray-400 text-white cursor-not-allowed'
+                  }`}
                 >
-                  Adicionar ao carrinho
+                  {isStoreOpen ? 'Adicionar ao carrinho' : 'Restaurante Fechado'}
                 </button>
               </div>
             </div>
@@ -839,13 +856,21 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
                         <div className="mt-6">
                           <a
                             href="#"
-                            className="flex justify-center items-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-amber-500 hover:bg-amber-600"
+                            className={`flex justify-center items-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium transition-colors ${
+                              isStoreOpen 
+                                ? 'text-white bg-amber-500 hover:bg-amber-600' 
+                                : 'text-white bg-gray-400 cursor-not-allowed'
+                            }`}
                             onClick={(e) => {
                               e.preventDefault();
-                              finishOrder();
+                              if (isStoreOpen) {
+                                finishOrder();
+                              } else {
+                                toast.error('Restaurante fechado. Não é possível finalizar pedidos no momento.');
+                              }
                             }}
                           >
-                            Finalizar pedido
+                            {isStoreOpen ? 'Finalizar pedido' : 'Restaurante Fechado'}
                           </a>
                         </div>
                         <div className="mt-6 flex justify-center text-sm text-center text-gray-500">

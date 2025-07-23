@@ -8,6 +8,7 @@ import { useUserTracking } from '@/hooks/useUserTracking';
 import { createOrder } from '@/services/api';
 import { toast } from 'react-hot-toast';
 import { ArrowLeft, MapPin, CreditCard, Banknote, Smartphone, Receipt, Loader2 } from 'lucide-react';
+import { useStoreStatus } from '@/infrastructure/context/StoreStatusContext';
 
 interface DeliveryAddress {
   street: string;
@@ -70,6 +71,7 @@ export default function CheckoutPage() {
   const [selectedPayment, setSelectedPayment] = useState<string>('');
   const [changeAmount, setChangeAmount] = useState<string>('');
   const [orderNotes, setOrderNotes] = useState('');
+  const { isStoreOpen } = useStoreStatus();
 
   // Configura o contexto ao carregar a página
   useEffect(() => {
@@ -108,6 +110,11 @@ export default function CheckoutPage() {
     // Validações
     if (items.length === 0) {
       toast.error('Adicione itens ao carrinho para fazer um pedido');
+      return;
+    }
+
+    if (!isStoreOpen) {
+      toast.error('Restaurante fechado. Não é possível finalizar pedidos no momento.');
       return;
     }
 
@@ -408,8 +415,12 @@ export default function CheckoutPage() {
       <div className="bg-white rounded-lg shadow p-4">
         <button
           onClick={handleSubmitOrder}
-          disabled={submitting}
-          className="w-full py-4 bg-primary text-white rounded-lg font-semibold text-lg flex items-center justify-center disabled:opacity-50"
+          disabled={submitting || !isStoreOpen}
+          className={`w-full py-4 rounded-lg font-semibold text-lg flex items-center justify-center transition-colors ${
+            isStoreOpen 
+              ? 'bg-primary text-white hover:bg-primary-dark' 
+              : 'bg-gray-400 text-white cursor-not-allowed'
+          }`}
         >
           {submitting ? (
             <>
@@ -417,7 +428,7 @@ export default function CheckoutPage() {
               Processando...
             </>
           ) : (
-            `Finalizar Pedido • ${formatPrice(totalPrice())}`
+            isStoreOpen ? `Finalizar Pedido • ${formatPrice(totalPrice())}` : 'Restaurante Fechado'
           )}
         </button>
       </div>
