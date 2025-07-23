@@ -219,13 +219,14 @@ export const useCartStore = create<CartStore>()(
       },
       
       syncCart: () => {
-        // Atualiza o timestamp para forçar persistência
-        set({ lastUpdated: Date.now() });
-        
         // Verifica se o carrinho expirou
         if (get().isExpired()) {
-          set({ items: [] });
+          set({ 
+            items: [],
+            lastUpdated: Date.now()
+          });
         }
+        // Não atualiza o timestamp se não for necessário para evitar re-renderizações
       }
     }),
     {

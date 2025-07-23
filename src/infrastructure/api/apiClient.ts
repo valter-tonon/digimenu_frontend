@@ -48,8 +48,6 @@ export class ApiClient {
     // Interceptor para adicionar o token de autenticação (apenas no cliente)
     this.api.interceptors.request.use(
       (config) => {
-        console.log('ApiClient - Fazendo requisição para:', config.url);
-        
         // Só tenta acessar localStorage no cliente
         if (!this.isServer) {
           const token = localStorage.getItem('token');
@@ -68,7 +66,6 @@ export class ApiClient {
     // Interceptor para tratar erros de resposta
     this.api.interceptors.response.use(
       (response) => {
-        console.log('ApiClient - Resposta recebida:', response.status);
         // Resetar contador de tentativas em caso de sucesso
         this.retryCount = 0;
         return response;
@@ -82,7 +79,6 @@ export class ApiClient {
           this.retryCount < this.maxRetries
         ) {
           this.retryCount++;
-          console.log(`ApiClient - Tentando novamente (${this.retryCount}/${this.maxRetries})...`);
           
           // Esperar um tempo antes de tentar novamente (backoff exponencial)
           const delay = Math.pow(2, this.retryCount) * 1000;
@@ -100,7 +96,6 @@ export class ApiClient {
 
   async get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
     try {
-      console.log(`ApiClient - GET ${url}`, config?.params);
       const response: AxiosResponse<T> = await this.api.get(url, config);
       return response.data;
     } catch (error: any) {
@@ -111,7 +106,6 @@ export class ApiClient {
 
   async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
     try {
-      console.log(`ApiClient - POST ${url}`);
       const response: AxiosResponse<T> = await this.api.post(url, data, config);
       return response.data;
     } catch (error: any) {
@@ -122,7 +116,6 @@ export class ApiClient {
 
   async put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
     try {
-      console.log(`ApiClient - PUT ${url}`);
       const response: AxiosResponse<T> = await this.api.put(url, data, config);
       return response.data;
     } catch (error: any) {

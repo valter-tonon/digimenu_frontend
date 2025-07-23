@@ -87,14 +87,19 @@ function MenuPage() {
         };
         
         // Carregar menu completo
+        console.log('MenuPage - Chamando menuRepository.getMenu com parâmetros:', menuParams);
         const menuData = await menuRepository.getMenu(menuParams);
+        console.log('MenuPage - Dados recebidos do repositório:', menuData);
+        
         setCategories(menuData.categories || []);
         setProducts(menuData.products || []);
+        
+        console.log('MenuPage - Categorias definidas:', menuData.categories || []);
+        console.log('MenuPage - Produtos definidos:', menuData.products || []);
         
         // Armazenar dados do tenant, se disponíveis
         if (menuData.tenant) {
           setTenantData(menuData.tenant);
-          console.log('Dados do tenant carregados:', menuData.tenant);
         }
         
         setLoading(false);

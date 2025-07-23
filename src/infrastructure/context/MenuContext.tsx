@@ -90,27 +90,17 @@ export function MenuProvider({ children, initialTableId, initialStoreSlug }: {
       store.syncCart();
       
       isInitialized.current = true;
-      console.log('Contexto inicializado e carrinho sincronizado:', { 
-        storeSlug, 
-        tableId,
-        itemCount: store.items.length
-      });
     }
   }, [store, storeSlug, tableId]);
   
-  // Este useEffect garante que o carrinho seja sincronizado quando a página é recarregada
+  // Este useEffect configura o TTL e listeners apenas uma vez
   useEffect(() => {
-    // Sincronizar o carrinho quando o componente é montado
-    if (storeSlug) {
-      store.syncCart();
-    }
-    
-    // Configurar o TTL padrão do carrinho (24 horas)
+    // Configurar o TTL padrão do carrinho (24 horas) apenas uma vez
     store.setCartTTL(24);
     
     // Adicionar listener para sincronizar o carrinho quando a página é recarregada
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
+      if (document.visibilityState === 'visible' && storeSlug) {
         store.syncCart();
       }
     };
@@ -120,7 +110,7 @@ export function MenuProvider({ children, initialTableId, initialStoreSlug }: {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [store, storeSlug]);
+  }, []); // Executar apenas uma vez
 
   // Função para formatar preço
   const formatPrice = (price: number): string => {

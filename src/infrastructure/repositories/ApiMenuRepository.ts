@@ -68,7 +68,7 @@ export class ApiMenuRepository implements MenuRepository {
       
       // Verificar se a resposta contém os dados esperados
       if (!response.data || !response.data.categories || !response.data.products) {
-        console.warn('Resposta da API não contém os dados esperados');
+        console.warn('ApiMenuRepository - Resposta da API não contém os dados esperados');
         return { categories: [], products: [] };
       }
       
@@ -85,7 +85,7 @@ export class ApiMenuRepository implements MenuRepository {
         tenant
       };
     } catch (error: any) {
-      console.error('Erro ao buscar menu:', error.message);
+      console.error('ApiMenuRepository - Erro ao buscar menu:', error.message);
       
       // Retornar um objeto vazio em vez de propagar o erro
       // para evitar quebrar a UI em caso de falha na API
