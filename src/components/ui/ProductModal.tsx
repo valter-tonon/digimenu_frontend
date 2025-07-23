@@ -59,13 +59,13 @@ export function ProductModal({ product, isOpen, onClose }: ProductModalProps) {
 
     addItem({
       productId: parseInt(product.id),
-      identify: product.uuid,
+      identify: product.uuid, // Usar product.uuid como identify
       name: product.name,
       price: product.price,
       quantity: quantity,
       additionals: selectedAdditionalsDetails,
       notes: observations.trim(),
-      image: product.image
+      image: product.image || undefined
     });
     
     toast.success('Item adicionado ao carrinho!');
