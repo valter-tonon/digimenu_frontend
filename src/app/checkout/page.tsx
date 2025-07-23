@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppContext } from '@/hooks/useAppContext';
 import { useCartStore } from '@/store/cart-store';
@@ -34,7 +34,7 @@ const paymentMethods: PaymentMethod[] = [
   { id: 'voucher', name: 'Vale Refeição', icon: <Receipt className="w-5 h-5" /> },
 ];
 
-export default function CheckoutPage() {
+function CheckoutPageContent() {
   const router = useRouter();
   const { data: contextData, isValid: contextValid, isLoading: contextLoading } = useAppContext();
   const { isAuthenticated, customer } = useAuth();
@@ -173,9 +173,9 @@ export default function CheckoutPage() {
       clearCart();
 
       // Redirecionar para sucesso
-      router.push('/order-success');
+      router.push('/success');
     } catch (error) {
-      console.error('Erro ao criar pedido:', error);
+      console.error('Erro ao finalizar pedido:', error);
       toast.error('Erro ao finalizar pedido. Tente novamente.');
     } finally {
       setSubmitting(false);
@@ -410,5 +410,20 @@ export default function CheckoutPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+          <p>Carregando checkout...</p>
+        </div>
+      </div>
+    }>
+      <CheckoutPageContent />
+    </Suspense>
   );
 } 
