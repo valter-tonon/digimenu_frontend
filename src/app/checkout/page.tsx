@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, Suspense } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAppContext } from '@/hooks/useAppContext';
 import { useCartStore } from '@/store/cart-store';
 import { useAuth } from '@/hooks/use-auth';
@@ -36,7 +36,8 @@ const paymentMethods: PaymentMethod[] = [
 
 function CheckoutPageContent() {
   const router = useRouter();
-  const { data: contextData, isValid: contextValid, isLoading: contextLoading } = useAppContext();
+  const searchParams = useSearchParams();
+  const { data: contextData, isValid: contextValid, isLoading: contextLoading } = useAppContext(searchParams);
   const { isAuthenticated, customer } = useAuth();
   const { userId, source, initializeTracking, associateWithOrder } = useUserTracking();
   const [submitting, setSubmitting] = useState(false);

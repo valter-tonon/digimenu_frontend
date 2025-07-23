@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 export type AppContextData = {
   storeId: string | null;
@@ -67,13 +67,12 @@ const validateTable = async (storeId: string, tableId: string): Promise<{ valid:
   }
 };
 
-export function useAppContext(): AppContextState & {
+export function useAppContext(searchParams?: URLSearchParams): AppContextState & {
   initializeFromParams: (params: { store?: string; table?: string; isDelivery?: string }) => Promise<void>;
   clearContext: () => void;
   updateContext: (updates: Partial<AppContextData>) => void;
 } {
   const router = useRouter();
-  const searchParams = useSearchParams();
   
   const [state, setState] = useState<AppContextState>({
     data: {
@@ -98,18 +97,14 @@ export function useAppContext(): AppContextState & {
       if (data.storeName) {
         localStorage.setItem('digimenu_store_name', data.storeName);
       }
-      if (data.storeData) {
-        localStorage.setItem('digimenu_store_data', JSON.stringify(data.storeData));
-      }
       
-      // Salvar dados temporários no sessionStorage
+      // Salvar dados de sessão no sessionStorage
       if (data.tableId) {
         sessionStorage.setItem('digimenu_table_id', data.tableId);
       }
-      if (data.tableData) {
-        sessionStorage.setItem('digimenu_table_data', JSON.stringify(data.tableData));
-      }
       sessionStorage.setItem('digimenu_is_delivery', data.isDelivery.toString());
+      
+      console.log('useAppContext - Dados salvos no storage:', data);
     } catch (error) {
       console.error('Erro ao salvar no storage:', error);
     }
@@ -122,55 +117,149 @@ export function useAppContext(): AppContextState & {
     try {
       const storeId = localStorage.getItem('digimenu_store_id');
       const storeName = localStorage.getItem('digimenu_store_name');
-      const storeDataStr = localStorage.getItem('digimenu_store_data');
       const tableId = sessionStorage.getItem('digimenu_table_id');
-      const tableDataStr = sessionStorage.getItem('digimenu_table_data');
-      const isDeliveryStr = sessionStorage.getItem('digimenu_is_delivery');
+      const isDelivery = sessionStorage.getItem('digimenu_is_delivery') === 'true';
       
-      if (!storeId) return null;
+      if (storeId) {
+        const data: AppContextData = {
+          storeId,
+          tableId,
+          isDelivery,
+          storeName: storeName || undefined,
+        };
+        
+        console.log('useAppContext - Carregando dados do storage:', data);
+        return data;
+      }
       
-      return {
-        storeId,
-        tableId,
-        isDelivery: isDeliveryStr === 'true',
-        storeName: storeName || undefined,
-        storeData: storeDataStr ? JSON.parse(storeDataStr) : undefined,
-        tableData: tableDataStr ? JSON.parse(tableDataStr) : undefined,
-      };
+      return null;
     } catch (error) {
       console.error('Erro ao carregar do storage:', error);
       return null;
     }
   }, []);
 
-  // Função para limpar contexto
+  // Função para limpar o contexto
   const clearContext = useCallback(() => {
     if (typeof window === 'undefined') return;
     
     try {
       localStorage.removeItem('digimenu_store_id');
       localStorage.removeItem('digimenu_store_name');
-      localStorage.removeItem('digimenu_store_data');
       sessionStorage.removeItem('digimenu_table_id');
-      sessionStorage.removeItem('digimenu_table_data');
       sessionStorage.removeItem('digimenu_is_delivery');
+      
+      setState({
+        data: {
+          storeId: null,
+          tableId: null,
+          isDelivery: false,
+        },
+        isLoading: false,
+        error: null,
+        isValid: false,
+      });
+      
+      console.log('useAppContext - Contexto limpo');
     } catch (error) {
-      console.error('Erro ao limpar storage:', error);
+      console.error('Erro ao limpar contexto:', error);
     }
-    
-    setState({
-      data: {
-        storeId: null,
-        tableId: null,
-        isDelivery: false,
-      },
-      isLoading: false,
-      error: null,
-      isValid: false,
-    });
   }, []);
 
-  // Função para atualizar contexto
+  // Função para inicializar a partir de parâmetros da URL
+  const initializeFromParams = useCallback(async (params: { store?: string; table?: string; isDelivery?: string }) => {
+    setState(prev => ({ ...prev, isLoading: true, error: null }));
+    
+    const { store, table, isDelivery } = params;
+    
+    // Se temos parâmetros da URL, processar eles
+    if (store || table || isDelivery) {
+      if (!store) {
+        console.log('useAppContext - Store não fornecida, redirecionando para /404-invalid');
+        router.push('/404-invalid');
+        return;
+      }
+      
+      try {
+        // Validar loja
+        const storeValidation = await validateStore(store);
+        if (!storeValidation.valid) {
+          console.log('useAppContext - Loja inválida, redirecionando para /404-restaurant');
+          router.push('/404-restaurant');
+          return;
+        }
+        
+        // Se temos mesa, validar ela
+        if (table) {
+          const tableValidation = await validateTable(store, table);
+          if (!tableValidation.valid) {
+            console.log('useAppContext - Mesa inválida, redirecionando para /404-table');
+            router.push('/404-table');
+            return;
+          }
+          
+          // Salvar contexto para mesa
+          const contextData: AppContextData = {
+            storeId: store,
+            tableId: table,
+            isDelivery: false,
+            storeName: storeValidation.data?.name,
+            tableData: tableValidation.data,
+          };
+          
+          saveToStorage(contextData);
+          setState({
+            data: contextData,
+            isLoading: false,
+            error: null,
+            isValid: true,
+          });
+          
+          console.log('useAppContext - Redirecionando para URL limpa: /menu');
+          router.replace('/menu');
+        } else {
+          // Salvar contexto para delivery
+          const contextData: AppContextData = {
+            storeId: store,
+            tableId: null,
+            isDelivery: isDelivery === 'true',
+            storeName: storeValidation.data?.name,
+          };
+          
+          saveToStorage(contextData);
+          setState({
+            data: contextData,
+            isLoading: false,
+            error: null,
+            isValid: true,
+          });
+          
+          console.log('useAppContext - Redirecionando para URL limpa: /menu');
+          router.replace('/menu');
+        }
+      } catch (error) {
+        console.error('useAppContext - Erro ao processar parâmetros:', error);
+        router.push('/404-invalid');
+        return;
+      }
+      return;
+    }
+    
+    // Se não temos parâmetros, tentar carregar do storage
+    const storedData = loadFromStorage();
+    if (storedData && storedData.storeId) {
+      setState({
+        data: storedData,
+        isLoading: false,
+        error: null,
+        isValid: true,
+      });
+    } else {
+      setState(prev => ({ ...prev, isLoading: false }));
+    }
+  }, [router, saveToStorage, loadFromStorage]);
+
+  // Função para atualizar o contexto
   const updateContext = useCallback((updates: Partial<AppContextData>) => {
     setState(prev => {
       const newData = { ...prev.data, ...updates };
@@ -182,152 +271,28 @@ export function useAppContext(): AppContextState & {
     });
   }, [saveToStorage]);
 
-  // Função para inicializar a partir dos parâmetros da URL
-  const initializeFromParams = useCallback(async (params: { store?: string; table?: string; isDelivery?: string }) => {
-    setState(prev => ({ ...prev, isLoading: true, error: null }));
-    
-    const { store, table, isDelivery } = params;
-    
-    // Se há parâmetros na URL, validar e salvar, depois limpar a URL
-    if (store || table || isDelivery) {
-      if (!store) {
-        setState({
-          data: { storeId: null, tableId: null, isDelivery: false },
-          isLoading: false,
-          error: 'INVALID_LINK',
-          isValid: false,
-        });
-        router.push('/404-invalid');
-        return;
-      }
-
-      try {
-        // Validar loja
-        const storeValidation = await validateStore(store);
-        if (!storeValidation.valid) {
-          setState({
-            data: { storeId: null, tableId: null, isDelivery: false },
-            isLoading: false,
-            error: storeValidation.error || 'RESTAURANT_NOT_FOUND',
-            isValid: false,
-          });
-          router.push('/404-restaurant');
-          return;
-        }
-
-        // Se tem mesa, validar mesa
-        if (table) {
-          const tableValidation = await validateTable(store, table);
-          if (!tableValidation.valid) {
-            setState({
-              data: { storeId: store, tableId: null, isDelivery: false },
-              isLoading: false,
-              error: tableValidation.error || 'TABLE_NOT_FOUND',
-              isValid: false,
-            });
-            router.push('/404-table');
-            return;
-          }
-
-          // Contexto válido com mesa
-          const contextData: AppContextData = {
-            storeId: store,
-            tableId: table,
-            isDelivery: false,
-            storeName: storeValidation.data?.name,
-            storeData: storeValidation.data,
-            tableData: tableValidation.data,
-          };
-
-          saveToStorage(contextData);
-          setState({
-            data: contextData,
-            isLoading: false,
-            error: null,
-            isValid: true,
-          });
-        } else {
-          // Contexto válido para delivery
-          const contextData: AppContextData = {
-            storeId: store,
-            tableId: null,
-            isDelivery: isDelivery === 'true',
-            storeName: storeValidation.data?.name,
-            storeData: storeValidation.data,
-          };
-
-          saveToStorage(contextData);
-          setState({
-            data: contextData,
-            isLoading: false,
-            error: null,
-            isValid: true,
-          });
-        }
-        
-        // Limpar parâmetros da URL para ter uma URL limpa
-        console.log('useAppContext - Redirecionando para URL limpa: /menu');
-        router.replace('/menu');
-        
-      } catch (error) {
-        console.error('Erro na validação:', error);
-        setState({
-          data: { storeId: null, tableId: null, isDelivery: false },
-          isLoading: false,
-          error: 'INVALID_LINK',
-          isValid: false,
-        });
-        router.push('/404-invalid');
-      }
-      return;
-    }
-    
-    // Se não há parâmetros na URL, tentar carregar do storage
-    const storedData = loadFromStorage();
-    if (storedData && storedData.storeId) {
-      console.log('useAppContext - Carregando dados do storage:', storedData);
-      setState({
-        data: storedData,
-        isLoading: false,
-        error: null,
-        isValid: true,
-      });
-    } else {
-      // Se não há dados no storage e não há parâmetros, redirecionar para 404-invalid
-      console.log('useAppContext - Nenhum dado encontrado, redirecionando para 404-invalid');
-      setState({
-        data: { storeId: null, tableId: null, isDelivery: false },
-        isLoading: false,
-        error: 'INVALID_LINK',
-        isValid: false,
-      });
-      router.push('/404-invalid');
-    }
-  }, [router, saveToStorage, loadFromStorage]);
-
-  // Efeito para inicializar a partir do storage ou URL params
+  // Efeito principal para processar parâmetros da URL
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    // Verificar se há parâmetros na URL
-    const store = searchParams?.get('store');
-    const table = searchParams?.get('table');
-    const isDelivery = searchParams?.get('isDelivery');
+    if (searchParams) {
+      const store = searchParams.get('store');
+      const table = searchParams.get('table');
+      const isDelivery = searchParams.get('isDelivery');
 
-    console.log('useAppContext - useEffect - Parâmetros da URL:', { store, table, isDelivery });
-    console.log('useAppContext - useEffect - searchParams.toString():', searchParams?.toString());
+      console.log('useAppContext - useEffect - Parâmetros da URL:', { store, table, isDelivery });
+      console.log('useAppContext - useEffect - searchParams.toString():', searchParams.toString());
 
-    // Se há parâmetros na URL, sempre processar (mesmo que haja dados no storage)
-    if (store || table || isDelivery) {
-      console.log('useAppContext - useEffect - Processando parâmetros da URL');
-      initializeFromParams({ store: store || undefined, table: table || undefined, isDelivery: isDelivery || undefined });
-      return;
+      if (store || table || isDelivery) {
+        console.log('useAppContext - useEffect - Processando parâmetros da URL');
+        initializeFromParams({ store: store || undefined, table: table || undefined, isDelivery: isDelivery || undefined });
+        return;
+      }
     }
 
-    // Se não há parâmetros na URL, tentar carregar do storage
+    // Se não temos parâmetros da URL, tentar carregar do storage
     const storedData = loadFromStorage();
     if (storedData && storedData.storeId) {
-      console.log('useAppContext - useEffect - Carregando dados do storage:', storedData);
       setState({
         data: storedData,
         isLoading: false,
@@ -335,7 +300,6 @@ export function useAppContext(): AppContextState & {
         isValid: true,
       });
     } else {
-      console.log('useAppContext - useEffect - Nenhum dado encontrado');
       setState(prev => ({ ...prev, isLoading: false }));
     }
   }, [searchParams, loadFromStorage, initializeFromParams]);
