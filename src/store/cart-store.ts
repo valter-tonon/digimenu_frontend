@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 
 export interface ProductAdditional {
   id: number;
@@ -20,26 +20,33 @@ export interface CartItem {
   additionals?: ProductAdditional[];
 }
 
-interface CartStore {
+interface CartState {
   items: CartItem[];
   storeId: string | null;
   tableId: string | null;
   deliveryMode: boolean;
-  
+  lastUpdated: number;
+  expiresAt: number | null;
+}
+
+interface CartStore extends CartState {
   // Getters
   totalItems: () => number;
   totalPrice: () => number;
   itemsCount: () => number;
+  isExpired: () => boolean;
   
   // Setters
   setContext: (storeId: string, tableId?: string) => void;
   setDeliveryMode: (isDelivery: boolean) => void;
+  setCartTTL: (hours: number) => void;
   
   // Actions
   addItem: (item: Omit<CartItem, 'id'>) => void;
   updateItem: (id: number, updates: Partial<Omit<CartItem, 'id'>>) => void;
   removeItem: (id: number) => void;
   clearCart: () => void;
+  syncCart: () => void;
 }
 
 // Helper para calcular o preço de um item (incluindo adicionais)
@@ -58,6 +65,58 @@ const calculateItemPrice = (item: CartItem): number => {
   return basePrice + additionalsPrice;
 };
 
+// Tempo padrão de expiração do carrinho (24 horas em milissegundos)
+const DEFAULT_TTL = 24 * 60 * 60 * 1000;
+
+// Storage personalizado com suporte a TTL
+const createPersistentStorage = () => {
+  return {
+    getItem: (name: string): string | null => {
+      if (typeof window === 'undefined') return null;
+      
+      try {
+        const storedValue = localStorage.getItem(name);
+        if (!storedValue) return null;
+        
+        const { state, expiresAt } = JSON.parse(storedValue);
+        
+        // Verifica se o carrinho expirou
+        if (expiresAt && Date.now() > expiresAt) {
+          localStorage.removeItem(name);
+          return null;
+        }
+        
+        return JSON.stringify(state);
+      } catch (error) {
+        console.error('Erro ao recuperar carrinho:', error);
+        return null;
+      }
+    },
+    setItem: (name: string, value: string): void => {
+      if (typeof window === 'undefined') return;
+      
+      try {
+        const state = JSON.parse(value);
+        const expiresAt = state.expiresAt || (Date.now() + DEFAULT_TTL);
+        
+        localStorage.setItem(
+          name,
+          JSON.stringify({
+            state,
+            expiresAt
+          })
+        );
+      } catch (error) {
+        console.error('Erro ao salvar carrinho:', error);
+      }
+    },
+    removeItem: (name: string): void => {
+      if (typeof window === 'undefined') return;
+      localStorage.removeItem(name);
+    }
+  };
+};
+
 export const useCartStore = create<CartStore>()(
   persist(
     (set, get) => ({
@@ -65,6 +124,8 @@ export const useCartStore = create<CartStore>()(
       storeId: null,
       tableId: null,
       deliveryMode: false,
+      lastUpdated: Date.now(),
+      expiresAt: Date.now() + DEFAULT_TTL,
       
       totalItems: () => {
         return get().items.reduce((sum, item) => sum + item.quantity, 0);
@@ -78,12 +139,29 @@ export const useCartStore = create<CartStore>()(
         return get().items.length;
       },
       
+      isExpired: () => {
+        const { expiresAt } = get();
+        return expiresAt !== null && Date.now() > expiresAt;
+      },
+      
       setContext: (storeId, tableId) => {
-        set({ storeId, tableId });
+        set({ 
+          storeId, 
+          tableId,
+          lastUpdated: Date.now()
+        });
       },
       
       setDeliveryMode: (isDelivery) => {
-        set({ deliveryMode: isDelivery });
+        set({ 
+          deliveryMode: isDelivery,
+          lastUpdated: Date.now()
+        });
+      },
+      
+      setCartTTL: (hours) => {
+        const expiresAt = Date.now() + (hours * 60 * 60 * 1000);
+        set({ expiresAt });
       },
       
       addItem: (item) => {
@@ -100,14 +178,20 @@ export const useCartStore = create<CartStore>()(
           // Se o item já existe, incrementa a quantidade
           const updatedItems = [...items];
           updatedItems[existingItemIndex].quantity += item.quantity;
-          set({ items: updatedItems });
+          set({ 
+            items: updatedItems,
+            lastUpdated: Date.now()
+          });
         } else {
           // Se o item não existe, adiciona ao carrinho
           const newItem = {
             ...item,
             id: Date.now() // Gera um ID único baseado no timestamp
           };
-          set({ items: [...items, newItem] });
+          set({ 
+            items: [...items, newItem],
+            lastUpdated: Date.now()
+          });
         }
       },
       
@@ -115,28 +199,46 @@ export const useCartStore = create<CartStore>()(
         set({
           items: get().items.map((item) =>
             item.id === id ? { ...item, ...updates } : item
-          )
+          ),
+          lastUpdated: Date.now()
         });
       },
       
       removeItem: (id) => {
         set({
-          items: get().items.filter((item) => item.id !== id)
+          items: get().items.filter((item) => item.id !== id),
+          lastUpdated: Date.now()
         });
       },
       
       clearCart: () => {
-        set({ items: [] });
+        set({ 
+          items: [],
+          lastUpdated: Date.now()
+        });
+      },
+      
+      syncCart: () => {
+        // Atualiza o timestamp para forçar persistência
+        set({ lastUpdated: Date.now() });
+        
+        // Verifica se o carrinho expirou
+        if (get().isExpired()) {
+          set({ items: [] });
+        }
       }
     }),
     {
       name: 'digimenu-cart', // nome da chave no localStorage
-      // Só persiste os dados importantes, não as funções
+      storage: createJSONStorage(() => createPersistentStorage()),
+      // Só persiste os dados importantes
       partialize: (state) => ({
         items: state.items,
         storeId: state.storeId,
         tableId: state.tableId,
-        deliveryMode: state.deliveryMode
+        deliveryMode: state.deliveryMode,
+        lastUpdated: state.lastUpdated,
+        expiresAt: state.expiresAt
       })
     }
   )

@@ -53,10 +53,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     // Verificar se existe um token no armazenamento local
-    const storedToken = localStorage.getItem('auth_token');
-    if (storedToken) {
-      setToken(storedToken);
-      fetchCustomer(storedToken);
+    if (typeof window !== 'undefined') {
+      const storedToken = localStorage.getItem('auth_token');
+      if (storedToken) {
+        setToken(storedToken);
+        fetchCustomer(storedToken);
+      } else {
+        setIsLoading(false);
+      }
     } else {
       setIsLoading(false);
     }
@@ -70,7 +74,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error('Erro ao buscar dados do usuário:', error);
       // Se ocorrer um erro (como token expirado), remover o token
-      localStorage.removeItem('auth_token');
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('auth_token');
+      }
       setToken(null);
     } finally {
       setIsLoading(false);
@@ -78,7 +84,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const login = (newToken: string) => {
-    localStorage.setItem('auth_token', newToken);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('auth_token', newToken);
+    }
     setToken(newToken);
     fetchCustomer(newToken);
   };
@@ -92,7 +100,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
     } finally {
-      localStorage.removeItem('auth_token');
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('auth_token');
+      }
       setToken(null);
       setCustomer(null);
       setIsLoading(false);

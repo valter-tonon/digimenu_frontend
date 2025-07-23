@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { X, Minus, Plus } from 'lucide-react';
-import { useCartStore } from '@/store/cart';
+import { useCartStore } from '@/store/cart-store';
 import { toast } from 'sonner';
 import { Additional } from '@/lib/mock-data';
 
@@ -37,16 +37,22 @@ export function ProductModal({ product, isOpen, onClose }: ProductModalProps) {
   const handleAddToCart = () => {
     const selectedAdditionalsDetails = product.additionals?.filter(
       add => selectedAdditionals.includes(add.id)
-    ) || [];
+    ).map(add => ({
+      id: parseInt(add.id),
+      name: add.name,
+      price: add.price,
+      quantity: 1
+    })) || [];
 
     addItem({
-      id: product.id,
+      productId: parseInt(product.id),
+      identify: product.id,
       name: product.name,
       price: product.price,
       quantity: quantity,
       additionals: selectedAdditionalsDetails,
-      observations: observations.trim(),
-      totalPrice: totalPrice
+      notes: observations.trim(),
+      image: product.image
     });
     
     toast.success('Item adicionado ao carrinho!');

@@ -1,13 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/infrastructure/auth';
+import { useAuth } from '@/hooks/use-auth';
 import { useContainer } from '@/infrastructure/di';
 import { Table } from '@/domain/entities/Table';
 import Link from 'next/link';
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { customer } = useAuth();
   const container = useContainer();
   const [tables, setTables] = useState<Table[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,7 +80,7 @@ export default function DashboardPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <div className="text-sm">
-          Bem-vindo, <span className="font-semibold">{user?.name || 'Usuário'}</span>
+          Bem-vindo, <span className="font-semibold">{customer?.name || 'Usuário'}</span>
         </div>
       </div>
 

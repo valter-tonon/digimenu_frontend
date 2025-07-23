@@ -1,7 +1,7 @@
 'use client';
 
 import { X } from 'lucide-react';
-import { useCartStore } from '@/store/cart';
+import { useCartStore } from '@/store/cart-store';
 
 interface CartModalProps {
   isOpen: boolean;
@@ -13,15 +13,15 @@ const getItemKey = (item: any) => {
   const additionalsKey = item.additionals 
     ? item.additionals.map((a: any) => a.id).sort().join(',')
     : '';
-  return `${item.id}-${additionalsKey}-${item.observations || ''}`;
+  return `${item.id}-${additionalsKey}-${item.notes || ''}`;
 };
 
 export function CartModal({ isOpen, onClose }: CartModalProps) {
-  const { items, removeItem, updateQuantity } = useCartStore();
+  const { items, removeItem, updateItem, totalPrice } = useCartStore();
 
   if (!isOpen) return null;
 
-  const total = items.reduce((sum, item) => sum + item.totalPrice, 0);
+  const total = totalPrice();
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-end z-50">
@@ -66,15 +66,15 @@ export function CartModal({ isOpen, onClose }: CartModalProps) {
                         </div>
                       )}
                       {/* Mostrar observações se houver */}
-                      {item.observations && (
+                      {item.notes && (
                         <div className="mt-2">
                           <p className="text-sm font-medium text-gray-700">Observações:</p>
-                          <p className="text-sm text-gray-600">{item.observations}</p>
+                          <p className="text-sm text-gray-600">{item.notes}</p>
                         </div>
                       )}
                     </div>
                     <button
-                      onClick={() => removeItem(item.id, item.additionals, item.observations)}
+                      onClick={() => removeItem(item.id)}
                       className="text-red-500 hover:text-red-600 text-sm"
                     >
                       Remover
@@ -83,12 +83,7 @@ export function CartModal({ isOpen, onClose }: CartModalProps) {
                   <div className="flex justify-between items-center mt-3">
                     <div className="flex items-center">
                       <button
-                        onClick={() => updateQuantity(
-                          item.id, 
-                          Math.max(1, item.quantity - 1),
-                          item.additionals,
-                          item.observations
-                        )}
+                        onClick={() => updateItem(item.id, { quantity: Math.max(1, item.quantity - 1) })}
                         className="w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-l-lg border-r border-gray-200 transition-colors"
                       >
                         -
@@ -97,19 +92,14 @@ export function CartModal({ isOpen, onClose }: CartModalProps) {
                         {item.quantity}
                       </span>
                       <button
-                        onClick={() => updateQuantity(
-                          item.id, 
-                          item.quantity + 1,
-                          item.additionals,
-                          item.observations
-                        )}
+                        onClick={() => updateItem(item.id, { quantity: item.quantity + 1 })}
                         className="w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-r-lg border-l border-gray-200 transition-colors"
                       >
                         +
                       </button>
                     </div>
                     <span className="font-medium text-gray-800">
-                      R$ {item.totalPrice.toFixed(2)}
+                      R$ {(item.price * item.quantity + (item.additionals?.reduce((sum, add) => sum + (add.price * add.quantity), 0) || 0)).toFixed(2)}
                     </span>
                   </div>
                 </div>

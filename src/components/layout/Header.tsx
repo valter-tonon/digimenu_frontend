@@ -5,15 +5,15 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { CartModal } from '../ui/CartModal';
 import { LoginModal } from '../ui/LoginModal';
-import { useCartStore } from '@/store/cart';
-import { useAuth } from '@/infrastructure/auth';
+import { useCartStore } from '@/store/cart-store';
+import { useAuth } from '@/hooks/use-auth';
 
 export function Header() {
-  const { user } = useAuth();
+  const { customer } = useAuth();
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const items = useCartStore((state) => state.items);
-  const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+  const { items, totalItems } = useCartStore();
+  const itemCount = totalItems();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
@@ -35,7 +35,7 @@ export function Header() {
                 <div className="ml-3 relative">
                   <div className="flex items-center">
                     <div className="text-sm font-medium text-gray-700 mr-2">
-                      {user?.name || 'Usuário'}
+                      {customer?.name || 'Usuário'}
                     </div>
                     <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
                       <svg
@@ -150,8 +150,8 @@ export function Header() {
               </div>
             </div>
             <div className="ml-3">
-              <div className="text-base font-medium text-gray-800">{user?.name || 'Usuário'}</div>
-              <div className="text-sm font-medium text-gray-500">{user?.email || ''}</div>
+              <div className="text-base font-medium text-gray-800">{customer?.name || 'Usuário'}</div>
+              <div className="text-sm font-medium text-gray-500">{customer?.email || ''}</div>
             </div>
           </div>
         </div>

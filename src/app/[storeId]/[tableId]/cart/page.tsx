@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useCartStore } from '@/store/cart-store';
 import { useAuth } from '@/hooks/use-auth';
+import { useUserTracking } from '@/hooks/useUserTracking';
 import { BottomNavigation } from '@/components/layout/BottomNavigation';
 import { createOrder } from '@/services/api';
 import { toast } from 'react-hot-toast';
@@ -14,6 +15,7 @@ export default function CartPage() {
   const router = useRouter();
   const params = useParams();
   const { isAuthenticated, customer } = useAuth();
+  const { userId, source, initializeTracking, associateWithOrder } = useUserTracking();
   const [submitting, setSubmitting] = useState(false);
   const [comment, setComment] = useState('');
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -92,10 +94,21 @@ export default function CartPage() {
         })),
         comment,
         type: deliveryMode ? 'delivery' : 'local',
-        customer_id: customer?.id
+        customer_id: customer?.id,
+        // Dados de rastreamento do usuário
+        user_tracking: {
+          user_id: userId,
+          source: source,
+          device_id: userId // Usando userId como deviceId por simplicidade
+        }
       };
       
       const response = await createOrder(orderData);
+      
+      // Associar pedido ao histórico do usuário
+      if (response.data?.identify) {
+        associateWithOrder(response.data.identify);
+      }
       
       toast.success('Pedido realizado com sucesso!');
       clearCart();
@@ -275,20 +288,29 @@ export default function CartPage() {
           
           {/* Botão de finalização */}
           <div className="p-4 border-t">
-            <button
-              className="w-full py-3 bg-primary text-white rounded-md font-medium flex items-center justify-center"
-              onClick={handleSubmitOrder}
-              disabled={submitting}
-            >
-              {submitting ? (
-                <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Processando...
-                </>
-              ) : (
-                'Finalizar pedido'
-              )}
-            </button>
+            {deliveryMode ? (
+              <button
+                className="w-full py-3 bg-primary text-white rounded-md font-medium flex items-center justify-center"
+                onClick={() => router.push(`/${storeId}/checkout`)}
+              >
+                Ir para Checkout
+              </button>
+            ) : (
+              <button
+                className="w-full py-3 bg-primary text-white rounded-md font-medium flex items-center justify-center"
+                onClick={handleSubmitOrder}
+                disabled={submitting}
+              >
+                {submitting ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Processando...
+                  </>
+                ) : (
+                  'Finalizar pedido'
+                )}
+              </button>
+            )}
             
             <button
               className="w-full mt-2 py-2 text-gray-500 flex items-center justify-center"

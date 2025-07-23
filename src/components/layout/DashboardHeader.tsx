@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/infrastructure/auth';
+import { useAuth } from '@/hooks/use-auth';
 
 export function DashboardHeader() {
-  const { user } = useAuth();
+  const { customer } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
@@ -25,7 +25,7 @@ export function DashboardHeader() {
               <div className="ml-3 relative">
                 <div className="flex items-center">
                   <div className="text-sm font-medium text-gray-700 mr-2">
-                    {user?.name || 'Usuário'}
+                    {customer?.name || 'Usuário'}
                   </div>
                   <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
                     <svg
@@ -139,8 +139,8 @@ export function DashboardHeader() {
               </div>
             </div>
             <div className="ml-3">
-              <div className="text-base font-medium text-gray-800">{user?.name || 'Usuário'}</div>
-              <div className="text-sm font-medium text-gray-500">{user?.email || ''}</div>
+              <div className="text-base font-medium text-gray-800">{customer?.name || 'Usuário'}</div>
+              <div className="text-sm font-medium text-gray-500">{customer?.email || ''}</div>
             </div>
           </div>
         </div>

@@ -1,0 +1,80 @@
+/* Sistema de Z-Index consistente */
+:root {
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+  --z-toast: 1080;
+  --z-scroll-buttons: 1025;
+  --z-header: 1020;
+  --z-floating-cart: 1030;
+}
+
+/* Classes de z-index */
+.z-dropdown { z-index: var(--z-dropdown); }
+.z-sticky { z-index: var(--z-sticky); }
+.z-fixed { z-index: var(--z-fixed); }
+.z-modal-backdrop { z-index: var(--z-modal-backdrop); }
+.z-modal { z-index: var(--z-modal); }
+.z-popover { z-index: var(--z-popover); }
+.z-tooltip { z-index: var(--z-tooltip); }
+.z-toast { z-index: var(--z-toast); }
+.z-scroll-buttons { z-index: var(--z-scroll-buttons); }
+.z-header { z-index: var(--z-header); }
+.z-floating-cart { z-index: var(--z-floating-cart); }
+
+/* Botões de scroll para categorias */
+.scroll-button {
+  @apply bg-white/90 backdrop-blur-sm shadow-md hover:bg-white hover:shadow-lg;
+  @apply border border-gray-200/50;
+  transition: all 0.2s ease-in-out;
+}
+
+.scroll-button:hover {
+  transform: translateY(-50%) scale(1.05);
+}
+
+/* Header sticky melhorado */
+.sticky-header {
+  @apply bg-white/95 backdrop-blur-sm border-b border-gray-200/50;
+  transition: all 0.2s ease-in-out;
+}
+
+/* Scrollbar personalizada (webkit) */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Animações suaves para scroll */
+.scroll-smooth {
+  scroll-behavior: smooth;
+}
+
+/* Melhorias para elementos flutuantes */
+.floating-element {
+  @apply backdrop-blur-sm;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.floating-element:hover {
+  transform: translateY(-2px);
+}
+
+/* Gradientes para indicar scroll */
+.scroll-gradient-left {
+  background: linear-gradient(to right, rgba(255,255,255,1) 0%, rgba(255,255,255,0) 100%);
+  pointer-events: none;
+}
+
+.scroll-gradient-right {
+  background: linear-gradient(to left, rgba(255,255,255,1) 0%, rgba(255,255,255,0) 100%);
+  pointer-events: none;
+}

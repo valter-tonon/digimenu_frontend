@@ -1,10 +1,9 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
 import './globals.css';
+import '../styles/z-index.css';
 import { AuthProvider } from '@/hooks/use-auth';
 import { Toaster } from 'react-hot-toast';
-
-const inter = Inter({ subsets: ['latin'] });
+import { CookieConsentBanner } from '@/components/ui/CookieConsentBanner';
 
 export const metadata: Metadata = {
   title: 'DigiMenu - Sistema de Pedidos',
@@ -18,10 +17,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body className={inter.className} suppressHydrationWarning={true}>
+      <body suppressHydrationWarning={true}>
         <AuthProvider>
           {children}
           <Toaster position="top-center" />
+          <CookieConsentBanner />
         </AuthProvider>
       </body>
     </html>

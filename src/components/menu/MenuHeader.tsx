@@ -3,6 +3,7 @@
 import { useMenu } from '@/infrastructure/context/MenuContext';
 import { useState, useEffect } from 'react';
 import { apiClient } from '@/infrastructure/api/apiClient';
+import { CompactStoreHeader } from './StoreHeader';
 
 interface MenuHeaderProps {
   cartItemsCount: number;
@@ -70,23 +71,16 @@ export function MenuHeader({
   };
   
   return (
-    <header className="w-full bg-white shadow-sm py-4 px-4 sticky top-0 z-10">
+    <header className="w-full sticky-header py-4 px-4 sticky top-0 z-header">
       <div className="w-full flex justify-between items-center">
-        <div className="flex items-center">
-          {storeLogo ? (
-            <img 
-              src={storeLogo} 
-              alt={storeName || 'Logo'} 
-              className="h-12 w-auto mr-3 object-contain border-2 border-amber-500"
-            />
-          ) : (
-            <div className="h-12 w-12 bg-amber-500 rounded-full flex items-center justify-center text-white font-bold mr-3">
-              {storeName ? storeName.charAt(0).toUpperCase() : 'F'}
-            </div>
-          )}
+        <div className="flex items-center flex-1">
+          <CompactStoreHeader 
+            storeName={storeName}
+            storeLogo={storeLogo}
+            className="flex-1"
+          />
           
-          <div>
-            <h1 className="text-xl font-semibold text-gray-800">{storeName}</h1>
+          <div className="ml-4">
             <p className="text-xs text-gray-500">Cardápio Digital</p>
             
             {/* Informações de horário de funcionamento */}

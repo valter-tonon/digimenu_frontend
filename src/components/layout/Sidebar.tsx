@@ -2,11 +2,11 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useAuth } from '@/infrastructure/auth';
+import { useAuth } from '@/hooks/use-auth';
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { logout } = useAuth();
+  const { logoutUser } = useAuth();
 
   const menuItems = [
     { name: 'Dashboard', href: '/dashboard', icon: 'home' },
@@ -106,7 +106,7 @@ export function Sidebar() {
           </div>
           <div className="flex-shrink-0 flex border-t border-gray-700 p-4">
             <button
-              onClick={() => logout()}
+              onClick={() => logoutUser()}
               className="flex-shrink-0 w-full group block"
             >
               <div className="flex items-center">

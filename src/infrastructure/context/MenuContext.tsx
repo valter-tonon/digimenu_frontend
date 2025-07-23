@@ -80,16 +80,47 @@ export function MenuProvider({ children, initialTableId, initialStoreSlug }: {
   // Referência ao store
   const store = useCartStore();
   
-  // Este useEffect inicializa o contexto no store apenas uma vez
+  // Este useEffect inicializa o contexto no store e sincroniza o carrinho
   useEffect(() => {
     if (!isInitialized.current && storeSlug) {
+      // Definir o contexto (loja e mesa)
       store.setContext(storeSlug, tableId || undefined);
-      isInitialized.current = true;
       
-      // Aqui não precisamos mais carregar os itens, pois o store já faz isso automaticamente
-      console.log('Contexto inicializado:', { storeSlug, tableId });
+      // Sincronizar o carrinho (verificar TTL e recuperar itens)
+      store.syncCart();
+      
+      isInitialized.current = true;
+      console.log('Contexto inicializado e carrinho sincronizado:', { 
+        storeSlug, 
+        tableId,
+        itemCount: store.items.length
+      });
     }
   }, [store, storeSlug, tableId]);
+  
+  // Este useEffect garante que o carrinho seja sincronizado quando a página é recarregada
+  useEffect(() => {
+    // Sincronizar o carrinho quando o componente é montado
+    if (storeSlug) {
+      store.syncCart();
+    }
+    
+    // Configurar o TTL padrão do carrinho (24 horas)
+    store.setCartTTL(24);
+    
+    // Adicionar listener para sincronizar o carrinho quando a página é recarregada
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        store.syncCart();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [store, storeSlug]);
 
   // Função para formatar preço
   const formatPrice = (price: number): string => {

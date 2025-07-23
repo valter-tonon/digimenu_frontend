@@ -1,7 +1,8 @@
 'use client';
 
 import { Category } from '@/domain/entities/Category';
-import { useMemo } from 'react';
+import { useMemo, useState, useRef, useEffect } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface CategoryListProps {
   categories: Category[];
@@ -10,27 +11,38 @@ interface CategoryListProps {
 }
 
 // Função para obter ícone baseado no nome da categoria
-const getCategoryIcon = (categoryName: string): string => {
+const getCategoryIcon = (categoryName: string): { emoji: string; bgColor: string } => {
   const name = categoryName.toLowerCase();
   
   if (name.includes('lanch') || name.includes('hambur')) {
-    return '🍔';
+    return { emoji: '🍔', bgColor: 'bg-amber-100' };
   } else if (name.includes('pizza')) {
-    return '🍕';
+    return { emoji: '🍕', bgColor: 'bg-red-100' };
   } else if (name.includes('bebida')) {
-    return '🥤';
+    return { emoji: '🥤', bgColor: 'bg-blue-100' };
   } else if (name.includes('salada') || name.includes('vegano')) {
-    return '🥗';
+    return { emoji: '🥗', bgColor: 'bg-green-100' };
   } else if (name.includes('sobremesa') || name.includes('doce')) {
-    return '🍰';
+    return { emoji: '🍰', bgColor: 'bg-pink-100' };
   } else if (name.includes('café') || name.includes('cafe')) {
-    return '☕';
+    return { emoji: '☕', bgColor: 'bg-amber-100' };
+  } else if (name.includes('porção') || name.includes('porcao') || name.includes('porçoes')) {
+    return { emoji: '🍟', bgColor: 'bg-yellow-100' };
+  } else if (name.includes('combo')) {
+    return { emoji: '🍱', bgColor: 'bg-indigo-100' };
+  } else if (name.includes('promo')) {
+    return { emoji: '🔥', bgColor: 'bg-orange-100' };
   } else {
-    return '🍽️';
+    return { emoji: '🍽️', bgColor: 'bg-gray-100' };
   }
 };
 
 export function CategoryList({ categories, onSelectCategory, selectedCategoryId }: CategoryListProps) {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+  const [showScrollButtons, setShowScrollButtons] = useState(false);
+
   // Garantir que temos categorias válidas e com chaves únicas
   const validCategories = useMemo(() => {
     if (!categories || !Array.isArray(categories)) {
@@ -42,6 +54,45 @@ export function CategoryList({ categories, onSelectCategory, selectedCategoryId 
       category && (typeof category === 'object')
     );
   }, [categories]);
+
+  // Verificar se precisa mostrar botões de scroll
+  const checkScrollButtons = () => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const { scrollLeft, scrollWidth, clientWidth } = container;
+    setCanScrollLeft(scrollLeft > 0);
+    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 1);
+    setShowScrollButtons(scrollWidth > clientWidth);
+  };
+
+  useEffect(() => {
+    checkScrollButtons();
+    const container = scrollContainerRef.current;
+    if (container) {
+      container.addEventListener('scroll', checkScrollButtons);
+      window.addEventListener('resize', checkScrollButtons);
+      
+      return () => {
+        container.removeEventListener('scroll', checkScrollButtons);
+        window.removeEventListener('resize', checkScrollButtons);
+      };
+    }
+  }, [validCategories]);
+
+  const scrollLeft = () => {
+    const container = scrollContainerRef.current;
+    if (container) {
+      container.scrollBy({ left: -200, behavior: 'smooth' });
+    }
+  };
+
+  const scrollRight = () => {
+    const container = scrollContainerRef.current;
+    if (container) {
+      container.scrollBy({ left: 200, behavior: 'smooth' });
+    }
+  };
   
   if (!validCategories.length) {
     return (
@@ -52,23 +103,49 @@ export function CategoryList({ categories, onSelectCategory, selectedCategoryId 
   }
 
   return (
-    <div className="mb-6">
-      <div className="flex overflow-x-auto pb-2 space-x-4">
+    <div className="mb-6 relative">
+      {/* Botão de scroll esquerdo */}
+      {showScrollButtons && canScrollLeft && (
+        <button
+          onClick={scrollLeft}
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-scroll-buttons scroll-button rounded-full p-2 transition-all"
+          aria-label="Rolar categorias para a esquerda"
+        >
+          <ChevronLeft className="w-5 h-5 text-gray-600" />
+        </button>
+      )}
+
+      {/* Botão de scroll direito */}
+      {showScrollButtons && canScrollRight && (
+        <button
+          onClick={scrollRight}
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-scroll-buttons scroll-button rounded-full p-2 transition-all"
+          aria-label="Rolar categorias para a direita"
+        >
+          <ChevronRight className="w-5 h-5 text-gray-600" />
+        </button>
+      )}
+
+      <div 
+        ref={scrollContainerRef}
+        className="flex overflow-x-auto scrollbar-hide pb-2 space-x-4 scroll-smooth"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      >
         {/* Opção "Todos" */}
         <div 
           className="flex flex-col items-center cursor-pointer"
           onClick={() => onSelectCategory(0)}
         >
-          <div className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl ${
+          <div className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl shadow-sm transition-all ${
             selectedCategoryId === 0 || selectedCategoryId === null
-              ? 'bg-amber-100' 
-              : 'bg-gray-100'
+              ? 'ring-2 ring-primary ring-offset-2 scale-105' 
+              : 'bg-amber-100'
           }`}>
             🍽️
           </div>
           <span className={`mt-2 text-xs font-medium text-center ${
             selectedCategoryId === 0 || selectedCategoryId === null
-              ? 'text-amber-600' 
+              ? 'text-primary font-semibold' 
               : 'text-gray-700'
           }`}>
             Todos
@@ -76,7 +153,7 @@ export function CategoryList({ categories, onSelectCategory, selectedCategoryId 
         </div>
         
         {validCategories.map((category) => {
-          const icon = getCategoryIcon(category.name || '');
+          const { emoji, bgColor } = getCategoryIcon(category.name || '');
           const isSelected = selectedCategoryId === category.id;
           
           return (
@@ -85,16 +162,16 @@ export function CategoryList({ categories, onSelectCategory, selectedCategoryId 
               className="flex flex-col items-center cursor-pointer"
               onClick={() => onSelectCategory(category.id)}
             >
-              <div className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl ${
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl shadow-sm transition-all ${
                 isSelected 
-                  ? 'bg-amber-100' 
-                  : 'bg-gray-100'
+                  ? 'ring-2 ring-primary ring-offset-2 scale-105' 
+                  : bgColor
               }`}>
-                {icon}
+                {emoji}
               </div>
               <span className={`mt-2 text-xs font-medium text-center ${
                 isSelected 
-                  ? 'text-amber-600' 
+                  ? 'text-primary font-semibold' 
                   : 'text-gray-700'
               }`}>
                 {category.name}

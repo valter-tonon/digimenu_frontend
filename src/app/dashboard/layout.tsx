@@ -1,6 +1,6 @@
 'use client';
 
-import { ProtectedRoute } from '@/infrastructure/auth';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
 

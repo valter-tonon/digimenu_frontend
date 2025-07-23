@@ -3,6 +3,7 @@
 import { Search, User, ShoppingCart } from 'lucide-react';
 import { useState } from 'react';
 import { LoginModal } from './LoginModal';
+import { useCartStore } from '@/store/cart-store';
 
 interface HeaderProps {
   searchTerm: string;
@@ -11,6 +12,7 @@ interface HeaderProps {
 
 export function Header({ searchTerm, onSearchChange }: HeaderProps) {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const { totalItems } = useCartStore();
 
   return (
     <>
@@ -29,9 +31,11 @@ export function Header({ searchTerm, onSearchChange }: HeaderProps) {
               <button className="p-2 rounded-full hover:bg-gray-100 transition-colors">
                 <span className="relative">
                   <ShoppingCart className="w-6 h-6 text-gray-700" />
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
-                    0
-                  </span>
+                  {totalItems() > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
+                      {totalItems()}
+                    </span>
+                  )}
                 </span>
               </button>
             </div>

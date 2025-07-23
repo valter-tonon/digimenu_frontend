@@ -4,10 +4,14 @@ import { useEffect, useState, Suspense, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMenuParams } from '@/infrastructure/hooks/useMenuParams';
 import { MenuProvider, useMenu } from '@/infrastructure/context/MenuContext';
+import { LayoutProvider } from '@/infrastructure/context/LayoutContext';
 import { MenuHeader, CategoryList, ProductList } from '@/components/menu';
 import { TableActions } from '@/components/menu/TableActions';
 import { OrderSummary } from '@/components/menu/OrderSummary';
 import { NotFound } from '@/components/ui/NotFound';
+import { FloatingCartButton } from '@/components/ui/FloatingCartButton';
+import { LayoutSelector } from '@/components/ui/LayoutSelector';
+import { StoreHeader } from '@/components/menu/StoreHeader';
 import { useContainer } from '@/infrastructure/di';
 import { Category } from '@/domain/entities/Category';
 import { Product } from '@/domain/entities/Product';
@@ -145,22 +149,24 @@ function MenuPage() {
   
   return (
     <MenuProvider initialTableId={tableId} initialStoreSlug={storeSlug}>
-      <MenuContent 
-        categories={categories}
-        products={products}
-        selectedCategoryId={selectedCategoryId}
-        setSelectedCategoryId={setSelectedCategoryId}
-        cartItemsCount={cartItemsCount}
-        setCartItemsCount={setCartItemsCount}
-        showOrderSummary={showOrderSummary}
-        openOrderSummary={handleCartClick}
-        closeOrderSummary={closeOrderSummary}
-        error={error}
-        storeSlug={storeSlug}
-        tableId={tableId}
-        isDelivery={isDelivery}
-        tenantData={tenantData}
-      />
+      <LayoutProvider>
+        <MenuContent 
+          categories={categories}
+          products={products}
+          selectedCategoryId={selectedCategoryId}
+          setSelectedCategoryId={setSelectedCategoryId}
+          cartItemsCount={cartItemsCount}
+          setCartItemsCount={setCartItemsCount}
+          showOrderSummary={showOrderSummary}
+          openOrderSummary={handleCartClick}
+          closeOrderSummary={closeOrderSummary}
+          error={error}
+          storeSlug={storeSlug}
+          tableId={tableId}
+          isDelivery={isDelivery}
+          tenantData={tenantData}
+        />
+      </LayoutProvider>
     </MenuProvider>
   );
 }
@@ -274,14 +280,21 @@ function MenuContent({
   
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
-      <MenuHeader 
-        cartItemsCount={cartItemsCount} 
-        onCartClick={handleCartClick}
-        storeName={storeName || storeSlug || 'Restaurante'}
-        storeLogo={storeLogo || undefined}
-        openingHours={tenantData?.opening_hours}
-        minOrderValue={tenantData?.min_order_value}
-      />
+      <div className="relative">
+        <MenuHeader 
+          cartItemsCount={cartItemsCount} 
+          onCartClick={handleCartClick}
+          storeName={storeName || storeSlug || 'Restaurante'}
+          storeLogo={storeLogo || undefined}
+          openingHours={tenantData?.opening_hours}
+          minOrderValue={tenantData?.min_order_value}
+        />
+        
+        {/* Seletor de layout no canto superior direito */}
+        <div className="absolute top-4 right-4">
+          <LayoutSelector compact />
+        </div>
+      </div>
       
       {/* Alerta quando a loja está fechada */}
       {tenantData?.opening_hours && !tenantData.opening_hours.is_open && (
@@ -318,22 +331,13 @@ function MenuContent({
       <footer className="bg-gray-800 text-white py-8 mt-auto">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="mb-6 md:mb-0 flex items-center">
-              {storeLogo ? (
-                <img 
-                  src={storeLogo} 
-                  alt={storeName || storeSlug || 'Logo'} 
-                  className="h-16 w-auto mr-4 object-contain border-2 border-amber-500"
-                />
-              ) : (
-                <div className="h-16 w-16 bg-amber-500 rounded-full flex items-center justify-center text-white text-2xl font-bold mr-4">
-                  {storeName ? storeName.charAt(0).toUpperCase() : storeSlug ? storeSlug.charAt(0).toUpperCase() : 'F'}
-                </div>
-              )}
-              <div>
-                <h3 className="text-xl font-bold mb-1">{storeName || storeSlug || 'Restaurante'}</h3>
-                <p className="text-gray-400">Cardápio digital</p>
-              </div>
+            <div className="mb-6 md:mb-0">
+              <StoreHeader 
+                storeName={storeName || storeSlug || 'Restaurante'}
+                storeLogo={storeLogo}
+                subtitle="Cardápio digital"
+                className="text-white"
+              />
             </div>
             
             <div className="flex flex-col items-center md:items-end">
@@ -382,6 +386,12 @@ function MenuContent({
           minOrderValue={tenantData?.min_order_value ?? 0}
         />
       )}
+      
+      {/* Botão flutuante do carrinho */}
+      <FloatingCartButton 
+        storeId={storeSlug || ''}
+        tableId={tableId || undefined}
+      />
     </div>
   );
 } 

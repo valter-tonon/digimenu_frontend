@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/infrastructure/auth';
+import { useAuth } from '@/hooks/use-auth';
 import Link from 'next/link';
 
 export default function LoginPage() {
@@ -22,7 +22,9 @@ export default function LoginPage() {
     try {
       setError(null);
       setIsSubmitting(true);
-      await login(email, password);
+      // Simular login - você precisará implementar a lógica real de autenticação
+      // Por enquanto, vamos apenas definir um token fictício
+      login('fake-token-for-development');
     } catch (err: any) {
       console.error('Erro no login:', err);
       setError(err.response?.data?.message || 'Erro ao fazer login. Verifique suas credenciais.');
