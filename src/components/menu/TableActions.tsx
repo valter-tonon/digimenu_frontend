@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { apiClient } from '@/infrastructure/api/apiClient';
+import { toast } from 'react-hot-toast';
 
 interface TableActionsProps {
   storeId: string;
@@ -38,22 +39,11 @@ export function TableActions({ storeId, tableId }: TableActionsProps) {
     const checkForActiveOrders = async () => {
       try {
         setIsCheckingOrders(true);
-        const response = await apiClient.get<OrderStatusResponse>(`/orders/status`, {
-          params: {
-            store_id: storeId,
-            table_id: tableId,
-          }
-        });
-        
-        const hasOrders = response && 
-                          response.orders && 
-                          response.orders.length > 0 && 
-                          response.orders.some(order => 
-                            order.status !== 'delivered' && order.status !== 'cancelled'
-                          );
-        
-        setHasActiveOrders(hasOrders);
-        setOrderStatus(response);
+        // TODO: Implementar verificação de status quando a API estiver disponível
+        // Por enquanto, desabilitar a verificação para evitar erro 404
+        console.log('Verificação de pedidos ativos desabilitada temporariamente');
+        setHasActiveOrders(false);
+        setOrderStatus(null);
       } catch (error) {
         console.error('Erro ao verificar pedidos ativos:', error);
         setHasActiveOrders(false);
@@ -72,25 +62,10 @@ export function TableActions({ storeId, tableId }: TableActionsProps) {
     setIsLoadingStatus(true);
     try {
       console.log('Verificando status para:', { storeId, tableId });
-      const response = await apiClient.get<OrderStatusResponse>(`/orders/status`, {
-        params: {
-          store_id: storeId,
-          table_id: tableId,
-        }
-      });
-      
-      setOrderStatus(response);
-      setShowOrderStatus(true);
-      
-      // Atualizar o estado de pedidos ativos
-      const hasOrders = response && 
-                        response.orders && 
-                        response.orders.length > 0 && 
-                        response.orders.some(order => 
-                          order.status !== 'delivered' && order.status !== 'cancelled'
-                        );
-      
-      setHasActiveOrders(hasOrders);
+      // TODO: Implementar verificação de status quando a API estiver disponível
+      // Por enquanto, mostrar mensagem informativa
+      toast.error('Funcionalidade de verificação de status temporariamente indisponível');
+      setShowOrderStatus(false);
     } catch (error) {
       console.error('Erro ao verificar status do pedido:', error);
     } finally {

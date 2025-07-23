@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useAppContext } from '@/hooks/useAppContext';
 import { useCartStore } from '@/store/cart-store';
 import { useAuth } from '@/hooks/use-auth';
 import { useUserTracking } from '@/hooks/useUserTracking';
@@ -36,11 +37,12 @@ const paymentMethods: PaymentMethod[] = [
 export default function CheckoutPage() {
   const router = useRouter();
   const params = useParams();
+  const { data: contextData, isValid: contextValid, isLoading: contextLoading } = useAppContext();
   const { isAuthenticated, customer } = useAuth();
   const { userId, source, initializeTracking, associateWithOrder } = useUserTracking();
   const [submitting, setSubmitting] = useState(false);
   
-  const storeId = params.storeId as string;
+  const storeId = contextData.storeId || (params.storeId as string);
   
   // Cart store
   const { 
@@ -75,8 +77,17 @@ export default function CheckoutPage() {
 
   // Configura o contexto ao carregar a página
   useEffect(() => {
+    // Se o contexto ainda está carregando, aguardar
+    if (contextLoading) return;
+    
+    // Se não tem contexto válido, redirecionar para sessão expirada
+    if (!contextValid || !storeId) {
+      router.push('/404-session');
+      return;
+    }
+    
     setContext(storeId);
-    setDeliveryMode(true);
+    setDeliveryMode(contextData.isDelivery);
     
     // Se não estiver autenticado, redireciona para login
     if (!isAuthenticated) {
@@ -96,7 +107,7 @@ export default function CheckoutPage() {
         zipCode: address.zipcode || ''
       });
     }
-  }, [storeId, setContext, setDeliveryMode, isAuthenticated, customer, router]);
+  }, [contextLoading, contextValid, storeId, contextData.isDelivery, setContext, setDeliveryMode, isAuthenticated, customer, router]);
 
   // Formatação de preço
   const formatPrice = (price: number) => {
@@ -185,6 +196,15 @@ export default function CheckoutPage() {
       setSubmitting(false);
     }
   };
+
+  // Loading states
+  if (contextLoading) {
+    return (
+      <div className="container mx-auto p-4 text-center">
+        <p>Carregando...</p>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return (

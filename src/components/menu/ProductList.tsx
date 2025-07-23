@@ -3,7 +3,7 @@
 import { Product, Additional } from '@/domain/entities/Product';
 import { useMemo, useState, useEffect } from 'react';
 import { useMenu } from '@/infrastructure/context/MenuContext';
-import { useMenuParams } from '@/infrastructure/hooks/useMenuParams';
+import { useAppContext } from '@/hooks/useAppContext';
 import { PlusIcon, MinusIcon } from 'lucide-react';
 import { useStoreStatus } from '@/infrastructure/context/StoreStatusContext';
 import { AddToCartButton } from './AddToCartButton';
@@ -11,6 +11,7 @@ import { formatPrice } from '@/utils/formatPrice';
 import Image from 'next/image';
 import { useCartStore } from '@/store/cart-store';
 import { toast } from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
 
 // Função para formatar o preço com segurança
 const formatPriceLocal = (price: any): string => {
@@ -43,6 +44,7 @@ interface ProductListProps {
 
 export function ProductList({ products, selectedCategoryId, onCartItemsChange, searchTerm = '' }: ProductListProps) {
   const { isStoreOpen } = useStoreStatus();
+  const router = useRouter();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedAdditionals, setSelectedAdditionals] = useState<Additional[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -78,8 +80,8 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
   const { items: cartItemsZustand, clearCart: clearCartZustand } = useCartStore();
   const [internalSearchTerm, setInternalSearchTerm] = useState('');
   
-  // Obter os parâmetros do menu no nível do componente
-  const menuParams = useMenuParams();
+  // Obter o contexto da aplicação
+  const { data: contextData } = useAppContext();
   
   // Adicionar estado para controlar o carregamento e feedback
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -297,6 +299,21 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
       return;
     }
 
+    // Verificar se é delivery - se for, redirecionar para checkout
+    const { deliveryMode } = useCartStore.getState();
+    const { tableId, storeId } = contextData;
+    
+    if (deliveryMode) {
+      console.log('Modo delivery detectado, redirecionando para checkout...');
+      setIsCartOpen(false);
+      
+      // Redirecionar para a página de checkout com URL limpa
+      console.log('Redirecionando para checkout...');
+      router.push('/checkout');
+      return;
+    }
+
+    // Se não for delivery, continuar com o fluxo normal (mesa)
     try {
       // Iniciar o processo de submissão
       setIsSubmitting(true);
@@ -304,9 +321,6 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
       
       // Fechar o carrinho
       setIsCartOpen(false);
-      
-      // Usar os parâmetros do menu obtidos no nível do componente
-      const { tableId, storeSlug } = menuParams;
       
       if (!storeSlug) {
         throw new Error('Identificador da loja não encontrado');

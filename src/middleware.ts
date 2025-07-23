@@ -7,20 +7,9 @@ export function middleware(request: NextRequest) {
   
 
   
-  // Se já estamos na página /menu com parâmetros válidos, não redirecionar
-  if (pathname === '/menu') {
-    const hasTable = url.searchParams.has('table');
-    const hasStore = url.searchParams.has('store');
-    
-    // Se tiver pelo menos o parâmetro store, deixar passar
-    if (hasStore) {
-      return NextResponse.next();
-    }
-    
-    // Se não tiver nem mesa nem loja, redirecionar para a página 404
-    if (!hasTable && !hasStore) {
-      return NextResponse.redirect(new URL('/404', url.origin));
-    }
+  // Para /menu e /checkout, sempre deixar passar - os dados serão carregados do localStorage/sessionStorage
+  if (pathname === '/menu' || pathname === '/checkout') {
+    return NextResponse.next();
   }
   
   // Verificar se o caminho corresponde ao padrão /:storeId/:tableId
@@ -29,6 +18,11 @@ export function middleware(request: NextRequest) {
   if (pathSegments.length === 2) {
     const storeId = pathSegments[0];
     const tableId = pathSegments[1];
+    
+    // Se for uma rota de checkout ou login, não redirecionar
+    if (tableId === 'checkout' || tableId === 'login') {
+      return NextResponse.next();
+    }
     
     // Verificar se os IDs parecem válidos
     if (storeId && tableId) {
@@ -50,6 +44,11 @@ export function middleware(request: NextRequest) {
         storeId !== 'menu' && 
         storeId !== '404' && 
         storeId !== 'not-found' && 
+        storeId !== '404-restaurant' && 
+        storeId !== '404-table' && 
+        storeId !== '404-invalid' && 
+        storeId !== '404-session' && 
+        storeId !== 'test-flow' && 
         storeId !== 'login' && 
         storeId !== 'dashboard' &&
         storeId !== 'favicon.ico' &&
@@ -71,6 +70,7 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     '/menu',
-    '/((?!api|_next/static|_next/image|favicon.ico|login|dashboard|admin|not-found).*)',
+    // Excluir completamente as rotas de checkout de qualquer interceptação
+    '/((?!api|_next/static|_next/image|favicon.ico|login|dashboard|admin|not-found)(?!.*checkout).*)',
   ],
 }; 

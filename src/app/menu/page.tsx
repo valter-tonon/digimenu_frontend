@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useMenuParams } from '@/infrastructure/hooks/useMenuParams';
+import { useAppContext } from '@/hooks/useAppContext';
 import { MenuProvider, useMenu } from '@/infrastructure/context/MenuContext';
 import { LayoutProvider } from '@/infrastructure/context/LayoutContext';
 import { MenuHeader, CategoryList, ProductList } from '@/components/menu';
@@ -17,6 +17,7 @@ import { useContainer } from '@/infrastructure/di';
 import { Category } from '@/domain/entities/Category';
 import { Product } from '@/domain/entities/Product';
 import { StoreStatusProvider } from '@/infrastructure/context/StoreStatusContext';
+import { useCartStore } from '@/store/cart-store';
 
 // Componente de carregamento para o Suspense
 function MenuLoading() {
@@ -43,12 +44,10 @@ export default function MenuPageWrapper() {
 function MenuPage() {
   console.log('Renderizando MenuPage - Início');
   const router = useRouter();
-  const { tableId, storeSlug, isDelivery, isValid, params } = useMenuParams();
-  console.log('MenuPage - Parâmetros:', { tableId, storeSlug, isDelivery, isValid, params });
   
+  // Todos os hooks devem ser declarados incondicionalmente
+  const { data, isLoading: contextLoading, error: contextError, isValid } = useAppContext();
   const { menuRepository } = useContainer();
-  console.log('MenuPage - Container carregado');
-  
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(0);
@@ -73,8 +72,14 @@ function MenuPage() {
   } | null>(null);
   const hasLoadedMenu = useRef(false);
   
+  // Extrair dados do contexto
+  const { storeId, tableId, isDelivery, storeName } = data;
+  console.log('MenuPage - Contexto:', { storeId, tableId, isDelivery, storeName, isValid });
+  console.log('MenuPage - Container carregado');
+  
+  // useEffect para carregar menu
   useEffect(() => {
-    if (!isValid || hasLoadedMenu.current) {
+    if (!isValid || hasLoadedMenu.current || !storeId || contextLoading) {
       return;
     }
     
@@ -82,10 +87,11 @@ function MenuPage() {
       try {
         setLoading(true);
         
-        // Converter isDelivery de string para booleano
+        // Preparar parâmetros para o repositório
         const menuParams = {
-          ...params,
-          isDelivery: params.isDelivery === 'true' || params.isDelivery === '1'
+          store: storeId,
+          table: tableId || '',
+          isDelivery: isDelivery
         };
         
         // Carregar menu completo
@@ -114,7 +120,13 @@ function MenuPage() {
     };
     
     loadMenu();
-  }, [isValid, menuRepository, params]);
+  }, [isValid, storeId, tableId, isDelivery, menuRepository, contextLoading]);
+  
+  // Se o contexto ainda está carregando, mostrar loading
+  if (contextLoading) {
+    return <MenuLoading />;
+  }
+
   
   // Se não for válido, mostrar página de erro
   if (!isValid) {
@@ -155,7 +167,7 @@ function MenuPage() {
     : products.filter(product => product.category_id === selectedCategoryId);
   
   return (
-    <MenuProvider initialTableId={tableId} initialStoreSlug={storeSlug}>
+    <MenuProvider initialTableId={tableId} initialStoreSlug={storeId}>
       <LayoutProvider>
         <StoreStatusProvider isStoreOpen={tenantData?.opening_hours?.is_open ?? true}>
           <MenuContent 
@@ -169,7 +181,7 @@ function MenuPage() {
             openOrderSummary={handleCartClick}
             closeOrderSummary={closeOrderSummary}
             error={error}
-            storeSlug={storeSlug}
+            storeSlug={storeId}
             tableId={tableId}
             isDelivery={isDelivery}
             tenantData={tenantData}
@@ -229,6 +241,9 @@ function MenuContent({
   // Agora podemos usar o hook useMenu com segurança
   const { cartItems, addToCart, removeFromCart, clearCart, updateCartItemQuantity } = useMenu();
   
+  // Configurar deliveryMode baseado no parâmetro isDelivery
+  const { setDeliveryMode } = useCartStore();
+  
   // Estados para armazenar os dados da loja
   const [storeName, setStoreName] = useState<string>('');
   const [storeLogo, setStoreLogo] = useState<string | null>(null);
@@ -265,6 +280,12 @@ function MenuContent({
     }
   }, []);
   
+  // Configurar deliveryMode baseado no parâmetro isDelivery
+  useEffect(() => {
+    setDeliveryMode(isDelivery);
+    console.log('DeliveryMode configurado:', isDelivery);
+  }, [isDelivery, setDeliveryMode]);
+  
   // Efeito para definir os dados da loja a partir do tenant
   useEffect(() => {
     // Usar os dados do tenant, se disponíveis
@@ -279,11 +300,11 @@ function MenuContent({
       
       console.log('Usando dados do tenant:', tenantData);
     } else {
-      // Fallback para o storeSlug
-      setStoreName(storeSlug || '');
-      console.log('Usando storeSlug como nome da loja:', storeSlug);
+      // Fallback para o nome da loja do contexto ou storeId
+      setStoreName(storeName || storeSlug || '');
+      console.log('Usando dados do contexto como nome da loja:', storeName || storeSlug);
     }
-  }, [tenantData, storeSlug]);
+  }, [tenantData, storeName, storeSlug]);
   
   // Atualizar contador de itens no carrinho quando o carrinho mudar
   useEffect(() => {
