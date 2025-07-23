@@ -10,7 +10,8 @@ import { TableActions } from '@/components/menu/TableActions';
 import { OrderSummary } from '@/components/menu/OrderSummary';
 import { NotFound } from '@/components/ui/NotFound';
 import { FloatingCartButton } from '@/components/ui/FloatingCartButton';
-import { LayoutSelector } from '@/components/ui/LayoutSelector';
+// TODO: LayoutSelector removido - tema será configurado no painel admin
+// import { LayoutSelector } from '@/components/ui/LayoutSelector';
 import { StoreHeader } from '@/components/menu/StoreHeader';
 import { useContainer } from '@/infrastructure/di';
 import { Category } from '@/domain/entities/Category';
@@ -246,6 +247,20 @@ function MenuContent({
   const handleCartItemsChange = (count: number) => {
     setCartItemsCount(count);
   };
+
+  // Função para abrir a modal do carrinho
+  const openCartModal = () => {
+    if (typeof window !== 'undefined' && (window as any).openCartModal) {
+      (window as any).openCartModal();
+    }
+  };
+
+  // Expor a função globalmente
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).openCartModalGlobal = openCartModal;
+    }
+  }, []);
   
   // Efeito para definir os dados da loja a partir do tenant
   useEffect(() => {
@@ -295,10 +310,7 @@ function MenuContent({
           minOrderValue={tenantData?.min_order_value}
         />
         
-        {/* Seletor de layout no canto superior direito */}
-        <div className="absolute top-4 right-4">
-          <LayoutSelector compact />
-        </div>
+        {/* TODO: Seletor de layout removido - tema será configurado no painel admin */}
       </div>
       
       {/* Alerta quando a loja está fechada */}

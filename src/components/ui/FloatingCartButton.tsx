@@ -8,9 +8,10 @@ interface FloatingCartButtonProps {
   storeId: string;
   tableId?: string;
   className?: string;
+  onCartClick?: () => void;
 }
 
-export function FloatingCartButton({ storeId, tableId, className = '' }: FloatingCartButtonProps) {
+export function FloatingCartButton({ storeId, tableId, className = '', onCartClick }: FloatingCartButtonProps) {
   const router = useRouter();
   const { totalItems, totalPrice, deliveryMode } = useCartStore();
   
@@ -20,6 +21,19 @@ export function FloatingCartButton({ storeId, tableId, className = '' }: Floatin
   const handleClick = () => {
     if (itemCount === 0) return; // Não fazer nada se o carrinho estiver vazio
     
+    // Se temos um callback personalizado, usar ele
+    if (onCartClick) {
+      onCartClick();
+      return;
+    }
+    
+    // Tentar abrir a modal do carrinho usando a função global
+    if (typeof window !== 'undefined' && (window as any).openCartModalGlobal) {
+      (window as any).openCartModalGlobal();
+      return;
+    }
+    
+    // Fallback para navegação (comportamento anterior)
     if (tableId) {
       router.push(`/${storeId}/${tableId}/cart`);
     } else {
@@ -81,7 +95,7 @@ export function FloatingCartButton({ storeId, tableId, className = '' }: Floatin
 }
 
 // Versão compacta do botão (apenas ícone)
-export function CompactFloatingCartButton({ storeId, tableId, className = '' }: FloatingCartButtonProps) {
+export function CompactFloatingCartButton({ storeId, tableId, className = '', onCartClick }: FloatingCartButtonProps) {
   const router = useRouter();
   const { totalItems } = useCartStore();
   
@@ -91,6 +105,19 @@ export function CompactFloatingCartButton({ storeId, tableId, className = '' }: 
   if (itemCount === 0) return null;
 
   const handleClick = () => {
+    // Se temos um callback personalizado, usar ele
+    if (onCartClick) {
+      onCartClick();
+      return;
+    }
+    
+    // Tentar abrir a modal do carrinho usando a função global
+    if (typeof window !== 'undefined' && (window as any).openCartModalGlobal) {
+      (window as any).openCartModalGlobal();
+      return;
+    }
+    
+    // Fallback para navegação (comportamento anterior)
     if (tableId) {
       router.push(`/${storeId}/${tableId}/cart`);
     } else {
@@ -101,7 +128,7 @@ export function CompactFloatingCartButton({ storeId, tableId, className = '' }: 
   return (
     <button
       onClick={handleClick}
-      className={`fixed bottom-6 right-6 bg-primary text-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 z-40 ${className}`}
+      className={`fixed bottom-6 right-6 bg-primary text-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 z-floating-cart ${className}`}
       aria-label={`Ver carrinho com ${itemCount} ${itemCount === 1 ? 'item' : 'itens'}`}
     >
       <div className="relative">

@@ -136,7 +136,7 @@ export function OrderSummary({ onClose, isDelivery = false, isStoreOpen = true, 
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-modal">
       <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
       
         <div className="flex justify-between items-center mb-4">

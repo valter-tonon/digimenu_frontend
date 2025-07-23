@@ -1,5 +1,13 @@
 'use client';
 
+/**
+ * LayoutSelector - Componente para seleção de temas
+ * 
+ * TODO: Este componente será usado apenas no painel administrativo.
+ * A seleção de tema foi removida da interface do usuário final.
+ * O tema será configurado pelo restaurante no painel admin.
+ */
+
 import { useState } from 'react';
 import { useLayout } from '@/infrastructure/context/LayoutContext';
 import { Check, ChevronDown, Palette } from 'lucide-react';

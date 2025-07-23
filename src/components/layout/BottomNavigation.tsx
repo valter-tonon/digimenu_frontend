@@ -48,7 +48,7 @@ export function BottomNavigation({ storeId, tableId }: BottomNavigationProps) {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 flex items-center justify-around bg-white border-t border-gray-200 h-16 z-10">
+    <nav className="fixed bottom-0 left-0 right-0 flex items-center justify-around bg-white border-t border-gray-200 h-16 z-fixed">
       {navigationItems.map((item, index) => (
         <button
           key={index}

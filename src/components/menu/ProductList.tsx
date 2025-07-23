@@ -42,6 +42,24 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedAdditionals, setSelectedAdditionals] = useState<Additional[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+
+  // Função para abrir o carrinho
+  const openCart = () => {
+    setIsCartOpen(true);
+  };
+
+  // Expor a função globalmente para que possa ser chamada externamente
+  useEffect(() => {
+    // Criar uma função que pode ser chamada externamente
+    const openCartHandler = () => openCart();
+    // Atribuir à função global temporariamente
+    (window as any).openCartModal = openCartHandler;
+    
+    // Limpar quando o componente for desmontado
+    return () => {
+      delete (window as any).openCartModal;
+    };
+  }, []);
   const { 
     cartItems,
     addToCart,
@@ -334,7 +352,7 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
     if (!orderSuccess) return null;
     
     return (
-      <div className={`fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50`}>
+              <div className={`fixed inset-0 flex items-center justify-center z-modal bg-black bg-opacity-50`}>
         <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
           <div className={`text-2xl mb-4 ${orderSuccess.success ? 'text-green-600' : 'text-red-600'}`}>
             {orderSuccess.success ? '✓ Sucesso!' : '✗ Erro!'}
@@ -510,7 +528,7 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
 
       {/* Modal de detalhes do produto */}
       {selectedProduct && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-modal">
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
@@ -682,7 +700,7 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
 
       {/* Sidebar do carrinho */}
       {isCartOpen && (
-        <div className="fixed inset-0 z-50 overflow-hidden">
+        <div className="fixed inset-0 z-modal overflow-hidden">
           <div className="absolute inset-0 overflow-hidden">
             <div 
               className="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity"

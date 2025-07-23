@@ -24,7 +24,7 @@ export function CartModal({ isOpen, onClose }: CartModalProps) {
   const total = totalPrice();
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-end z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-end z-modal">
       <div className="bg-white h-full w-full max-w-md p-6 shadow-xl">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-800">Carrinho</h2>

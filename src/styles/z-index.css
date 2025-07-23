@@ -11,6 +11,7 @@
   --z-scroll-buttons: 1025;
   --z-header: 1020;
   --z-floating-cart: 1030;
+  --z-cookie-banner: 1090;
 }
 
 /* Classes de z-index */
@@ -25,6 +26,7 @@
 .z-scroll-buttons { z-index: var(--z-scroll-buttons); }
 .z-header { z-index: var(--z-header); }
 .z-floating-cart { z-index: var(--z-floating-cart); }
+.z-cookie-banner { z-index: var(--z-cookie-banner); }
 
 /* Botões de scroll para categorias */
 .scroll-button {

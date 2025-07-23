@@ -62,12 +62,12 @@ export function ProductModal({ product, isOpen, onClose }: ProductModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-modal">
       <div className="bg-white rounded-lg max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="relative">
           <button 
             onClick={onClose}
-            className="absolute right-2 top-2 z-10 p-2 bg-white rounded-full shadow-md hover:bg-gray-100"
+            className="absolute right-2 top-2 z-popover p-2 bg-white rounded-full shadow-md hover:bg-gray-100"
           >
             <X className="w-6 h-6 text-secondary" />
           </button>
