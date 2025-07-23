@@ -9,6 +9,8 @@ import { useStoreStatus } from '@/infrastructure/context/StoreStatusContext';
 import { AddToCartButton } from './AddToCartButton';
 import { formatPrice } from '@/utils/formatPrice';
 import Image from 'next/image';
+import { useCartStore } from '@/store/cart-store';
+import { toast } from 'react-hot-toast';
 
 // Função para formatar o preço com segurança
 const formatPriceLocal = (price: any): string => {
@@ -71,6 +73,9 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
     setIsCartOpen: setContextCartOpen,
     clearCart
   } = useMenu();
+  
+  // Usar o carrinho Zustand diretamente para ter acesso aos dados corretos
+  const { items: cartItemsZustand, clearCart: clearCartZustand } = useCartStore();
   const [internalSearchTerm, setInternalSearchTerm] = useState('');
   
   // Obter os parâmetros do menu no nível do componente
@@ -89,6 +94,14 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
 
   // Inicializar o estado do carrinho quando o componente montar
   useEffect(() => {
+    // Verificar se há itens inválidos no carrinho e limpar se necessário
+    const hasInvalidItems = cartItemsZustand.some(item => !item.identify || item.identify === item.productId?.toString());
+    if (hasInvalidItems) {
+      console.log('Carrinho com itens inválidos detectado na inicialização, limpando...');
+      clearCartZustand();
+      toast.error('Carrinho foi limpo devido a formato inválido. Adicione os produtos novamente.');
+    }
+    
     // Atualizar o estado do carrinho baseado no contexto
     const cartHasItems = cartItems && cartItems.length > 0;
     
@@ -218,16 +231,18 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
       return;
     }
 
-    // Converter o produto para o formato do CartItem esperado pelo context
+    // Converter o produto para o formato do CartItem esperado pelo carrinho Zustand
     addToCart({
-      id: product.id.toString(),
+      id: product.uuid, // UUID do produto como identificador
+      productId: product.id, // ID numérico do produto
       name: product.name,
       price: Number(product.price) || 0,
       quantity: 1,
       additionals: additionals.map(add => ({
-        id: add.id.toString(),
+        id: add.id,
         name: add.name,
-        price: Number(add.price) || 0
+        price: Number(add.price) || 0,
+        quantity: 1
       }))
     });
     
@@ -272,6 +287,16 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
       return;
     }
 
+    // Limpar carrinho antigo se houver itens com formato incorreto
+    const hasInvalidItems = cartItemsZustand.some(item => !item.identify || item.identify === item.productId?.toString());
+    if (hasInvalidItems) {
+      console.log('Carrinho com itens inválidos detectado, limpando...');
+      clearCartZustand();
+      toast.error('Carrinho foi limpo devido a formato inválido. Adicione os produtos novamente.');
+      setIsCartOpen(false);
+      return;
+    }
+
     try {
       // Iniciar o processo de submissão
       setIsSubmitting(true);
@@ -287,18 +312,24 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
         throw new Error('Identificador da loja não encontrado');
       }
       
-      // Preparar os dados do pedido
+      // Preparar os dados do pedido usando o carrinho Zustand
       const orderData = {
         token_company: storeSlug, // Identificador da empresa/loja
         ...(tableId ? { table: tableId } : {}), // Adicionar mesa apenas se existir
-        products: cartItems.map(item => ({
-          identify: item.id,
+        products: cartItemsZustand.map(item => ({
+          identify: item.identify,
           quantity: item.quantity,
           additionals: item.additionals ? item.additionals.map(add => add.id) : []
         }))
       };
       
       console.log('Enviando pedido:', orderData);
+      console.log('Itens do carrinho Zustand:', cartItemsZustand);
+      console.log('Detalhes dos produtos:', cartItemsZustand.map(item => ({
+        identify: item.identify,
+        name: item.name,
+        productId: item.productId
+      })));
       
       // Enviar para a API
       const baseURL = process.env.NEXT_PUBLIC_API_URL || '';
@@ -337,7 +368,7 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
       console.log('Dados da resposta:', data);
       
       // Limpar o carrinho
-      clearCart();
+      clearCartZustand();
       
       // Definir sucesso
       setOrderSuccess({

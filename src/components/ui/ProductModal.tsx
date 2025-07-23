@@ -59,7 +59,7 @@ export function ProductModal({ product, isOpen, onClose }: ProductModalProps) {
 
     addItem({
       productId: parseInt(product.id),
-      identify: product.id,
+      identify: product.uuid,
       name: product.name,
       price: product.price,
       quantity: quantity,

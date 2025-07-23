@@ -36,6 +36,7 @@ function testMenuContext() {
 
 interface CartItem {
   id: string;
+  productId?: number;
   name: string;
   price: number;
   quantity: number;
@@ -137,8 +138,8 @@ export function MenuProvider({ children, initialTableId, initialStoreSlug }: {
   const addToCart = (item: CartItem) => {
     // Usar apenas o store zustand
     store.addItem({
-      productId: parseInt(item.id),
-      identify: item.id,
+      productId: item.productId || 0, // Usar productId se disponível, senão 0
+      identify: item.id, // item.id já contém o UUID do produto
       name: item.name,
       price: item.price,
       quantity: item.quantity,
