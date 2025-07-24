@@ -24,15 +24,9 @@ export function middleware(request: NextRequest) {
       return NextResponse.next();
     }
     
-    // Verificar se os IDs parecem válidos
-    if (storeId && tableId) {
-      // Redirecionar para a página de menu com os parâmetros de consulta
-      const menuUrl = new URL('/menu', url.origin);
-      menuUrl.searchParams.set('store', storeId);
-      menuUrl.searchParams.set('table', tableId);
-      
-      return NextResponse.redirect(menuUrl);
-    }
+    // Para rotas de mesa (/storeId/tableId), deixar passar para a página [storeId]/[tableId]/page.tsx
+    // O middleware não deve interceptar essas rotas
+    return NextResponse.next();
   }
   
   // Para rotas de storeId único (/12345678901234), deixar passar para a página [storeId]/page.tsx
