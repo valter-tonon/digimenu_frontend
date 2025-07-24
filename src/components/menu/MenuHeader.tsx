@@ -1,9 +1,8 @@
 'use client';
 
-import { useMenu } from '@/infrastructure/context/MenuContext';
 import { useState, useEffect } from 'react';
-import { apiClient } from '@/infrastructure/api/apiClient';
 import { CompactStoreHeader } from './StoreHeader';
+import { useContainer } from '@/infrastructure/di';
 
 interface MenuHeaderProps {
   cartItemsCount: number;
@@ -16,6 +15,8 @@ interface MenuHeaderProps {
     is_open: boolean;
   };
   minOrderValue?: number;
+  tableId?: string | null;
+  storeId?: string | null;
 }
 
 export function MenuHeader({ 
@@ -24,42 +25,69 @@ export function MenuHeader({
   storeName: propStoreName,
   storeLogo: propStoreLogo,
   openingHours,
-  minOrderValue
+  minOrderValue,
+  tableId,
+  storeId
 }: MenuHeaderProps) {
-  const { tableId, storeSlug } = useMenu();
-  const [storeName, setStoreName] = useState<string>(propStoreName || 'FoodMenu');
-  const [storeLogo, setStoreLogo] = useState<string | null>(propStoreLogo || null);
+  const { tableRepository } = useContainer();
+  const [tableName, setTableName] = useState<string | null>(null);
+  const [isLoadingTable, setIsLoadingTable] = useState(false);
   const [isCallingWaiter, setIsCallingWaiter] = useState(false);
   const [waiterCalled, setWaiterCalled] = useState(false);
-  
+
+  // Buscar informações da mesa quando tableId estiver disponível
   useEffect(() => {
-    if (propStoreName) {
-      setStoreName(propStoreName);
+    if (!tableId) {
+      setTableName(null);
+      return;
     }
-    if (propStoreLogo) {
-      setStoreLogo(propStoreLogo);
-    }
-  }, [propStoreName, propStoreLogo]);
-  
+
+    const generateTableName = () => {
+      try {
+        // Extrair um número mais legível do UUID
+        const uuidParts = tableId.split('-');
+        const lastPart = uuidParts[uuidParts.length - 1];
+        const tableNumber = parseInt(lastPart.slice(0, 4), 16) % 100; // Converter para número e limitar a 2 dígitos
+        return `Mesa ${tableNumber}`;
+      } catch (error) {
+        // Fallback final se tudo falhar
+        return `Mesa ${tableId.slice(-4)}`;
+      }
+    };
+
+    const fetchTableInfo = async () => {
+      try {
+        setIsLoadingTable(true);
+        const table = await tableRepository.getTableByUuid(tableId, storeId || undefined);
+        setTableName(table.identifier);
+      } catch (error) {
+        console.warn('Não foi possível buscar informações da mesa, usando fallback:', error);
+        setTableName(generateTableName());
+      } finally {
+        setIsLoadingTable(false);
+      }
+    };
+
+    fetchTableInfo();
+  }, [tableId, storeId, tableRepository]);
+
   const handleCartClick = () => {
     onCartClick();
   };
-  
-  // Função para chamar o garçom
+
   const callWaiter = async () => {
-    if (isCallingWaiter || waiterCalled || !tableId || !storeSlug) return;
-    
-    setIsCallingWaiter(true);
     try {
-      console.log('Chamando garçom para:', { storeId: storeSlug, tableId });
-      await apiClient.post<any>('/waiter-calls', {
-        store_id: storeSlug,
-        table_id: tableId,
-      });
+      setIsCallingWaiter(true);
+      
+      // TODO: Implementar chamada real à API
+      // await apiClient.post('/waiter-calls', { table_id: tableId });
+      
+      // Simular chamada
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       setWaiterCalled(true);
       
-      // Reset após 30 segundos
+      // Resetar após 30 segundos
       setTimeout(() => {
         setWaiterCalled(false);
       }, 30000);
@@ -75,8 +103,8 @@ export function MenuHeader({
       <div className="w-full flex justify-between items-center">
         <div className="flex items-center flex-1">
           <CompactStoreHeader 
-            storeName={storeName}
-            storeLogo={storeLogo}
+            storeName={propStoreName || 'Restaurante'}
+            storeLogo={propStoreLogo}
             className="flex-1"
           />
           
@@ -154,7 +182,14 @@ export function MenuHeader({
       {tableId && (
         <div className="mt-2 flex items-center text-xs text-gray-500">
           <div className="bg-gray-100 px-2 py-1 rounded-md">
-            Mesa: {tableId}
+            {isLoadingTable ? (
+              <span className="flex items-center">
+                <div className="h-3 w-3 border border-gray-400 border-t-transparent rounded-full animate-spin mr-1"></div>
+                Carregando...
+              </span>
+            ) : (
+              <span>Mesa: {tableName || `Mesa ${tableId.slice(-4)}`}</span>
+            )}
           </div>
         </div>
       )}

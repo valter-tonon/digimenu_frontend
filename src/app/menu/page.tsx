@@ -332,6 +332,8 @@ function MenuContent({
           storeLogo={storeLogo || undefined}
           openingHours={tenantData?.opening_hours}
           minOrderValue={tenantData?.min_order_value}
+          tableId={tableId}
+          storeId={storeSlug}
         />
         
         {/* TODO: Seletor de layout removido - tema será configurado no painel admin */}

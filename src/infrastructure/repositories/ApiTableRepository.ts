@@ -13,9 +13,14 @@ export class ApiTableRepository implements TableRepository {
     }
   }
 
-  async getTableByUuid(uuid: string): Promise<Table> {
+  async getTableByUuid(uuid: string, storeId?: string): Promise<Table> {
     try {
-      const response = await apiClient.get<{ data: Table }>(`/tables/${uuid}`);
+      const params: any = {};
+      if (storeId) {
+        params.token_company = storeId;
+      }
+      
+      const response = await apiClient.get<{ data: Table }>(`/tables/${uuid}`, { params });
       return response.data;
     } catch (error) {
       console.error(`Erro ao buscar mesa ${uuid}:`, error);
