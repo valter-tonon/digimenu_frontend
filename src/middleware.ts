@@ -35,32 +35,31 @@ export function middleware(request: NextRequest) {
     }
   }
   
-  // Caso para /:storeId (menu do restaurante sem mesa específica - delivery)
+  // Para rotas de storeId único (/12345678901234), deixar passar para a página [storeId]/page.tsx
+  // O middleware não deve interceptar essas rotas
   if (pathSegments.length === 1) {
     const storeId = pathSegments[0];
     
-    // Verificar se o ID parece válido e não é uma rota especial
-    if (storeId && 
-        storeId !== 'menu' && 
-        storeId !== '404' && 
-        storeId !== 'not-found' && 
-        storeId !== '404-restaurant' && 
-        storeId !== '404-table' && 
-        storeId !== '404-invalid' && 
-        storeId !== '404-session' && 
-        storeId !== 'test-flow' && 
-        storeId !== 'login' && 
-        storeId !== 'dashboard' &&
-        storeId !== 'favicon.ico' &&
-        storeId !== '_next' &&
-        !storeId.includes('.')) {
-      // Redirecionar para a página de menu apenas com o parâmetro de loja
-      const menuUrl = new URL('/menu', url.origin);
-      menuUrl.searchParams.set('store', storeId);
-      menuUrl.searchParams.set('isDelivery', 'true');
-      
-      return NextResponse.redirect(menuUrl);
+    // Verificar se é uma rota especial que deve ser ignorada
+    if (storeId === 'menu' || 
+        storeId === '404' || 
+        storeId === 'not-found' || 
+        storeId === '404-restaurant' || 
+        storeId === '404-table' || 
+        storeId === '404-invalid' || 
+        storeId === '404-session' || 
+        storeId === 'test-flow' || 
+        storeId === 'login' || 
+        storeId === 'dashboard' ||
+        storeId === 'favicon.ico' ||
+        storeId === '_next' ||
+        storeId.includes('.')) {
+      return NextResponse.next();
     }
+    
+    // Para storeId único, deixar passar (não redirecionar)
+    // A página [storeId]/page.tsx irá lidar com isso
+    return NextResponse.next();
   }
   
   return NextResponse.next();
