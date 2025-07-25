@@ -46,23 +46,51 @@ const validateStore = async (storeId: string): Promise<{ valid: boolean; error?:
   }
 };
 
-// Função para validar mesa via API (mockada por enquanto)
+// Função para validar mesa via API
 const validateTable = async (storeId: string, tableId: string): Promise<{ valid: boolean; error?: ValidationError; data?: any }> => {
   try {
-    // TODO: Implementar chamada real à API
-    // const response = await fetch(`/api/stores/${storeId}/tables/${tableId}`);
-    // if (!response.ok) {
-    //   return { valid: false, error: 'TABLE_NOT_FOUND' };
-    // }
-    // const data = await response.json();
+    // Buscar dados da mesa via API
+    const baseURL = process.env.NEXT_PUBLIC_API_URL || '';
+    const url = `${baseURL}/tables/${tableId}`;
     
-    // Por enquanto, simular validação
-    if (storeId && tableId && tableId.length >= 10) {
-      return { valid: true, data: { number: `Mesa ${tableId.slice(-4)}` } };
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      console.error('Erro ao buscar mesa:', response.status, response.statusText);
+      // Fallback para validação básica
+      if (storeId && tableId && tableId.length >= 10) {
+        return { valid: true, data: { identifier: `Mesa ${tableId.slice(-4)}` } };
+      }
+      return { valid: false, error: 'TABLE_NOT_FOUND' };
     }
-    return { valid: false, error: 'TABLE_NOT_FOUND' };
+    
+    const tableData = await response.json();
+    
+    if (tableData.data && tableData.data.identifier) {
+      return { 
+        valid: true, 
+        data: { 
+          identifier: tableData.data.identifier,
+          description: tableData.data.description,
+          status: tableData.data.status
+        } 
+      };
+    }
+    
+    // Fallback se não conseguir obter o identifier
+    return { valid: true, data: { identifier: `Mesa ${tableId.slice(-4)}` } };
   } catch (error) {
     console.error('Erro ao validar mesa:', error);
+    // Fallback para validação básica
+    if (storeId && tableId && tableId.length >= 10) {
+      return { valid: true, data: { identifier: `Mesa ${tableId.slice(-4)}` } };
+    }
     return { valid: false, error: 'TABLE_NOT_FOUND' };
   }
 };

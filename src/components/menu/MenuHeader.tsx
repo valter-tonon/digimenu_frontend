@@ -72,7 +72,21 @@ export function MenuHeader({
 
   const getCurrentContext = () => {
     if (tableId) {
-      return `Mesa ${tableId.slice(-4)}`;
+      // Usar o identifier da mesa se disponível no contexto
+      if (data.tableData?.identifier) {
+        return data.tableData.identifier;
+      }
+      
+      // Fallback: tentar extrair um número mais legível da mesa
+      if (tableId.length > 10) {
+        const mesaNumber = tableId.slice(-4);
+        const numero = parseInt(mesaNumber, 16);
+        if (!isNaN(numero) && numero > 0) {
+          return `Mesa ${numero}`;
+        }
+        return `Mesa ${mesaNumber}`;
+      }
+      return `Mesa ${tableId}`;
     }
     return 'Delivery';
   };
