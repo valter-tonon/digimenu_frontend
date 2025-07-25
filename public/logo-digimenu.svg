@@ -1,0 +1,10 @@
+<svg width="120" height="40" viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Logo "D" -->
+  <path d="M8 6C8 5.44772 8.44772 5 9 5H16C20.4183 5 24 8.58172 24 13V19C24 23.4183 20.4183 27 16 27H9C8.44772 27 8 26.5523 8 26V6Z" fill="#FF6B35"/>
+  
+  <!-- Texto "digi" -->
+  <text x="35" y="18" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#FF6B35">digi</text>
+  
+  <!-- Texto "menu" -->
+  <text x="35" y="32" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#FFFFFF">menu</text>
+</svg> 

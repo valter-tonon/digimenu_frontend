@@ -439,12 +439,14 @@ function MenuContent({
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="mb-6 md:mb-0">
-              <StoreHeader 
-                storeName={storeName || storeSlug || 'Restaurante'}
-                storeLogo={storeLogo}
-                subtitle="Cardápio digital"
-                className="text-white"
-              />
+                        <StoreHeader 
+            storeName={storeName || storeSlug || 'Restaurante'}
+            storeLogo={storeLogo}
+            subtitle="Cardápio digital"
+            className="text-white"
+            showHistoryButton={true}
+            storeId={storeSlug}
+          />
             </div>
             
             <div className="flex flex-col items-center md:items-end">
@@ -467,8 +469,11 @@ function MenuContent({
               </div>
               <div className="flex flex-col items-center">
                 <div className="flex items-center mb-2">
-                  <span className="text-amber-500 font-bold text-lg mr-1">digi</span>
-                  <span className="text-white font-bold text-lg">menu</span>
+                  <img 
+                    src="/logo-digimenu.svg" 
+                    alt="DigiMenu" 
+                    className="h-8 w-auto"
+                  />
                 </div>
                 <p className="text-sm text-gray-400">© {new Date().getFullYear()} Todos os direitos reservados</p>
               </div>

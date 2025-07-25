@@ -8,6 +8,11 @@ import { CookieConsentBanner } from '@/components/ui/CookieConsentBanner';
 export const metadata: Metadata = {
   title: 'DigiMenu - Sistema de Pedidos',
   description: 'Sistema de pedidos para restaurantes e estabelecimentos',
+  icons: {
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
 };
 
 export default function RootLayout({
