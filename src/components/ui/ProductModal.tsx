@@ -1,185 +1,252 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Minus, X } from 'lucide-react';
-import { useCartStore } from '@/store/cart-store';
-import { toast } from 'react-hot-toast';
-import { useStoreStatus } from '@/infrastructure/context/StoreStatusContext';
-
-interface Additional {
-  id: string;
-  name: string;
-  price: number;
-}
-
-interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  image: string | null;
-  additionals?: Additional[];
-}
+import { X, Plus, Minus, Star, Tag, TrendingUp } from 'lucide-react';
+import { Product, Additional } from '@/domain/entities/Product';
+import { ProductBadge } from './ProductBadge';
+import { PriceDisplay } from './PriceDisplay';
+import Image from 'next/image';
 
 interface ProductModalProps {
-  product: Product;
+  product: Product | null;
   isOpen: boolean;
   onClose: () => void;
+  onAddToCart: (product: Product, additionals: Additional[], quantity: number) => void;
 }
 
-export function ProductModal({ product, isOpen, onClose }: ProductModalProps) {
-  const { isStoreOpen } = useStoreStatus();
+export function ProductModal({ product, isOpen, onClose, onAddToCart }: ProductModalProps) {
+  const [selectedAdditionals, setSelectedAdditionals] = useState<Additional[]>([]);
   const [quantity, setQuantity] = useState(1);
-  const [selectedAdditionals, setSelectedAdditionals] = useState<string[]>([]);
-  const [observations, setObservations] = useState('');
-  const addItem = useCartStore((state) => state.addItem);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
-  const additionalTotal = product.additionals?.reduce((total, additional) => {
-    return selectedAdditionals.includes(additional.id) 
-      ? total + additional.price 
-      : total;
-  }, 0) || 0;
+  if (!product || !isOpen) return null;
 
-  const totalPrice = (product.price + additionalTotal) * quantity;
+  // Preparar imagens do produto (imagem principal + adicionais se houver)
+  const productImages = [
+    product.image,
+    ...(product.additional?.map(add => add.image).filter(Boolean) || [])
+  ].filter(Boolean);
 
-  const handleAddToCart = () => {
-    if (!isStoreOpen) {
-      toast.error('Restaurante fechado. Não é possível adicionar itens ao carrinho no momento.');
-      return;
-    }
-
-    const selectedAdditionalsDetails = product.additionals?.filter(
-      add => selectedAdditionals.includes(add.id)
-    ).map(add => ({
-      id: parseInt(add.id),
-      name: add.name,
-      price: add.price,
-      quantity: 1
-    })) || [];
-
-    addItem({
-      productId: parseInt(product.id),
-      identify: product.uuid, // Usar product.uuid como identify
-      name: product.name,
-      price: product.price,
-      quantity: quantity,
-      additionals: selectedAdditionalsDetails,
-      notes: observations.trim(),
-      image: product.image || undefined
+  const toggleAdditional = (additional: Additional) => {
+    setSelectedAdditionals(prev => {
+      const isSelected = prev.some(item => item.id === additional.id);
+      if (isSelected) {
+        return prev.filter(item => item.id !== additional.id);
+      } else {
+        return [...prev, additional];
+      }
     });
-    
-    toast.success('Item adicionado ao carrinho!');
-    onClose();
   };
 
-  if (!isOpen) return null;
+  const handleAddToCart = () => {
+    onAddToCart(product, selectedAdditionals, quantity);
+    onClose();
+    // Resetar estado
+    setSelectedAdditionals([]);
+    setQuantity(1);
+    setSelectedImageIndex(0);
+  };
+
+  const calculateTotalPrice = () => {
+    const basePrice = product.promotional_price && product.promotional_price > 0 && product.promotional_price < product.price
+      ? product.promotional_price
+      : product.price;
+    
+    const additionalsPrice = selectedAdditionals.reduce((sum, add) => sum + add.price, 0);
+    return (basePrice + additionalsPrice) * quantity;
+  };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-modal p-4">
-      <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
-          <div className="flex justify-between items-start mb-4">
-            <h2 className="text-xl font-bold text-gray-900">{product.name}</h2>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <X className="w-6 h-6" />
-            </button>
-          </div>
-          
-          {product.image && (
-            <div className="mb-4">
-              <img
-                src={product.image}
-                alt={product.name}
-                className="w-full h-48 object-cover rounded-lg"
-              />
-            </div>
-          )}
-          
-          <p className="text-gray-600 mb-4">{product.description}</p>
-          
-          {product.additionals && product.additionals.length > 0 && (
-            <div className="mb-4">
-              <h3 className="font-semibold text-gray-900 mb-2">Adicionais</h3>
-              <div className="space-y-2">
-                {product.additionals.map((additional) => (
-                  <label key={additional.id} className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={selectedAdditionals.includes(additional.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedAdditionals([...selectedAdditionals, additional.id]);
-                          } else {
-                            setSelectedAdditionals(selectedAdditionals.filter(id => id !== additional.id));
-                          }
-                        }}
-                        className="mr-2"
-                        disabled={!isStoreOpen}
-                      />
-                      <span className="text-gray-700">{additional.name}</span>
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Overlay */}
+      <div 
+        className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      
+      {/* Modal */}
+      <div className="relative bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
+        {/* Header */}
+        <div className="flex justify-between items-center p-4 border-b">
+          <h2 className="text-xl font-bold text-gray-900">{product.name}</h2>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="flex flex-col lg:flex-row max-h-[calc(90vh-80px)] overflow-hidden">
+          {/* Galeria de Imagens */}
+          <div className="lg:w-1/2 p-4">
+            <div className="relative aspect-square rounded-lg overflow-hidden bg-gray-100">
+              {productImages.length > 0 ? (
+                <>
+                  <Image
+                    src={productImages[selectedImageIndex]}
+                    alt={product.name}
+                    fill
+                    className="object-cover"
+                  />
+                  
+                  {/* Indicadores de imagem */}
+                  {productImages.length > 1 && (
+                    <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                      {productImages.map((_, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setSelectedImageIndex(index)}
+                          className={`w-2 h-2 rounded-full transition-colors ${
+                            index === selectedImageIndex ? 'bg-white' : 'bg-white/50'
+                          }`}
+                        />
+                      ))}
                     </div>
-                    <span className="text-gray-600">R$ {additional.price.toFixed(2)}</span>
-                  </label>
+                  )}
+                </>
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <span className="text-gray-400">Sem imagem</span>
+                </div>
+              )}
+            </div>
+
+            {/* Miniaturas */}
+            {productImages.length > 1 && (
+              <div className="flex space-x-2 mt-4 overflow-x-auto">
+                {productImages.map((image, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedImageIndex(index)}
+                    className={`relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-colors ${
+                      index === selectedImageIndex ? 'border-amber-500' : 'border-gray-200'
+                    }`}
+                  >
+                    <Image
+                      src={image}
+                      alt={`${product.name} - Imagem ${index + 1}`}
+                      fill
+                      className="object-cover"
+                    />
+                  </button>
                 ))}
               </div>
-            </div>
-          )}
-          
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Observações
-            </label>
-            <textarea
-              value={observations}
-              onChange={(e) => setObservations(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-              rows={3}
-              placeholder="Alguma observação especial?"
-              disabled={!isStoreOpen}
-            />
-          </div>
-          
-          <div className="flex items-center justify-between mb-6">
-            <span className="text-xl font-bold text-secondary">
-              R$ {totalPrice.toFixed(2)}
-            </span>
-            
-            <div className="flex items-center gap-3 bg-white border-2 border-gray-200 rounded-lg p-1 shadow-sm">
-              <button 
-                onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                className="p-1 hover:bg-gray-100 rounded-full text-secondary disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={!isStoreOpen}
-              >
-                <Minus className="w-5 h-5" />
-              </button>
-              <span className="w-8 text-center font-semibold text-secondary text-lg">
-                {quantity}
-              </span>
-              <button 
-                onClick={() => setQuantity(quantity + 1)}
-                className="p-1 hover:bg-gray-100 rounded-full text-secondary disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={!isStoreOpen}
-              >
-                <Plus className="w-5 h-5" />
-              </button>
-            </div>
+            )}
           </div>
 
-          <button
-            onClick={handleAddToCart}
-            className={`w-full py-4 rounded-lg font-semibold text-lg shadow-md transition-colors ${
-              isStoreOpen 
-                ? 'bg-primary text-white hover:bg-primary-hover' 
-                : 'bg-gray-400 text-white cursor-not-allowed'
-            }`}
-            disabled={!isStoreOpen}
-          >
-            {isStoreOpen ? `Adicionar • R$ ${totalPrice.toFixed(2)}` : 'Restaurante Fechado'}
-          </button>
+          {/* Conteúdo */}
+          <div className="lg:w-1/2 p-4 overflow-y-auto">
+            {/* Badges */}
+            <div className="flex flex-wrap gap-2 mb-4">
+              {product.is_featured && <ProductBadge type="featured" />}
+              {product.is_popular && <ProductBadge type="popular" />}
+              {product.promotional_price && product.promotional_price > 0 && product.promotional_price < product.price && (
+                <ProductBadge type="promotion" />
+              )}
+            </div>
+
+            {/* Descrição */}
+            <div className="mb-6">
+              <p className="text-gray-700 leading-relaxed">{product.description}</p>
+            </div>
+
+            {/* Tags */}
+            {product.tags && product.tags.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-sm font-medium text-gray-900 mb-2">Tags</h3>
+                <div className="flex flex-wrap gap-2">
+                  {product.tags.map((tag, index) => (
+                    <span
+                      key={index}
+                      className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Preço */}
+            <div className="mb-6">
+              <PriceDisplay product={product} className="text-2xl" />
+            </div>
+
+            {/* Adicionais */}
+            {product.additional && product.additional.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Adicionais</h3>
+                <div className="space-y-2">
+                  {product.additional.map((additional) => (
+                    <label
+                      key={additional.id}
+                      className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <input
+                          type="checkbox"
+                          checked={selectedAdditionals.some(item => item.id === additional.id)}
+                          onChange={() => toggleAdditional(additional)}
+                          className="w-4 h-4 text-amber-500 border-gray-300 rounded focus:ring-amber-500"
+                        />
+                        <div>
+                          <p className="font-medium text-gray-900">{additional.name}</p>
+                          {additional.description && (
+                            <p className="text-sm text-gray-600">{additional.description}</p>
+                          )}
+                        </div>
+                      </div>
+                      <span className="font-semibold text-gray-900">
+                        R$ {additional.price.toFixed(2).replace('.', ',')}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Quantidade */}
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">Quantidade</h3>
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <Minus className="w-4 h-4" />
+                </button>
+                <span className="text-xl font-semibold text-gray-900 min-w-[3rem] text-center">
+                  {quantity}
+                </span>
+                <button
+                  onClick={() => setQuantity(quantity + 1)}
+                  className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Total */}
+            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+              <div className="flex justify-between items-center">
+                <span className="text-lg font-semibold text-gray-900">Total</span>
+                <span className="text-2xl font-bold text-amber-600">
+                  R$ {calculateTotalPrice().toFixed(2).replace('.', ',')}
+                </span>
+              </div>
+            </div>
+
+            {/* Botão Adicionar ao Carrinho */}
+            <button
+              onClick={handleAddToCart}
+              className="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2"
+            >
+              <Plus className="w-5 h-5" />
+              <span>Adicionar ao Carrinho</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

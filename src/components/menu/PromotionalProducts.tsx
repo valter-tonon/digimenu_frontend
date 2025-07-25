@@ -27,13 +27,14 @@ export function PromotionalProducts({ products, onProductClick }: PromotionalPro
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {promotionalProducts.slice(0, 6).map((product) => (
-            <ProductCard 
-              key={product.id} 
-              product={product} 
-              onClick={() => onProductClick(product)}
-              showBadge={true}
-              isPromotional={true}
-            />
+                                    <ProductCard
+                          key={product.id}
+                          product={product}
+                          onClick={() => onProductClick(product)}
+                          showBadge={true}
+                          isPromotional={true}
+                          className="cursor-pointer"
+                        />
           ))}
         </div>
       </div>
