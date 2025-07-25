@@ -98,7 +98,10 @@ export const useNotificationStore = create<NotificationState>()(
       },
 
       connect: (storeId, tableId) => {
-        websocketService.connect(storeId, tableId);
+        // Verificar se estamos no browser antes de conectar
+        if (typeof window !== 'undefined') {
+          websocketService.connect(storeId, tableId);
+        }
         
         // Configurar listeners
         const unsubscribeConnected = websocketService.subscribe('connected', () => {
@@ -189,9 +192,12 @@ export const useNotificationStore = create<NotificationState>()(
 // Função para tocar som de notificação
 function playNotificationSound() {
   try {
-    const audio = new Audio('/sounds/notification.mp3');
-    audio.volume = 0.5;
-    audio.play().catch(console.error);
+    // Verificar se estamos no browser antes de tocar som
+    if (typeof window !== 'undefined') {
+      const audio = new Audio('/sounds/notification.mp3');
+      audio.volume = 0.5;
+      audio.play().catch(console.error);
+    }
   } catch (error) {
     console.error('Erro ao tocar som de notificação:', error);
   }

@@ -6,7 +6,7 @@ import { OrderHistory } from '@/components/orders/OrderHistory';
 import { OrderDetails } from '@/components/orders/OrderDetails';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { StoreHeader } from '@/components/menu/StoreHeader';
-import { api } from '@/services/api';
+import api from '@/services/api';
 
 interface Order {
   id: number;
@@ -110,7 +110,7 @@ export default function OrdersPage() {
 
   // WebSocket para atualizações em tempo real
   useEffect(() => {
-    if (!storeId) return;
+    if (!storeId || typeof window === 'undefined') return;
 
     const ws = new WebSocket(`ws://localhost:6001/orders/${storeId}`);
     

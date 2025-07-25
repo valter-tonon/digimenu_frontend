@@ -25,7 +25,10 @@ class WebSocketService {
 
   constructor() {
     this.handleVisibilityChange = this.handleVisibilityChange.bind(this);
-    document.addEventListener('visibilitychange', this.handleVisibilityChange);
+    // Verificar se estamos no browser antes de adicionar event listener
+    if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', this.handleVisibilityChange);
+    }
   }
 
   private handleVisibilityChange() {
