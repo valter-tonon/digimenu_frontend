@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import {
   ShoppingCart,
   User,
@@ -10,7 +9,8 @@ import {
   Heart,
   Clock,
   MapPin,
-  ChevronDown
+  ChevronDown,
+  Circle
 } from 'lucide-react';
 import { useAppContext } from '@/hooks/useAppContext';
 import { CompactStoreHeader } from './StoreHeader';
@@ -21,7 +21,7 @@ interface MenuHeaderProps {
   cartItemsCount: number;
   onCartClick: () => void;
   storeName?: string;
-  storeLogo?: string;
+  storeLogo?: string | null;
   openingHours?: {
     opens_at: string;
     closes_at: string;
@@ -42,7 +42,6 @@ export function MenuHeader({
   tableId,
   storeId
 }: MenuHeaderProps) {
-  const router = useRouter();
   const { data } = useAppContext();
   const [profileOpen, setProfileOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -57,7 +56,6 @@ export function MenuHeader({
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const cartItemCount = 0; // TODO: Implementar carrinho
   const finalStoreName = propStoreName || data?.storeName || 'Restaurante';
   const finalStoreLogo = propStoreLogo;
 
@@ -71,6 +69,10 @@ export function MenuHeader({
       return `Mesa ${tableId.slice(-4)}`;
     }
     return 'Delivery';
+  };
+
+  const formatTime = (time: string) => {
+    return time.replace(':', 'h');
   };
 
   return (
@@ -91,9 +93,26 @@ export function MenuHeader({
             />
           </Link>
 
+          {/* Status de Abertura e Horário */}
+          {openingHours && (
+            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-gray-50 text-gray-700 rounded-full text-sm font-medium border border-gray-200">
+              <Circle 
+                className={`w-2 h-2 ${
+                  openingHours.is_open ? 'text-green-500 fill-current' : 'text-red-500 fill-current'
+                }`} 
+              />
+              <span className={openingHours.is_open ? 'text-green-700' : 'text-red-700'}>
+                {openingHours.is_open ? 'Aberto' : 'Fechado'}
+              </span>
+              <span className="text-gray-500">
+                {formatTime(openingHours.opens_at)} - {formatTime(openingHours.closes_at)}
+              </span>
+            </div>
+          )}
+
           {/* Indicador de Contexto */}
           {tableId && (
-            <div className="hidden md:flex items-center gap-2 px-3 py-1 bg-amber-50 text-amber-700 rounded-full text-sm font-medium border border-amber-200">
+            <div className="hidden lg:flex items-center gap-2 px-3 py-1 bg-amber-50 text-amber-700 rounded-full text-sm font-medium border border-amber-200">
               <MapPin className="w-4 h-4" />
               {getCurrentContext()}
             </div>
@@ -106,16 +125,16 @@ export function MenuHeader({
 
             {/* Carrinho */}
             <button
-              onClick={() => router.push(`/${storeId}/cart`)}
+              onClick={onCartClick}
               className="relative p-2 text-gray-600 hover:text-amber-500 transition-colors"
               aria-label="Carrinho"
             >
               <ShoppingCart className="h-6 w-6" />
               
               {/* Badge do carrinho */}
-              {cartItemCount > 0 && (
+              {cartItemsCount > 0 && (
                 <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-amber-500 rounded-full min-w-[20px] h-5">
-                  {cartItemCount > 99 ? '99+' : cartItemCount}
+                  {cartItemsCount > 99 ? '99+' : cartItemsCount}
                 </span>
               )}
             </button>
@@ -150,6 +169,46 @@ export function MenuHeader({
                             Mesa {tableId.slice(-4)}
                           </p>
                           <p className="text-xs text-amber-600">Contexto atual</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Status da Loja */}
+                  {openingHours && (
+                    <div className="px-4 py-3 bg-gradient-to-r from-gray-50 to-blue-50 border-b border-gray-100">
+                      <div className="flex items-center gap-2">
+                        <Circle 
+                          className={`w-3 h-3 ${
+                            openingHours.is_open ? 'text-green-500 fill-current' : 'text-red-500 fill-current'
+                          }`} 
+                        />
+                        <div>
+                          <p className={`text-sm font-medium ${
+                            openingHours.is_open ? 'text-green-700' : 'text-red-700'
+                          }`}>
+                            {openingHours.is_open ? 'Loja Aberta' : 'Loja Fechada'}
+                          </p>
+                          <p className="text-xs text-gray-600">
+                            {formatTime(openingHours.opens_at)} - {formatTime(openingHours.closes_at)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Pedido Mínimo */}
+                  {minOrderValue && (
+                    <div className="px-4 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100">
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-3 h-3 text-blue-600" />
+                        <div>
+                          <p className="text-sm font-medium text-blue-700">
+                            Pedido Mínimo
+                          </p>
+                          <p className="text-xs text-blue-600">
+                            R$ {minOrderValue.toFixed(2).replace('.', ',')}
+                          </p>
                         </div>
                       </div>
                     </div>

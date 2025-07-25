@@ -27,6 +27,8 @@ interface CartState {
   deliveryMode: boolean;
   lastUpdated: number;
   expiresAt: number | null;
+  sessionId: string | null;
+  fingerprint: string | null;
 }
 
 interface CartStore extends CartState {
@@ -40,6 +42,7 @@ interface CartStore extends CartState {
   setContext: (storeId: string, tableId?: string) => void;
   setDeliveryMode: (isDelivery: boolean) => void;
   setCartTTL: (hours: number) => void;
+  setSessionData: (sessionId: string, fingerprint: string) => void;
   
   // Actions
   addItem: (item: Omit<CartItem, 'id'>) => void;
@@ -47,6 +50,7 @@ interface CartStore extends CartState {
   removeItem: (id: number) => void;
   clearCart: () => void;
   syncCart: () => void;
+  syncWithSession: () => Promise<void>;
 }
 
 // Helper para calcular o preço de um item (incluindo adicionais)
@@ -126,6 +130,8 @@ export const useCartStore = create<CartStore>()(
       deliveryMode: false,
       lastUpdated: Date.now(),
       expiresAt: Date.now() + DEFAULT_TTL,
+      sessionId: null,
+      fingerprint: null,
       
       totalItems: () => {
         return get().items.reduce((sum, item) => sum + item.quantity, 0);
@@ -211,9 +217,19 @@ export const useCartStore = create<CartStore>()(
         });
       },
       
+      setSessionData: (sessionId, fingerprint) => {
+        set({ 
+          sessionId,
+          fingerprint,
+          lastUpdated: Date.now()
+        });
+      },
+      
       clearCart: () => {
         set({ 
           items: [],
+          sessionId: null,
+          fingerprint: null,
           lastUpdated: Date.now()
         });
       },
@@ -227,6 +243,35 @@ export const useCartStore = create<CartStore>()(
           });
         }
         // Não atualiza o timestamp se não for necessário para evitar re-renderizações
+      },
+
+      syncWithSession: async () => {
+        const state = get();
+        
+        // Se não há sessão ou fingerprint, não faz nada
+        if (!state.sessionId || !state.fingerprint) {
+          return;
+        }
+
+        try {
+          // Importa dinamicamente para evitar dependência circular
+          const { sessionService } = await import('../services/sessionService');
+          
+          // Atualiza atividade da sessão se há itens no carrinho
+          if (state.items.length > 0) {
+            await sessionService.updateActivity(state.sessionId);
+          }
+
+          // Em produção, sincronizar carrinho com backend
+          console.log('Carrinho sincronizado com sessão:', {
+            sessionId: state.sessionId,
+            itemCount: state.items.length,
+            totalPrice: get().totalPrice()
+          });
+
+        } catch (error) {
+          console.error('Erro ao sincronizar carrinho com sessão:', error);
+        }
       }
     }),
     {
@@ -239,7 +284,9 @@ export const useCartStore = create<CartStore>()(
         tableId: state.tableId,
         deliveryMode: state.deliveryMode,
         lastUpdated: state.lastUpdated,
-        expiresAt: state.expiresAt
+        expiresAt: state.expiresAt,
+        sessionId: state.sessionId,
+        fingerprint: state.fingerprint
       })
     }
   )
