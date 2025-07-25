@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useNotificationStore, sendPushNotification } from '@/store/notification-store';
 import { AppNotification } from '@/services/websocket';
 import toast from 'react-hot-toast';
-import { Bell, CheckCircle, AlertCircle, Info, XCircle } from 'lucide-react';
+import { Bell, CheckCircle, AlertCircle, Info, XCircle, Star } from 'lucide-react';
 
 export function NotificationToast() {
   const { notifications } = useNotificationStore();
@@ -33,62 +33,74 @@ export function NotificationToast() {
         background: getToastBackground(notification.priority),
         color: '#1f2937',
         border: `1px solid ${getToastBorder(notification.priority)}`,
-        borderRadius: '8px',
-        padding: '12px 16px',
-        minWidth: '300px',
-        maxWidth: '400px',
+        borderRadius: '12px',
+        padding: '16px 20px',
+        minWidth: '320px',
+        maxWidth: '450px',
+        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+        backdropFilter: 'blur(10px)',
+        borderLeft: `4px solid ${getPriorityColor(notification.priority)}`,
       },
     };
 
     const toastContent = (
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-4">
         <div className="flex-shrink-0">
-          {getToastIcon(notification.type)}
+          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getIconBackground(notification.priority)}`}>
+            {getToastIcon(notification.type)}
+          </div>
         </div>
         
         <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between">
-            <h4 className="text-sm font-medium text-gray-900 truncate">
+          <div className="flex items-start justify-between mb-2">
+            <h4 className="text-sm font-semibold text-gray-900 truncate">
               {notification.title}
             </h4>
             <button
               onClick={() => toast.dismiss(toastId)}
-              className="flex-shrink-0 ml-2 p-1 text-gray-400 hover:text-gray-600 transition-colors"
+              className="flex-shrink-0 ml-3 p-1 text-gray-400 hover:text-gray-600 transition-colors rounded-full hover:bg-gray-100"
             >
               <XCircle className="w-4 h-4" />
             </button>
           </div>
           
-          <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+          <p className="text-sm text-gray-600 mb-3 leading-relaxed">
             {notification.message}
           </p>
           
-          <div className="flex items-center justify-between mt-2">
-            <span className="text-xs text-gray-400">
-              {new Date(notification.timestamp).toLocaleTimeString('pt-BR', {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </span>
-            
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => {
-                  toast.dismiss(toastId);
-                  // Marcar como lida
-                  useNotificationStore.getState().markAsRead(notification.id);
-                }}
-                className="text-xs text-blue-600 hover:text-blue-800 transition-colors"
-              >
-                Marcar como lida
-              </button>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-gray-400">
+                {new Date(notification.timestamp).toLocaleTimeString('pt-BR', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </span>
+              
+              {notification.priority === 'high' && (
+                <span className="flex items-center gap-1 text-xs text-red-600 font-medium">
+                  <Star className="w-3 h-3 fill-current" />
+                  Importante
+                </span>
+              )}
             </div>
+            
+            <button
+              onClick={() => {
+                toast.dismiss(toastId);
+                // Marcar como lida
+                useNotificationStore.getState().markAsRead(notification.id);
+              }}
+              className="text-xs text-blue-600 hover:text-blue-800 transition-colors font-medium hover:underline"
+            >
+              Marcar como lida
+            </button>
           </div>
         </div>
       </div>
     );
 
-    // Mostrar toast
+    // Mostrar toast com animação personalizada
     toast(toastContent, toastOptions);
 
     // Enviar notificação push se for alta prioridade
@@ -98,52 +110,83 @@ export function NotificationToast() {
         icon: '/favicon.ico',
         tag: `notification-${notification.id}`,
         requireInteraction: true,
+        badge: '/favicon.ico',
+        vibrate: [200, 100, 200],
+        data: {
+          notificationId: notification.id,
+          type: notification.type,
+          priority: notification.priority,
+        },
       });
     }
   };
 
   const getToastIcon = (type: string) => {
-    const baseClasses = 'w-6 h-6';
-    
     switch (type) {
       case 'order_status':
-        return <CheckCircle className={`${baseClasses} text-blue-600`} />;
+        return <CheckCircle className="w-5 h-5 text-blue-600" />;
       case 'stock_update':
-        return <AlertCircle className={`${baseClasses} text-amber-600`} />;
+        return <AlertCircle className="w-5 h-5 text-amber-600" />;
       case 'promotion':
-        return <Bell className={`${baseClasses} text-green-600`} />;
+        return <Star className="w-5 h-5 text-green-600" />;
       case 'waiter_call':
-        return <AlertCircle className={`${baseClasses} text-purple-600`} />;
+        return <Bell className="w-5 h-5 text-purple-600" />;
       default:
-        return <Info className={`${baseClasses} text-gray-600`} />;
+        return <Info className="w-5 h-5 text-gray-600" />;
     }
   };
 
   const getToastBackground = (priority: string) => {
     switch (priority) {
       case 'high':
-        return '#fef2f2'; // bg-red-50
+        return 'linear-gradient(135deg, #fef2f2 0%, #fecaca 100%)';
       case 'medium':
-        return '#fffbeb'; // bg-amber-50
+        return 'linear-gradient(135deg, #fffbeb 0%, #fed7aa 100%)';
       case 'low':
-        return '#f0fdf4'; // bg-green-50
+        return 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)';
       default:
-        return '#f9fafb'; // bg-gray-50
+        return 'linear-gradient(135deg, #f9fafb 0%, #e5e7eb 100%)';
     }
   };
 
   const getToastBorder = (priority: string) => {
     switch (priority) {
       case 'high':
-        return '#fecaca'; // border-red-200
+        return '#fca5a5';
       case 'medium':
-        return '#fed7aa'; // border-amber-200
+        return '#fbbf24';
       case 'low':
-        return '#bbf7d0'; // border-green-200
+        return '#93c5fd';
       default:
-        return '#e5e7eb'; // border-gray-200
+        return '#d1d5db';
     }
   };
 
-  return null; // Este componente não renderiza nada, apenas gerencia toasts
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'high':
+        return '#ef4444';
+      case 'medium':
+        return '#f59e0b';
+      case 'low':
+        return '#3b82f6';
+      default:
+        return '#6b7280';
+    }
+  };
+
+  const getIconBackground = (priority: string) => {
+    switch (priority) {
+      case 'high':
+        return 'bg-red-100';
+      case 'medium':
+        return 'bg-amber-100';
+      case 'low':
+        return 'bg-blue-100';
+      default:
+        return 'bg-gray-100';
+    }
+  };
+
+  return null; // Este componente não renderiza nada visualmente
 } 

@@ -243,12 +243,20 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
       return;
     }
 
+    // Determinar o preço correto a ser usado
+    let effectivePrice = Number(product.price) || 0;
+    if (product.is_on_promotion && 
+        product.promotional_price != null && 
+        Number(product.promotional_price) > 0) {
+      effectivePrice = Number(product.promotional_price);
+    }
+
     // Converter o produto para o formato do CartItem esperado pelo carrinho Zustand
     addToCart({
       id: product.uuid, // UUID do produto como identificador
       productId: product.id, // ID numérico do produto
       name: product.name,
-      price: Number(product.price) || 0,
+      price: effectivePrice,
       quantity: selectedQuantity,
       additionals: additionals.map(add => ({
         id: add.id,
