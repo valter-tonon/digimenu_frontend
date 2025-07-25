@@ -96,8 +96,18 @@ export function CategoryList({ categories, onSelectCategory, selectedCategoryId 
   
   if (!validCategories.length) {
     return (
-      <div className="text-center py-4">
-        <p className="text-gray-600">Nenhuma categoria disponível.</p>
+              <div className="text-center py-4">
+          <p className="text-gray-700">Nenhuma categoria disponível.</p>
+        <div className="flex justify-center mt-4">
+          <div className="flex space-x-4">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} className="flex flex-col items-center animate-pulse">
+                <div className="w-16 h-16 bg-gray-200 rounded-full"></div>
+                <div className="h-3 bg-gray-200 rounded w-12 mt-2"></div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }

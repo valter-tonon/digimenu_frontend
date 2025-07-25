@@ -121,10 +121,11 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
   useEffect(() => {
     // Notificar componentes pai sobre a mudança na quantidade de itens do carrinho
     if (onCartItemsChange) {
-      const totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
+      const totalItems = cartItemsZustand.reduce((total, item) => total + item.quantity, 0);
+      console.log('ProductList: onCartItemsChange chamado com totalItems:', totalItems, 'cartItemsZustand:', cartItemsZustand);
       onCartItemsChange(totalItems);
     }
-  }, [cartItems, onCartItemsChange]);
+  }, [cartItemsZustand, onCartItemsChange]);
 
   // Adicionar efeito para escutar eventos de toggle do carrinho
   useEffect(() => {

@@ -5,7 +5,10 @@ import { useRouter } from 'next/navigation';
 import { useAppContext } from '@/hooks/useAppContext';
 import { MenuProvider, useMenu } from '@/infrastructure/context/MenuContext';
 import { LayoutProvider } from '@/infrastructure/context/LayoutContext';
-import { MenuHeader, CategoryList, ProductList } from '@/components/menu';
+import { MenuHeader, CategoryList, ProductList, FeaturedProducts, PromotionalProducts } from '@/components/menu';
+import { SearchBar } from '@/components/ui/SearchBar';
+import { FilterBar } from '@/components/ui/FilterBar';
+import { ResultsStats } from '@/components/ui/ResultsStats';
 import { TableActions } from '@/components/menu/TableActions';
 import { OrderSummary } from '@/components/menu/OrderSummary';
 import { NotFound } from '@/components/ui/NotFound';
@@ -247,22 +250,23 @@ function MenuContent({
   // Estados para armazenar os dados da loja
   const [storeName, setStoreName] = useState<string>('');
   const [storeLogo, setStoreLogo] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [activeFilters, setActiveFilters] = useState({
+    onlyFeatured: false,
+    onlyPromotional: false,
+    onlyPopular: false,
+    priceRange: { min: 0, max: 1000 }
+  });
   
   // Função para lidar com o clique no botão do carrinho
   const handleCartClick = () => {
-    // Em vez de abrir o OrderSummary, vamos usar o ProductList para abrir o carrinho lateral
-    const productListElement = document.querySelector('.product-list-container');
-    if (productListElement) {
-      const event = new CustomEvent('toggleCart');
-      productListElement.dispatchEvent(event);
-    } else {
-      // Fallback para o método anterior se não encontrar o elemento
-      openOrderSummary();
-    }
+    console.log('Carrinho clicado, itens no carrinho:', cartItemsCount);
+    openOrderSummary();
   };
 
   // Função para lidar com mudanças nos itens do carrinho
   const handleCartItemsChange = (count: number) => {
+    console.log('handleCartItemsChange chamado com count:', count);
     setCartItemsCount(count);
   };
 
@@ -309,13 +313,30 @@ function MenuContent({
   // Atualizar contador de itens no carrinho quando o carrinho mudar
   useEffect(() => {
     const totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
+    console.log('useEffect: cartItems mudou, totalItems:', totalItems, 'cartItems:', cartItems);
     setCartItemsCount(totalItems);
   }, [cartItems, setCartItemsCount]);
   
-  // Filtrar produtos pela categoria selecionada
-  const filteredProducts = selectedCategoryId === 0
-    ? products
-    : products.filter(product => product.category_id === selectedCategoryId);
+  // Filtrar produtos pela categoria selecionada, busca e filtros avançados
+  const filteredProducts = products.filter(product => {
+    const matchesCategory = selectedCategoryId === 0 || product.category_id === selectedCategoryId;
+    const matchesSearch = !searchTerm || 
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (product.tags && product.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())));
+    
+    const matchesFeatured = !activeFilters.onlyFeatured || product.is_featured;
+    const matchesPromotional = !activeFilters.onlyPromotional || 
+      (product.promotional_price && product.promotional_price > 0 && product.promotional_price < product.price);
+    const matchesPopular = !activeFilters.onlyPopular || product.is_popular;
+    
+    const currentPrice = product.promotional_price && product.promotional_price > 0 && product.promotional_price < product.price 
+      ? product.promotional_price 
+      : product.price;
+    const matchesPrice = currentPrice >= activeFilters.priceRange.min && currentPrice <= activeFilters.priceRange.max;
+    
+    return matchesCategory && matchesSearch && matchesFeatured && matchesPromotional && matchesPopular && matchesPrice;
+  });
   
   // Se houver erro, mostrar mensagem
   if (error) {
@@ -355,10 +376,49 @@ function MenuContent({
       
       {/* Conteúdo principal */}
       <main className="container mx-auto px-4 py-6 mb-16 flex-1">
+        {/* Barra de busca e filtros */}
+        <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center justify-center">
+          <SearchBar 
+            onSearch={setSearchTerm}
+            placeholder="Buscar produtos, categorias ou tags..."
+            className="w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl"
+          />
+          <FilterBar 
+            onFilterChange={setActiveFilters}
+            className="sm:ml-4"
+          />
+        </div>
+        
+        {/* Produtos em Destaque */}
+        <FeaturedProducts 
+          products={products} 
+          onProductClick={(product) => {
+            // Abrir modal de detalhes do produto
+            console.log('Produto em destaque clicado:', product);
+          }} 
+        />
+        
+        {/* Produtos em Promoção */}
+        <PromotionalProducts 
+          products={products} 
+          onProductClick={(product) => {
+            // Abrir modal de detalhes do produto
+            console.log('Produto em promoção clicado:', product);
+          }} 
+        />
+        
         <CategoryList 
           categories={categories} 
           selectedCategoryId={selectedCategoryId} 
           onSelectCategory={setSelectedCategoryId} 
+        />
+        
+        {/* Estatísticas dos resultados */}
+        <ResultsStats 
+          totalProducts={products.length}
+          filteredProducts={filteredProducts.length}
+          searchTerm={searchTerm}
+          activeFilters={activeFilters}
         />
         
         <div className="product-list-container">
@@ -432,8 +492,8 @@ function MenuContent({
       
       {/* Botão flutuante do carrinho */}
       <FloatingCartButton 
-        storeId={storeSlug || ''}
-        tableId={tableId || undefined}
+        itemCount={cartItemsCount}
+        onClick={handleCartClick}
       />
     </div>
   );
