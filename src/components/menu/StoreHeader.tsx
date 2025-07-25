@@ -2,25 +2,18 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { Store, History } from 'lucide-react';
-import Link from 'next/link';
+import { Store } from 'lucide-react';
 
 interface StoreHeaderProps {
   storeName: string;
   storeLogo?: string | null;
-  subtitle?: string;
   className?: string;
-  showHistoryButton?: boolean;
-  storeId?: string;
 }
 
 export function StoreHeader({ 
   storeName, 
   storeLogo, 
-  subtitle = 'Cardápio Digital',
-  className = '',
-  showHistoryButton = false,
-  storeId
+  className = ''
 }: StoreHeaderProps) {
   const [imageError, setImageError] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
@@ -48,58 +41,36 @@ export function StoreHeader({
   );
 
   return (
-    <div className={`flex items-center justify-between ${className}`}>
-      <div className="flex items-center">
-        {/* Logo Container */}
-        <div className="relative mr-4">
-          {storeLogo && !imageError ? (
-            <div className="relative h-16 w-16 overflow-hidden rounded-xl border-2 border-primary/20 shadow-sm bg-white">
-              {imageLoading && (
-                <div className="absolute inset-0 bg-gray-100 animate-pulse rounded-xl" />
-              )}
-              <Image
-                src={storeLogo}
-                alt={`Logo ${storeName}`}
-                fill
-                style={{ objectFit: 'contain' }}
-                sizes="64px"
-                quality={90}
-                priority
-                onError={handleImageError}
-                onLoad={handleImageLoad}
-                className={`transition-opacity duration-300 ${
-                  imageLoading ? 'opacity-0' : 'opacity-100'
-                }`}
-              />
-            </div>
-          ) : (
-            <LogoFallback />
-          )}
-        </div>
-
-        {/* Store Info */}
-        <div className="flex-1 min-w-0">
-          <h1 className="text-xl font-bold text-gray-900 truncate">
-            {storeName}
-          </h1>
-          {subtitle && (
-            <p className="text-sm text-gray-500 mt-0.5">
-              {subtitle}
-            </p>
-          )}
-        </div>
+    <div className={`flex items-center gap-4 ${className}`}>
+      {/* Logo Container */}
+      <div className="relative">
+        {storeLogo && !imageError ? (
+          <div className="relative h-16 w-16 overflow-hidden rounded-xl border-2 border-primary/20 shadow-sm bg-white">
+            {imageLoading && (
+              <div className="absolute inset-0 bg-gray-100 animate-pulse rounded-xl" />
+            )}
+            <Image
+              src={storeLogo}
+              alt={`Logo ${storeName}`}
+              fill
+              style={{ objectFit: 'contain' }}
+              sizes="64px"
+              quality={90}
+              priority
+              onError={handleImageError}
+              onLoad={handleImageLoad}
+              className={`transition-opacity duration-300 ${
+                imageLoading ? 'opacity-0' : 'opacity-100'
+              }`}
+            />
+          </div>
+        ) : (
+          <LogoFallback />
+        )}
       </div>
-
-      {/* Botão de Histórico */}
-      {showHistoryButton && storeId && (
-        <Link
-          href={`/${storeId}/orders`}
-          className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors text-sm font-medium"
-        >
-          <History className="w-4 h-4" />
-          Histórico
-        </Link>
-      )}
+      <h1 className="text-xl font-bold text-gray-900 truncate">
+        {storeName}
+      </h1>
     </div>
   );
 }

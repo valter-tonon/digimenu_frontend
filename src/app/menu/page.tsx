@@ -14,7 +14,7 @@ import { TableActions } from '@/components/menu/TableActions';
 import { OrderSummary } from '@/components/menu/OrderSummary';
 import { NotFound } from '@/components/ui/NotFound';
 import { FloatingCartButton } from '@/components/ui/FloatingCartButton';
-import { FloatingNavigation } from '@/components/ui/FloatingNavigation';
+
 // TODO: LayoutSelector removido - tema será configurado no painel admin
 // import { LayoutSelector } from '@/components/ui/LayoutSelector';
 import { StoreHeader } from '@/components/menu/StoreHeader';
@@ -357,7 +357,7 @@ function MenuContent({
           storeName={storeName || storeSlug || 'Restaurante'}
           storeLogo={storeLogo || undefined}
           openingHours={tenantData?.opening_hours}
-          minOrderValue={tenantData?.min_order_value}
+          minOrderValue={tenantData?.min_order_value || undefined}
           tableId={tableId}
           storeId={storeSlug}
         />
@@ -504,10 +504,7 @@ function MenuContent({
         onClick={handleCartClick}
       />
 
-      {/* Navegação flutuante */}
-      <FloatingNavigation 
-        storeId={storeSlug || ''}
-      />
+
 
 
     </div>

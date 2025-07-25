@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { CompactStoreHeader } from './StoreHeader';
 import { useContainer } from '@/infrastructure/di';
+import { User, History, LogOut, LogIn } from 'lucide-react';
+import Link from 'next/link';
 
 interface MenuHeaderProps {
   cartItemsCount: number;
@@ -34,6 +36,8 @@ export function MenuHeader({
   const [isLoadingTable, setIsLoadingTable] = useState(false);
   const [isCallingWaiter, setIsCallingWaiter] = useState(false);
   const [waiterCalled, setWaiterCalled] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const isAuthenticated = true; // TODO: integrar com auth real
 
   // Buscar informações da mesa quando tableId estiver disponível
   useEffect(() => {
@@ -49,7 +53,7 @@ export function MenuHeader({
         const lastPart = uuidParts[uuidParts.length - 1];
         const tableNumber = parseInt(lastPart.slice(0, 4), 16) % 100; // Converter para número e limitar a 2 dígitos
         return `Mesa ${tableNumber}`;
-      } catch (error) {
+      } catch {
         // Fallback final se tudo falhar
         return `Mesa ${tableId.slice(-4)}`;
       }
@@ -60,8 +64,8 @@ export function MenuHeader({
         setIsLoadingTable(true);
         const table = await tableRepository.getTableByUuid(tableId, storeId || undefined);
         setTableName(table.identifier);
-      } catch (error) {
-        console.warn('Não foi possível buscar informações da mesa, usando fallback:', error);
+      } catch {
+        console.warn('Não foi possível buscar informações da mesa, usando fallback');
         setTableName(generateTableName());
       } finally {
         setIsLoadingTable(false);
@@ -108,12 +112,10 @@ export function MenuHeader({
             className="flex-1"
           />
           
-          <div className="ml-4">
-            <p className="text-xs text-gray-500">Cardápio Digital</p>
-            
+          <div className="ml-6 flex flex-col gap-1">
             {/* Informações de horário de funcionamento */}
             {openingHours && (
-              <p className="text-xs text-gray-600 mt-1">
+              <p className="text-xs text-gray-600">
                 {openingHours.is_open ? (
                   <span className="flex items-center">
                     <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
@@ -127,8 +129,7 @@ export function MenuHeader({
                 )}
               </p>
             )}
-            
-            {/* Valor mínimo do pedido */}
+            {/* Valor mínimo do pedido - só mostra se > 0 */}
             {minOrderValue && minOrderValue > 0 && (
               <p className="text-xs text-gray-600">
                 Pedido mínimo: R$ {minOrderValue.toFixed(2)}
@@ -137,7 +138,7 @@ export function MenuHeader({
           </div>
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-6">
           {/* Botão de chamar garçom */}
           {tableId && (
             <button
@@ -159,6 +160,50 @@ export function MenuHeader({
               <span>{waiterCalled ? 'Garçom chamado' : 'Chamar Garçom'}</span>
             </button>
           )}
+          
+          {/* Botão de perfil */}
+          <div className="relative pl-3">
+            <button
+              onClick={() => setProfileOpen((v) => !v)}
+              className="flex items-center gap-2 px-3 py-2 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 shadow-sm transition-colors"
+              aria-label="Abrir menu do perfil"
+            >
+              <User className="w-5 h-5" />
+            </button>
+            {profileOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+                <Link
+                  href={`/${storeId}/profile`}
+                  className="flex items-center gap-2 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100"
+                  onClick={() => setProfileOpen(false)}
+                >
+                  <User className="w-4 h-4 text-blue-500" /> Meu Perfil
+                </Link>
+                <Link
+                  href={`/${storeId}/orders`}
+                  className="flex items-center gap-2 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100"
+                  onClick={() => setProfileOpen(false)}
+                >
+                  <History className="w-4 h-4 text-amber-500" /> Histórico de Pedidos
+                </Link>
+                {isAuthenticated ? (
+                  <button
+                    className="flex items-center gap-2 w-full px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors"
+                    onClick={() => { setProfileOpen(false); /* TODO: logout */ }}
+                  >
+                    <LogOut className="w-4 h-4 text-red-500" /> Sair
+                  </button>
+                ) : (
+                  <button
+                    className="flex items-center gap-2 w-full px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors"
+                    onClick={() => { setProfileOpen(false); /* TODO: login */ }}
+                  >
+                    <LogIn className="w-4 h-4 text-green-500" /> Entrar
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
           
           {/* Botão do carrinho */}
           <button 
