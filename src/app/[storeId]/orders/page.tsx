@@ -6,10 +6,7 @@ import { useAppContext } from '@/hooks/useAppContext';
 import { MenuProvider, useMenu } from '@/infrastructure/context/MenuContext';
 import { LayoutProvider } from '@/infrastructure/context/LayoutContext';
 import { MenuHeader } from '@/components/menu';
-import { UserProfile } from '@/components/profile/UserProfile';
-import { AddressManager } from '@/components/profile/AddressManager';
-import { PreferencesSettings } from '@/components/profile/PreferencesSettings';
-import { NotificationSettings } from '@/components/profile/NotificationSettings';
+import { OrderHistory } from '@/components/orders/OrderHistory';
 import { StoreHeader } from '@/components/menu/StoreHeader';
 import { useContainer } from '@/infrastructure/di';
 import { StoreStatusProvider } from '@/infrastructure/context/StoreStatusContext';
@@ -18,30 +15,29 @@ import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { useNavigation } from '@/hooks/useNavigation';
 
 // Componente de carregamento para o Suspense
-function ProfileLoading() {
+function OrdersLoading() {
   return (
     <div className="flex items-center justify-center min-h-screen">
       <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500 mx-auto"></div>
-        <p className="mt-4 text-gray-600">Carregando perfil...</p>
+        <p className="mt-4 text-gray-600">Carregando histórico de pedidos...</p>
       </div>
     </div>
   );
 }
 
 // Componente principal envolvido em Suspense
-export default function ProfilePageWrapper() {
+export default function OrdersPageWrapper() {
   return (
-    <Suspense fallback={<ProfileLoading />}>
-      <ProfilePage />
+    <Suspense fallback={<OrdersLoading />}>
+      <OrdersPage />
     </Suspense>
   );
 }
 
-function ProfilePage() {
+function OrdersPage() {
   const params = useParams();
   const storeId = params.storeId as string;
-  const [activeTab, setActiveTab] = useState<'profile' | 'addresses' | 'preferences' | 'notifications'>('profile');
   
   // Usar o mesmo contexto do menu
   const { data, isLoading: contextLoading, error: contextError, isValid } = useAppContext();
@@ -67,8 +63,8 @@ function ProfilePage() {
         // Usar o mesmo repositório do menu para carregar dados do tenant
         const menuParams = {
           store: storeId,
-          table: null,
-          isDelivery: false
+          table: tableId || null,
+          isDelivery: isDelivery
         };
         const menuData = await menuRepository.getMenu(menuParams);
         
@@ -95,10 +91,10 @@ function ProfilePage() {
     };
 
     loadTenantData();
-  }, [isValid, contextLoading, storeId, storeName, menuRepository]);
+  }, [isValid, contextLoading, storeId, storeName, menuRepository, tableId, isDelivery]);
 
   if (loading || contextLoading) {
-    return <ProfileLoading />;
+    return <OrdersLoading />;
   }
 
   return (
@@ -122,7 +118,7 @@ function ProfilePage() {
           {/* Breadcrumb */}
           <div className="mb-4">
             <Breadcrumb
-              items={getBreadcrumbItems('Meu Perfil')}
+              items={getBreadcrumbItems('Histórico de Pedidos')}
             />
           </div>
 
@@ -137,8 +133,8 @@ function ProfilePage() {
                 <span>Voltar ao Cardápio</span>
               </button>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Meu Perfil</h1>
-            <p className="text-gray-600">Gerencie suas informações pessoais e preferências</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Histórico de Pedidos</h1>
+            <p className="text-gray-600">Acompanhe todos os seus pedidos realizados</p>
             {tableId && (
               <p className="text-sm text-gray-500 mt-2">
                 Contexto: {getCurrentContext()} • {isDelivery ? 'Delivery' : 'Presencial'}
@@ -146,45 +142,13 @@ function ProfilePage() {
             )}
           </div>
 
-          {/* Navegação por abas */}
-          <div className="mb-8">
-            <nav className="flex space-x-8 border-b border-gray-200">
-              {[
-                { id: 'profile', label: 'Perfil', icon: '👤' },
-                { id: 'addresses', label: 'Endereços', icon: '📍' },
-                { id: 'preferences', label: 'Preferências', icon: '⚙️' },
-                { id: 'notifications', label: 'Notificações', icon: '🔔' }
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
-                  className={`flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                    activeTab === tab.id
-                      ? 'border-amber-500 text-amber-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  <span>{tab.icon}</span>
-                  {tab.label}
-                </button>
-              ))}
-            </nav>
-          </div>
-
-          {/* Conteúdo das abas */}
+          {/* Lista de Pedidos */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            {activeTab === 'profile' && (
-              <UserProfile />
-            )}
-            {activeTab === 'addresses' && (
-              <AddressManager />
-            )}
-            {activeTab === 'preferences' && (
-              <PreferencesSettings />
-            )}
-            {activeTab === 'notifications' && (
-              <NotificationSettings />
-            )}
+            <OrderHistory 
+              storeId={storeId}
+              tableId={tableId}
+              isDelivery={isDelivery}
+            />
           </div>
         </div>
       </main>

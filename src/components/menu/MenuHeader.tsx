@@ -5,6 +5,7 @@ import { CompactStoreHeader } from './StoreHeader';
 import { useContainer } from '@/infrastructure/di';
 import { User, History, LogOut, LogIn } from 'lucide-react';
 import Link from 'next/link';
+import { NotificationBadge } from '../notifications/NotificationBadge';
 
 interface MenuHeaderProps {
   cartItemsCount: number;
@@ -106,11 +107,16 @@ export function MenuHeader({
     <header className="w-full sticky-header py-4 px-4 sticky top-0 z-header">
       <div className="w-full flex justify-between items-center">
         <div className="flex items-center flex-1">
-          <CompactStoreHeader 
-            storeName={propStoreName || 'Restaurante'}
-            storeLogo={propStoreLogo}
+          <Link 
+            href={tableId ? `/${storeId}/${tableId}` : `/${storeId}`}
             className="flex-1"
-          />
+          >
+            <CompactStoreHeader 
+              storeName={propStoreName || 'Restaurante'}
+              storeLogo={propStoreLogo}
+              className="flex-1 hover:opacity-80 transition-opacity cursor-pointer"
+            />
+          </Link>
           
           <div className="ml-6 flex flex-col gap-1">
             {/* Informações de horário de funcionamento */}
@@ -139,6 +145,9 @@ export function MenuHeader({
         </div>
         
         <div className="flex items-center gap-6">
+          {/* Botão de notificações */}
+          <NotificationBadge storeId={storeId || undefined} tableId={tableId || undefined} />
+          
           {/* Botão de chamar garçom */}
           {tableId && (
             <button
@@ -172,6 +181,14 @@ export function MenuHeader({
             </button>
             {profileOpen && (
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+                {/* Contexto atual */}
+                {tableId && (
+                  <div className="px-4 py-2 bg-gray-50 border-b border-gray-100">
+                    <p className="text-xs text-gray-500">Mesa {tableId.slice(-4)}</p>
+                    <p className="text-xs text-gray-400">Contexto atual</p>
+                  </div>
+                )}
+                
                 <Link
                   href={`/${storeId}/profile`}
                   className="flex items-center gap-2 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100"

@@ -1,0 +1,16 @@
+export { Breadcrumb } from './Breadcrumb';
+export { FloatingNavigation } from './FloatingNavigation';
+export { PriceDisplay } from './PriceDisplay';
+export { FloatingCartButton } from './FloatingCartButton';
+export { FilterBar } from './FilterBar';
+export { LoadingSpinner } from './LoadingSpinner';
+export { ResultsStats } from './ResultsStats';
+export { SearchBar } from './SearchBar';
+export { ProductCard } from './ProductCard';
+export { ProductBadge } from './ProductBadge';
+export { LayoutSelector } from './LayoutSelector';
+export { LoginModal } from './LoginModal';
+export { CartModal } from './CartModal';
+export { CookieConsentBanner } from './CookieConsentBanner';
+export { Header } from './Header';
+export { NotFound } from './NotFound'; 
