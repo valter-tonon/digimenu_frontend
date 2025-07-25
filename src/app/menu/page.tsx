@@ -9,7 +9,7 @@ import { MenuHeader, CategoryList, ProductList, FeaturedProducts, PromotionalPro
 import { SearchBar } from '@/components/ui/SearchBar';
 import { FilterBar } from '@/components/ui/FilterBar';
 import { ResultsStats } from '@/components/ui/ResultsStats';
-import { ProductModal } from '@/components/ui/ProductModal';
+
 import { TableActions } from '@/components/menu/TableActions';
 import { OrderSummary } from '@/components/menu/OrderSummary';
 import { NotFound } from '@/components/ui/NotFound';
@@ -258,8 +258,7 @@ function MenuContent({
     onlyPopular: false,
     priceRange: { min: 0, max: 1000 }
   });
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+
   
   // Função para lidar com o clique no botão do carrinho
   const handleCartClick = () => {
@@ -273,35 +272,7 @@ function MenuContent({
     setCartItemsCount(count);
   };
 
-  // Função para abrir modal de produto
-  const handleProductClick = (product: Product) => {
-    setSelectedProduct(product);
-    setIsProductModalOpen(true);
-  };
 
-  // Função para fechar modal de produto
-  const handleCloseProductModal = () => {
-    setIsProductModalOpen(false);
-    setSelectedProduct(null);
-  };
-
-  // Função para adicionar produto ao carrinho via modal
-  const handleAddToCartFromModal = (product: Product, additionals: any[], quantity: number) => {
-    // Converter o produto para o formato do CartItem esperado pelo carrinho
-    addToCart({
-      id: product.uuid,
-      productId: product.id,
-      name: product.name,
-      price: Number(product.price) || 0,
-      quantity: quantity,
-      additionals: additionals.map(add => ({
-        id: add.id,
-        name: add.name,
-        price: Number(add.price) || 0,
-        quantity: 1
-      }))
-    });
-  };
 
   // Função para abrir a modal do carrinho
   const openCartModal = () => {
@@ -425,13 +396,19 @@ function MenuContent({
         {/* Produtos em Destaque */}
         <FeaturedProducts 
           products={products} 
-          onProductClick={handleProductClick} 
+          onProductClick={(product) => {
+            // Abrir modal de detalhes do produto
+            console.log('Produto em destaque clicado:', product);
+          }} 
         />
         
         {/* Produtos em Promoção */}
         <PromotionalProducts 
           products={products} 
-          onProductClick={handleProductClick} 
+          onProductClick={(product) => {
+            // Abrir modal de detalhes do produto
+            console.log('Produto em promoção clicado:', product);
+          }} 
         />
         
         <CategoryList 
@@ -523,13 +500,7 @@ function MenuContent({
         onClick={handleCartClick}
       />
 
-      {/* Modal de detalhes do produto */}
-      <ProductModal
-        product={selectedProduct}
-        isOpen={isProductModalOpen}
-        onClose={handleCloseProductModal}
-        onAddToCart={handleAddToCartFromModal}
-      />
+
     </div>
   );
 } 

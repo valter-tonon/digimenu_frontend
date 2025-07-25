@@ -47,6 +47,7 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
   const router = useRouter();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedAdditionals, setSelectedAdditionals] = useState<Additional[]>([]);
+  const [selectedQuantity, setSelectedQuantity] = useState(1);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   // Função para abrir o carrinho
@@ -195,10 +196,18 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
     setSelectedAdditionals([]); // Limpar adicionais selecionados ao abrir nova modal
   };
 
+  // Expor a função globalmente para que outros componentes possam usar
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).openProductDetailsGlobal = openProductDetails;
+    }
+  }, []);
+
   // Função para fechar a modal
   const closeModal = () => {
     setSelectedProduct(null);
     setSelectedAdditionals([]);
+    setSelectedQuantity(1);
   };
   
   // Função para alternar a seleção de um adicional
@@ -240,7 +249,7 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
       productId: product.id, // ID numérico do produto
       name: product.name,
       price: Number(product.price) || 0,
-      quantity: 1,
+      quantity: selectedQuantity,
       additionals: additionals.map(add => ({
         id: add.id,
         name: add.name,
@@ -705,6 +714,32 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
                 </div>
               )}
               
+              {/* Controle de Quantidade */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-3">Quantidade</h3>
+                <div className="flex items-center space-x-4">
+                  <button
+                    onClick={() => setSelectedQuantity(Math.max(1, selectedQuantity - 1))}
+                    className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                    </svg>
+                  </button>
+                  <span className="text-xl font-semibold text-gray-900 min-w-[3rem] text-center">
+                    {selectedQuantity}
+                  </span>
+                  <button
+                    onClick={() => setSelectedQuantity(selectedQuantity + 1)}
+                    className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
               <div className="mb-6">
                 <h3 className="text-lg font-semibold text-gray-800">Preço</h3>
                 <div className="flex items-baseline mt-1">
@@ -719,7 +754,7 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
                         R$ {formatPrice(calculateTotalPrice(
                           Number(selectedProduct.promotional_price) || 0,
                           selectedAdditionals
-                        ))}
+                        ) * selectedQuantity)}
                       </p>
                     </div>
                   ) : (
@@ -727,7 +762,7 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
                       R$ {formatPrice(calculateTotalPrice(
                         Number(selectedProduct.price) || 0, 
                         selectedAdditionals
-                      ))}
+                      ) * selectedQuantity)}
                     </p>
                   )}
                 </div>

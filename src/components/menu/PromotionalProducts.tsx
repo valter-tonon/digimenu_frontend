@@ -30,7 +30,14 @@ export function PromotionalProducts({ products, onProductClick }: PromotionalPro
                                     <ProductCard
                           key={product.id}
                           product={product}
-                          onClick={() => onProductClick(product)}
+                          onClick={() => {
+                            // Usar a função global do ProductList se disponível
+                            if (typeof window !== 'undefined' && (window as any).openProductDetailsGlobal) {
+                              (window as any).openProductDetailsGlobal(product);
+                            } else if (onProductClick) {
+                              onProductClick(product);
+                            }
+                          }}
                           showBadge={true}
                           isPromotional={true}
                           className="cursor-pointer"
