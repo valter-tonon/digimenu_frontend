@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '@/infrastructure/api/apiClient';
 import { toast } from 'react-hot-toast';
+import { useAuth } from '@/hooks/useAuth';
+import { WaiterCallButton } from './WaiterCallButton';
 
 interface TableActionsProps {
   storeId: string;
@@ -28,6 +30,7 @@ interface OrderStatusResponse {
 }
 
 export function TableActions({ storeId, tableId }: TableActionsProps) {
+  const { isAuthenticated } = useAuth();
   const [isLoadingStatus, setIsLoadingStatus] = useState(false);
   const [orderStatus, setOrderStatus] = useState<OrderStatusResponse | null>(null);
   const [showOrderStatus, setShowOrderStatus] = useState(false);
@@ -79,7 +82,15 @@ export function TableActions({ storeId, tableId }: TableActionsProps) {
   };
 
   return (
-            <div className="fixed bottom-4 right-4 flex flex-col gap-2 z-floating-cart">
+    <div className="fixed bottom-4 right-4 flex flex-col gap-2 z-floating-cart">
+      {/* Botão de chamar garçom - habilitado apenas para usuários autenticados */}
+      {isAuthenticated && (
+        <WaiterCallButton 
+          storeId={storeId}
+          tableId={tableId}
+        />
+      )}
+
       {/* Botão de verificar status do pedido - só aparece se houver pedidos ativos */}
       {(hasActiveOrders || isCheckingOrders) && (
         <button
