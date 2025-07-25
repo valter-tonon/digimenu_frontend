@@ -14,6 +14,7 @@ import { TableActions } from '@/components/menu/TableActions';
 import { OrderSummary } from '@/components/menu/OrderSummary';
 import { NotFound } from '@/components/ui/NotFound';
 import { FloatingCartButton } from '@/components/ui/FloatingCartButton';
+import { FloatingNavigation } from '@/components/ui/FloatingNavigation';
 // TODO: LayoutSelector removido - tema será configurado no painel admin
 // import { LayoutSelector } from '@/components/ui/LayoutSelector';
 import { StoreHeader } from '@/components/menu/StoreHeader';
@@ -439,14 +440,12 @@ function MenuContent({
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="mb-6 md:mb-0">
-                        <StoreHeader 
-            storeName={storeName || storeSlug || 'Restaurante'}
-            storeLogo={storeLogo}
-            subtitle="Cardápio digital"
-            className="text-white"
-            showHistoryButton={true}
-            storeId={storeSlug}
-          />
+              <StoreHeader 
+                storeName={storeName || storeSlug || 'Restaurante'}
+                storeLogo={storeLogo}
+                subtitle="Cardápio digital"
+                className="text-white"
+              />
             </div>
             
             <div className="flex flex-col items-center md:items-end">
@@ -503,6 +502,11 @@ function MenuContent({
       <FloatingCartButton 
         itemCount={cartItemsCount}
         onClick={handleCartClick}
+      />
+
+      {/* Navegação flutuante */}
+      <FloatingNavigation 
+        storeId={storeSlug || ''}
       />
 
 
