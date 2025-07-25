@@ -16,6 +16,8 @@ import {
   FileText,
   Truck
 } from 'lucide-react';
+import { OrderStatusTracker } from './OrderStatusTracker';
+import { OrderActions } from './OrderActions';
 
 interface Order {
   id: number;
@@ -62,6 +64,9 @@ interface OrderItem {
 interface OrderDetailsProps {
   order: Order;
   onClose: () => void;
+  onRepeatOrder?: (orderId: number) => void;
+  onRateOrder?: (orderId: number) => void;
+  onContactSupport?: (orderId: number) => void;
 }
 
 const getStatusInfo = (status: string) => {
@@ -146,7 +151,13 @@ const formatAddress = (address: any): string => {
   return parts.join(', ');
 };
 
-export function OrderDetails({ order, onClose }: OrderDetailsProps) {
+export function OrderDetails({ 
+  order, 
+  onClose, 
+  onRepeatOrder, 
+  onRateOrder, 
+  onContactSupport 
+}: OrderDetailsProps) {
   const statusInfo = getStatusInfo(order.status);
   const StatusIcon = statusInfo.icon;
   const subtotal = order.items.reduce((sum, item) => {
@@ -320,6 +331,28 @@ export function OrderDetails({ order, onClose }: OrderDetailsProps) {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Rastreador de Status */}
+      <div className="mt-6">
+        <OrderStatusTracker 
+          order={order}
+          onStatusUpdate={(orderId, newStatus) => {
+            console.log('Status atualizado:', orderId, newStatus);
+          }}
+        />
+      </div>
+
+      {/* Ações do Pedido */}
+      <div className="mt-6">
+        <OrderActions 
+          orderId={order.id}
+          orderNumber={order.order_number}
+          status={order.status}
+          onRepeatOrder={onRepeatOrder}
+          onRateOrder={onRateOrder}
+          onContactSupport={onContactSupport}
+        />
       </div>
     </div>
   );
