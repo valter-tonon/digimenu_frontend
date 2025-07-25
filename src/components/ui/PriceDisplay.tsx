@@ -8,16 +8,17 @@ interface PriceDisplayProps {
 }
 
 export function PriceDisplay({ product, className = '' }: PriceDisplayProps) {
-  // Verificar se o produto está em promoção
-  const isOnPromotion = product.promotional_price && 
-    product.promotional_price > 0 && 
-    product.promotional_price < product.price;
+  // Garantir que os preços sejam números válidos
+  const originalPrice = Number(product.price) || 0;
+  const promotionalPrice = Number(product.promotional_price) || 0;
   
-  const currentPrice = isOnPromotion ? product.promotional_price : product.price;
-  const originalPrice = product.price;
+  // Verificar se o produto está em promoção
+  const isOnPromotion = promotionalPrice > 0 && promotionalPrice < originalPrice;
+  
+  const currentPrice = isOnPromotion ? promotionalPrice : originalPrice;
 
   // Calcular percentual de desconto
-  const discountPercentage = isOnPromotion 
+  const discountPercentage = isOnPromotion && originalPrice > 0
     ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100)
     : 0;
 

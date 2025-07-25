@@ -48,11 +48,14 @@ export function ProductModal({ product, isOpen, onClose, onAddToCart }: ProductM
   };
 
   const calculateTotalPrice = () => {
-    const basePrice = product.promotional_price && product.promotional_price > 0 && product.promotional_price < product.price
-      ? product.promotional_price
-      : product.price;
+    const originalPrice = Number(product.price) || 0;
+    const promotionalPrice = Number(product.promotional_price) || 0;
     
-    const additionalsPrice = selectedAdditionals.reduce((sum, add) => sum + add.price, 0);
+    const basePrice = promotionalPrice > 0 && promotionalPrice < originalPrice
+      ? promotionalPrice
+      : originalPrice;
+    
+    const additionalsPrice = selectedAdditionals.reduce((sum, add) => sum + (Number(add.price) || 0), 0);
     return (basePrice + additionalsPrice) * quantity;
   };
 
@@ -141,9 +144,11 @@ export function ProductModal({ product, isOpen, onClose, onAddToCart }: ProductM
             <div className="flex flex-wrap gap-2 mb-4">
               {product.is_featured && <ProductBadge type="featured" />}
               {product.is_popular && <ProductBadge type="popular" />}
-              {product.promotional_price && product.promotional_price > 0 && product.promotional_price < product.price && (
-                <ProductBadge type="promotion" />
-              )}
+                             {(() => {
+                 const originalPrice = Number(product.price) || 0;
+                 const promotionalPrice = Number(product.promotional_price) || 0;
+                 return promotionalPrice > 0 && promotionalPrice < originalPrice;
+               })() && <ProductBadge type="promotion" />}
             </div>
 
             {/* Descrição */}
@@ -198,7 +203,7 @@ export function ProductModal({ product, isOpen, onClose, onAddToCart }: ProductM
                         </div>
                       </div>
                       <span className="font-semibold text-gray-900">
-                        R$ {additional.price.toFixed(2).replace('.', ',')}
+                        R$ {(Number(additional.price) || 0).toFixed(2).replace('.', ',')}
                       </span>
                     </label>
                   ))}
