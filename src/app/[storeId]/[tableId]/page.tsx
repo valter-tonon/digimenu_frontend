@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { use } from 'react';
+import { useAppContext } from '@/hooks/useAppContext';
 
 interface StoreTablePageProps {
   params: Promise<{
@@ -15,6 +16,7 @@ interface StoreTablePageProps {
 export default function StoreTablePage({ params }: StoreTablePageProps) {
   const router = useRouter();
   const { storeId, tableId } = use(params);
+  const { initializeFromParams, isLoading, isValid, error } = useAppContext();
 
   useEffect(() => {
     // Validar se os IDs têm o formato correto
@@ -30,32 +32,50 @@ export default function StoreTablePage({ params }: StoreTablePageProps) {
       return;
     }
 
-    // Salvar dados diretamente no storage para mesa
-    if (typeof window !== 'undefined') {
-      try {
-        // Salvar no localStorage
-        localStorage.setItem('digimenu_store_id', storeId);
-        
-        // Salvar no sessionStorage
-        sessionStorage.setItem('digimenu_table_id', tableId);
-        sessionStorage.setItem('digimenu_is_delivery', 'false');
-        
-        console.log('StoreTablePage - Dados salvos no storage para mesa:', { storeId, tableId, isDelivery: false });
-      } catch (error) {
-        console.error('StoreTablePage - Erro ao salvar no storage:', error);
-      }
+    // Usar o useAppContext para processar os dados corretamente
+    console.log('StoreTablePage - Inicializando contexto com:', { storeId, tableId });
+    initializeFromParams({
+      store: storeId,
+      table: tableId,
+      isDelivery: 'false'
+    });
+  }, [storeId, tableId, router, initializeFromParams]);
+
+  // Se ainda está carregando, mostrar loading
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
+          <p className="text-gray-600">Carregando dados da mesa...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Se houve erro, redirecionar para página de erro apropriada
+  if (error) {
+    switch (error) {
+      case 'RESTAURANT_NOT_FOUND':
+        router.push('/404-restaurant');
+        break;
+      case 'TABLE_NOT_FOUND':
+        router.push('/404-table');
+        break;
+      default:
+        router.push('/404-invalid');
+        break;
     }
+    return null;
+  }
 
-    // Redirecionar para /menu limpo (sem parâmetros)
-    console.log('StoreTablePage - Redirecionando para /menu limpo');
-    router.replace('/menu');
-  }, [storeId, tableId, router]);
-
+  // Se é válido, o useAppContext já redirecionou para /menu
+  // Mostrar loading enquanto o redirecionamento acontece
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
       <div className="text-center">
         <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
-        <p className="text-gray-600">Carregando cardápio da mesa...</p>
+        <p className="text-gray-600">Redirecionando para o cardápio...</p>
       </div>
     </div>
   );

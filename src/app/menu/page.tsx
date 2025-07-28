@@ -127,12 +127,11 @@ function MenuPage() {
     loadMenu();
   }, [isValid, storeId, tableId, isDelivery, menuRepository, contextLoading]);
   
-  // Se o contexto ainda está carregando, mostrar loading
-  if (contextLoading) {
+  // Se o contexto ainda está carregando OU se estamos carregando o menu OU se não temos dados do tenant, mostrar loading
+  if (contextLoading || loading || (isValid && !tenantData && !error)) {
     return <MenuLoading />;
   }
 
-  
   // Se não for válido, mostrar página de erro
   if (!isValid) {
     return <NotFound message="Link inválido. Verifique se o QR code está correto." />;

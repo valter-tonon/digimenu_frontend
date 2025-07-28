@@ -73,8 +73,18 @@ export function MenuHeader({
 
   const getCurrentContext = () => {
     if (tableId) {
+      // Usar o displayName da mesa se disponível no contexto (já formatado)
+      if (data?.tableData?.displayName) {
+        return data.tableData.displayName;
+      }
+      
       // Usar o identifier da mesa se disponível no contexto
       if (data?.tableData?.identifier) {
+        // Se o identifier é algo como "mesa-1", converter para "Mesa 1"
+        if (data.tableData.identifier.startsWith('mesa-')) {
+          const mesaNumber = data.tableData.identifier.replace('mesa-', '');
+          return `Mesa ${mesaNumber}`;
+        }
         return data.tableData.identifier;
       }
       
@@ -92,6 +102,12 @@ export function MenuHeader({
       if (tableId.startsWith('mesa-')) {
         const mesaNumber = tableId.replace('mesa-', '');
         return `Mesa ${mesaNumber}`;
+      }
+      
+      // Último fallback: tentar extrair um número mais legível do UUID
+      if (tableId.length > 10) {
+        // Se é um UUID longo, tentar buscar na API ou usar fallback
+        return `Mesa ${tableId.slice(-4)}`;
       }
       
       return `Mesa ${tableId}`;

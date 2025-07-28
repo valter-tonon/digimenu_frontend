@@ -110,6 +110,10 @@ export const getTables = async (filters = {}) => {
   return api.get('/tables', { params: filters });
 };
 
+export const getTable = async (tableId: string) => {
+  return api.get(`/tables/${tableId}`);
+};
+
 // Função para chamar garçom
 export const callWaiter = async (data: any) => {
   return api.post('/waiter-calls', data);

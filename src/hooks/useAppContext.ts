@@ -25,20 +25,41 @@ export type AppContextState = {
   isValid: boolean;
 };
 
-// Função para validar loja via API (mockada por enquanto)
+// Função para validar loja via API
 const validateStore = async (storeId: string): Promise<{ valid: boolean; error?: ValidationError; data?: any }> => {
   try {
-    // TODO: Implementar chamada real à API
-    // const response = await fetch(`/api/stores/${storeId}`);
-    // if (!response.ok) {
-    //   return { valid: false, error: 'RESTAURANT_NOT_FOUND' };
-    // }
-    // const data = await response.json();
+    // Buscar dados do tenant via API
+    const baseURL = process.env.NEXT_PUBLIC_API_URL || '';
+    const url = `${baseURL}/tenant/${storeId}`;
     
-    // Por enquanto, simular validação
-    if (storeId && storeId.length >= 10) {
-      return { valid: true, data: { name: `Restaurante ${storeId.slice(-4)}` } };
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      console.error('Erro ao buscar tenant:', response.status, response.statusText);
+      return { valid: false, error: 'RESTAURANT_NOT_FOUND' };
     }
+    
+    const tenantData = await response.json();
+    
+    if (tenantData.data && tenantData.data.name) {
+      return { 
+        valid: true, 
+        data: { 
+          name: tenantData.data.name,
+          uuid: tenantData.data.uuid,
+          logo: tenantData.data.logo,
+          opening_hours: tenantData.data.opening_hours,
+          min_order_value: tenantData.data.min_order_value
+        } 
+      };
+    }
+    
     return { valid: false, error: 'RESTAURANT_NOT_FOUND' };
   } catch (error) {
     console.error('Erro ao validar loja:', error);
@@ -49,9 +70,11 @@ const validateStore = async (storeId: string): Promise<{ valid: boolean; error?:
 // Função para validar mesa via API
 const validateTable = async (storeId: string, tableId: string): Promise<{ valid: boolean; error?: ValidationError; data?: any }> => {
   try {
-    // Buscar dados da mesa via API
+    // Buscar dados da mesa via API incluindo o token_company (storeId)
     const baseURL = process.env.NEXT_PUBLIC_API_URL || '';
-    const url = `${baseURL}/tables/${tableId}`;
+    const url = `${baseURL}/tables/${tableId}?token_company=${storeId}`;
+    
+    console.log('Buscando dados da mesa:', url);
     
     const response = await fetch(url, {
       method: 'GET',
@@ -63,36 +86,56 @@ const validateTable = async (storeId: string, tableId: string): Promise<{ valid:
     
     if (!response.ok) {
       console.error('Erro ao buscar mesa:', response.status, response.statusText);
-      // Fallback para validação básica
-      if (storeId && tableId && tableId.length >= 10) {
-        return { valid: true, data: { identifier: `Mesa ${tableId.slice(-4)}` } };
-      }
+      const errorText = await response.text();
+      console.error('Resposta da API:', errorText);
       return { valid: false, error: 'TABLE_NOT_FOUND' };
     }
     
-    const tableData = await response.json();
+    const apiResponse = await response.json();
+    console.log('Resposta completa da API:', apiResponse);
     
-    if (tableData.data && tableData.data.identifier) {
+    // A API retorna os dados dentro de 'data'
+    const tableData = apiResponse.data || apiResponse;
+    
+    if (tableData && tableData.identifier) {
       return { 
         valid: true, 
         data: { 
-          identifier: tableData.data.identifier,
-          description: tableData.data.description,
-          status: tableData.data.status
+          id: tableData.id,
+          uuid: tableData.uuid,
+          identifier: tableData.identifier,
+          description: tableData.description,
+          status: tableData.status,
+          displayName: getTableDisplayName(tableData.identifier, tableData.description)
         } 
       };
     }
     
-    // Fallback se não conseguir obter o identifier
-    return { valid: true, data: { identifier: `Mesa ${tableId.slice(-4)}` } };
+    return { valid: false, error: 'TABLE_NOT_FOUND' };
   } catch (error) {
     console.error('Erro ao validar mesa:', error);
-    // Fallback para validação básica
-    if (storeId && tableId && tableId.length >= 10) {
-      return { valid: true, data: { identifier: `Mesa ${tableId.slice(-4)}` } };
-    }
     return { valid: false, error: 'TABLE_NOT_FOUND' };
   }
+};
+
+// Função auxiliar para obter o nome de exibição da mesa
+const getTableDisplayName = (identifier: string, description?: string): string => {
+  // Se temos identifier como "mesa-1", converter para "Mesa 1"
+  if (identifier && identifier.startsWith('mesa-')) {
+    const mesaNumber = identifier.replace('mesa-', '');
+    return `Mesa ${mesaNumber}`;
+  }
+  
+  // Se temos description, extrair o nome da mesa
+  if (description) {
+    const match = description.match(/^(Mesa \d+)/);
+    if (match) {
+      return match[1];
+    }
+  }
+  
+  // Fallback
+  return identifier || 'Mesa';
 };
 
 export function useAppContext(searchParams?: URLSearchParams): AppContextState & {
@@ -132,6 +175,14 @@ export function useAppContext(searchParams?: URLSearchParams): AppContextState &
       }
       sessionStorage.setItem('digimenu_is_delivery', data.isDelivery.toString());
       
+      // Salvar dados da mesa e loja se disponíveis
+      if (data.tableData) {
+        sessionStorage.setItem('digimenu_table_data', JSON.stringify(data.tableData));
+      }
+      if (data.storeData) {
+        sessionStorage.setItem('digimenu_store_data', JSON.stringify(data.storeData));
+      }
+      
       console.log('useAppContext - Dados salvos no storage:', data);
     } catch (error) {
       console.error('Erro ao salvar no storage:', error);
@@ -148,12 +199,32 @@ export function useAppContext(searchParams?: URLSearchParams): AppContextState &
       const tableId = sessionStorage.getItem('digimenu_table_id');
       const isDelivery = sessionStorage.getItem('digimenu_is_delivery') === 'true';
       
+      // Carregar dados da mesa e loja se disponíveis
+      let tableData = null;
+      let storeData = null;
+      
+      try {
+        const tableDataStr = sessionStorage.getItem('digimenu_table_data');
+        if (tableDataStr) {
+          tableData = JSON.parse(tableDataStr);
+        }
+        
+        const storeDataStr = sessionStorage.getItem('digimenu_store_data');
+        if (storeDataStr) {
+          storeData = JSON.parse(storeDataStr);
+        }
+      } catch (parseError) {
+        console.error('Erro ao fazer parse dos dados salvos:', parseError);
+      }
+      
       if (storeId) {
         const data: AppContextData = {
           storeId,
           tableId,
           isDelivery,
           storeName: storeName || undefined,
+          tableData,
+          storeData,
         };
         
         console.log('useAppContext - Carregando dados do storage:', data);
@@ -176,6 +247,8 @@ export function useAppContext(searchParams?: URLSearchParams): AppContextState &
       localStorage.removeItem('digimenu_store_name');
       sessionStorage.removeItem('digimenu_table_id');
       sessionStorage.removeItem('digimenu_is_delivery');
+      sessionStorage.removeItem('digimenu_table_data');
+      sessionStorage.removeItem('digimenu_store_data');
       
       setState({
         data: {
@@ -232,6 +305,7 @@ export function useAppContext(searchParams?: URLSearchParams): AppContextState &
             tableId: table,
             isDelivery: false,
             storeName: storeValidation.data?.name,
+            storeData: storeValidation.data,
             tableData: tableValidation.data,
           };
           
