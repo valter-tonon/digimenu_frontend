@@ -23,12 +23,22 @@ api.interceptors.request.use(
 );
 
 // Funções de autenticação via WhatsApp
-export const requestWhatsAppAuth = async (phone: string, storeId: string, fingerprint: string, sessionId?: string) => {
+export const requestWhatsAppAuth = async (
+  phone: string, 
+  storeId: string, 
+  fingerprint: string, 
+  sessionId?: string,
+  sessionContext?: {
+    tableId?: string;
+    isDelivery: boolean;
+  }
+) => {
   return api.post('/auth/whatsapp/request', {
     phone,
     store_id: storeId,
     fingerprint,
-    session_id: sessionId
+    session_id: sessionId,
+    session_context: sessionContext
   });
 };
 

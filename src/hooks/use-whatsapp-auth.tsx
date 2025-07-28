@@ -14,7 +14,16 @@ interface WhatsAppAuthState {
 
 interface UseWhatsAppAuthReturn {
   state: WhatsAppAuthState;
-  requestAuth: (phone: string, storeId: string, fingerprint: string, sessionId?: string) => Promise<void>;
+  requestAuth: (
+    phone: string, 
+    storeId: string, 
+    fingerprint: string, 
+    sessionId?: string,
+    sessionContext?: {
+      tableId?: string;
+      isDelivery: boolean;
+    }
+  ) => Promise<void>;
   validateToken: (token: string) => Promise<void>;
   reset: () => void;
 }
@@ -33,12 +42,16 @@ export const useWhatsAppAuth = (): UseWhatsAppAuthReturn => {
     phone: string, 
     storeId: string, 
     fingerprint: string, 
-    sessionId?: string
+    sessionId?: string,
+    sessionContext?: {
+      tableId?: string;
+      isDelivery: boolean;
+    }
   ) => {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
 
     try {
-      const response = await requestWhatsAppAuth(phone, storeId, fingerprint, sessionId);
+      const response = await requestWhatsAppAuth(phone, storeId, fingerprint, sessionId, sessionContext);
       
       if (response.data.success) {
         setState(prev => ({

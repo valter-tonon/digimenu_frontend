@@ -14,6 +14,11 @@ export interface WhatsAppAuthRequest {
   fingerprint: string;
   ipAddress?: string;
   userAgent?: string;
+  // Adicionar contexto da sessão
+  sessionContext?: {
+    tableId?: string;
+    isDelivery: boolean;
+  };
 }
 
 export interface WhatsAppAuthResponse {
@@ -35,6 +40,10 @@ export interface MagicLinkToken {
   createdAt: Date;
   ipAddress?: string;
   userAgent?: string;
+  sessionContext?: {
+    tableId?: string;
+    isDelivery: boolean;
+  };
 }
 
 export interface TokenValidationResult {
@@ -74,7 +83,7 @@ class WhatsAppAuthService {
         };
       }
 
-      // Gera token JWT temporário
+      // Gera token JWT temporário com contexto da sessão
       const token = await this.generateMagicLinkToken(request);
 
       // Envia WhatsApp (mock - integração com API real)
@@ -104,13 +113,9 @@ class WhatsAppAuthService {
 
     } catch (error) {
       console.error('Erro ao solicitar magic link:', error);
-      
-      // Registra tentativa falhada
-      await this.recordAuthAttempt(request.phone, request.fingerprint, false);
-
       return {
         success: false,
-        message: 'Erro interno do servidor'
+        message: 'Erro interno ao solicitar acesso'
       };
     }
   }
@@ -208,12 +213,16 @@ class WhatsAppAuthService {
       // Verifica se usuário já existe
       const existingCustomer = await this.findCustomerByPhone(token.phone);
 
-      // Cria sessão contextual para delivery
+      // Obtém contexto da sessão do token
+      const sessionContext = token.sessionContext || { isDelivery: true };
+
+      // Cria sessão contextual respeitando o contexto original
       const session = await sessionService.createSession({
         storeId: token.storeId,
         fingerprint: token.fingerprint,
-        type: 'delivery',
-        isDelivery: true,
+        type: sessionContext.isDelivery ? 'delivery' : 'table',
+        isDelivery: sessionContext.isDelivery,
+        tableId: sessionContext.tableId,
         customerId: existingCustomer?.uuid,
         ipAddress: token.ipAddress,
         userAgent: token.userAgent
@@ -227,7 +236,8 @@ class WhatsAppAuthService {
       console.log('Sessão criada via WhatsApp:', {
         sessionId: session.id,
         phone: token.phone,
-        customerId: existingCustomer?.uuid
+        customerId: existingCustomer?.uuid,
+        context: sessionContext
       });
 
       return {
@@ -383,6 +393,8 @@ class WhatsAppAuthService {
       phone: request.phone,
       storeId: request.storeId,
       fingerprint: request.fingerprint,
+      // Incluir contexto da sessão no token
+      sessionContext: request.sessionContext || { isDelivery: true },
       exp: Math.floor(expiresAt.getTime() / 1000)
     };
 
@@ -396,7 +408,9 @@ class WhatsAppAuthService {
       isUsed: false,
       createdAt: new Date(),
       ipAddress: request.ipAddress,
-      userAgent: request.userAgent
+      userAgent: request.userAgent,
+      // Armazenar contexto da sessão no token
+      sessionContext: request.sessionContext || { isDelivery: true }
     };
 
     // Armazena token

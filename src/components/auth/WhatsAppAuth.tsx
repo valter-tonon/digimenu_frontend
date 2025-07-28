@@ -11,6 +11,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useWhatsAppAuth } from '@/hooks/use-whatsapp-auth';
 import { useSession } from '@/hooks/use-session';
+import { useAppContext } from '@/hooks/use-app-context';
 
 interface WhatsAppAuthProps {
   storeId: string;
@@ -30,6 +31,7 @@ export const WhatsAppAuth: React.FC<WhatsAppAuthProps> = ({
   
   const { state, requestAuth, reset } = useWhatsAppAuth();
   const { session } = useSession();
+  const { data: appContext } = useAppContext();
 
   // Gera fingerprint simples (em produção, usar biblioteca mais robusta)
   const generateFingerprint = (): string => {
@@ -55,8 +57,14 @@ export const WhatsAppAuth: React.FC<WhatsAppAuthProps> = ({
     
     const fingerprint = generateFingerprint();
     
+    // Obtém contexto da sessão atual
+    const sessionContext = {
+      tableId: appContext?.tableId || session?.table_id,
+      isDelivery: appContext?.isDelivery || session?.is_delivery || false
+    };
+    
     try {
-      await requestAuth(phone, storeId, fingerprint, session?.id);
+      await requestAuth(phone, storeId, fingerprint, session?.id, sessionContext);
       
       if (state.isSuccess) {
         // Inicia countdown se há expiração
