@@ -16,6 +16,7 @@ import { useAppContext } from '@/hooks/useAppContext';
 import { useAuth } from '@/hooks/useAuth';
 import { CompactStoreHeader } from './StoreHeader';
 import { NotificationBadge } from '../notifications/NotificationBadge';
+import { WaiterCallButton } from './WaiterCallButton';
 import Link from 'next/link';
 
 interface MenuHeaderProps {
@@ -73,19 +74,26 @@ export function MenuHeader({
   const getCurrentContext = () => {
     if (tableId) {
       // Usar o identifier da mesa se disponível no contexto
-      if (data.tableData?.identifier) {
+      if (data?.tableData?.identifier) {
         return data.tableData.identifier;
       }
       
-      // Fallback: tentar extrair um número mais legível da mesa
-      if (tableId.length > 10) {
-        const mesaNumber = tableId.slice(-4);
-        const numero = parseInt(mesaNumber, 16);
-        if (!isNaN(numero) && numero > 0) {
-          return `Mesa ${numero}`;
+      // Usar description da mesa se disponível
+      if (data?.tableData?.description) {
+        // Extrair apenas o nome da mesa da descrição (ex: "Mesa 1 - Mesa para 4 pessoas" -> "Mesa 1")
+        const match = data.tableData.description.match(/^(Mesa \d+)/);
+        if (match) {
+          return match[1];
         }
+        return data.tableData.description;
+      }
+      
+      // Fallback: usar o tableId diretamente se for um identifier válido
+      if (tableId.startsWith('mesa-')) {
+        const mesaNumber = tableId.replace('mesa-', '');
         return `Mesa ${mesaNumber}`;
       }
+      
       return `Mesa ${tableId}`;
     }
     return 'Delivery';
@@ -145,6 +153,17 @@ export function MenuHeader({
               <NotificationBadge storeId={storeId || undefined} tableId={tableId || undefined} />
             )}
 
+            {/* Botão de chamar garçom - apenas para mesas quando a loja está aberta */}
+            {tableId && storeId && openingHours?.is_open && (
+              <div className="hidden sm:block">
+                <WaiterCallButton
+                  storeId={storeId}
+                  tableId={tableId}
+                  variant="header"
+                />
+              </div>
+            )}
+
             {/* Carrinho */}
             <button
               onClick={onCartClick}
@@ -189,7 +208,7 @@ export function MenuHeader({
                           <MapPin className="w-4 h-4 text-amber-600" />
                           <div>
                             <p className="text-sm font-medium text-amber-800">
-                              Mesa {tableId.slice(-4)}
+                              {getCurrentContext()}
                             </p>
                             <p className="text-xs text-amber-600">Contexto atual</p>
                           </div>

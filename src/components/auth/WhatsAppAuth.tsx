@@ -9,8 +9,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { whatsappAuthService, WhatsAppAuthRequest } from '@/services/whatsappAuth';
-import { useAuth } from '@/hooks/useAuth';
+import { useWhatsAppAuth } from '@/hooks/use-whatsapp-auth';
+import { useSession } from '@/hooks/use-session';
 
 interface WhatsAppAuthProps {
   storeId: string;
@@ -19,34 +19,33 @@ interface WhatsAppAuthProps {
   className?: string;
 }
 
-interface FormState {
-  phone: string;
-  isLoading: boolean;
-  isSuccess: boolean;
-  error: string | null;
-  rateLimitRemaining: number | null;
-  tokenId: string | null;
-  expiresAt: Date | null;
-}
-
 export const WhatsAppAuth: React.FC<WhatsAppAuthProps> = ({
   storeId,
   onSuccess,
   onError,
   className = ''
 }) => {
-  const [state, setState] = useState<FormState>({
-    phone: '',
-    isLoading: false,
-    isSuccess: false,
-    error: null,
-    rateLimitRemaining: null,
-    tokenId: null,
-    expiresAt: null
-  });
-
-  const { fingerprint } = useAuth();
+  const [phone, setPhone] = useState('');
   const [countdown, setCountdown] = useState<number | null>(null);
+  
+  const { state, requestAuth, reset } = useWhatsAppAuth();
+  const { session } = useSession();
+
+  // Gera fingerprint simples (em produção, usar biblioteca mais robusta)
+  const generateFingerprint = (): string => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    ctx?.fillText('fingerprint', 2, 2);
+    
+    return btoa(JSON.stringify({
+      userAgent: navigator.userAgent,
+      language: navigator.language,
+      platform: navigator.platform,
+      screen: `${screen.width}x${screen.height}`,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      canvas: canvas.toDataURL()
+    })).substring(0, 32);
+  };
 
   /**
    * Submete formulário para solicitar magic link
@@ -54,74 +53,29 @@ export const WhatsAppAuth: React.FC<WhatsAppAuthProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!fingerprint) {
-      setState(prev => ({ 
-        ...prev, 
-        error: 'Erro de inicialização. Recarregue a página.' 
-      }));
-      return;
-    }
-
-    setState(prev => ({ 
-      ...prev, 
-      isLoading: true, 
-      error: null 
-    }));
-
+    const fingerprint = generateFingerprint();
+    
     try {
-      const request: WhatsAppAuthRequest = {
-        phone: state.phone,
-        storeId,
-        fingerprint,
-        ipAddress: await getClientIP(),
-        userAgent: navigator.userAgent
-      };
-
-      const response = await whatsappAuthService.requestMagicLink(request);
-
-      if (response.success) {
-        setState(prev => ({
-          ...prev,
-          isLoading: false,
-          isSuccess: true,
-          tokenId: response.tokenId || null,
-          expiresAt: response.expiresAt || null,
-          rateLimitRemaining: response.rateLimitRemaining || null
-        }));
-
+      await requestAuth(phone, storeId, fingerprint, session?.id);
+      
+      if (state.isSuccess) {
         // Inicia countdown se há expiração
-        if (response.expiresAt) {
-          startCountdown(response.expiresAt);
+        if (state.expiresInMinutes) {
+          startCountdown(state.expiresInMinutes);
         }
-
-        onSuccess?.(response.tokenId || '');
-      } else {
-        setState(prev => ({
-          ...prev,
-          isLoading: false,
-          error: response.message,
-          rateLimitRemaining: response.rateLimitRemaining || null
-        }));
-
-        onError?.(response.message);
+        onSuccess?.(session?.id || '');
       }
-
     } catch (error) {
-      const errorMessage = 'Erro ao solicitar acesso via WhatsApp';
-      setState(prev => ({
-        ...prev,
-        isLoading: false,
-        error: errorMessage
-      }));
-
-      onError?.(errorMessage);
+      onError?.(state.error || 'Erro ao solicitar acesso via WhatsApp');
     }
   };
 
   /**
    * Inicia countdown para expiração do token
    */
-  const startCountdown = (expiresAt: Date) => {
+  const startCountdown = (expiresInMinutes: number) => {
+    const expiresAt = new Date(Date.now() + expiresInMinutes * 60 * 1000);
+    
     const updateCountdown = () => {
       const now = new Date();
       const timeLeft = Math.max(0, Math.floor((expiresAt.getTime() - now.getTime()) / 1000));
@@ -129,24 +83,19 @@ export const WhatsAppAuth: React.FC<WhatsAppAuthProps> = ({
       setCountdown(timeLeft);
       
       if (timeLeft <= 0) {
-        setState(prev => ({
-          ...prev,
-          isSuccess: false,
-          error: 'Link expirado. Solicite um novo acesso.',
-          tokenId: null,
-          expiresAt: null
-        }));
+        reset();
+        setCountdown(null);
       }
     };
 
     updateCountdown();
     const interval = setInterval(updateCountdown, 1000);
 
-    // Cleanup após 15 minutos
+    // Cleanup após o tempo de expiração
     setTimeout(() => {
       clearInterval(interval);
       setCountdown(null);
-    }, 15 * 60 * 1000);
+    }, expiresInMinutes * 60 * 1000);
   };
 
   /**
@@ -171,23 +120,16 @@ export const WhatsAppAuth: React.FC<WhatsAppAuthProps> = ({
       value = value.replace(/(\d{2})(\d+)/, '($1) $2');
     }
 
-    setState(prev => ({ ...prev, phone: value }));
+    setPhone(value);
   };
 
   /**
    * Reseta formulário para nova tentativa
    */
   const resetForm = () => {
-    setState({
-      phone: '',
-      isLoading: false,
-      isSuccess: false,
-      error: null,
-      rateLimitRemaining: null,
-      tokenId: null,
-      expiresAt: null
-    });
+    setPhone('');
     setCountdown(null);
+    reset();
   };
 
   /**
@@ -233,7 +175,7 @@ export const WhatsAppAuth: React.FC<WhatsAppAuthProps> = ({
                 <input
                   type="tel"
                   id="phone"
-                  value={state.phone}
+                  value={phone}
                   onChange={handlePhoneChange}
                   placeholder="(11) 99999-9999"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
@@ -259,7 +201,7 @@ export const WhatsAppAuth: React.FC<WhatsAppAuthProps> = ({
 
               <button
                 type="submit"
-                disabled={state.isLoading || state.phone.length < 14}
+                disabled={state.isLoading || phone.length < 14}
                 className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
               >
                 {state.isLoading ? (

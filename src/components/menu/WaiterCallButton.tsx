@@ -11,7 +11,16 @@ interface WaiterCallButtonProps {
   className?: string;
 }
 
-export function WaiterCallButton({ storeId, tableId, className = '' }: WaiterCallButtonProps) {
+interface WaiterCallButtonVariant {
+  variant?: 'floating' | 'header' | 'compact';
+}
+
+export function WaiterCallButton({ 
+  storeId, 
+  tableId, 
+  className = '', 
+  variant = 'floating' 
+}: WaiterCallButtonProps & WaiterCallButtonVariant) {
   const [isCalling, setIsCalling] = useState(false);
 
   const handleCallWaiter = async () => {
@@ -43,18 +52,50 @@ export function WaiterCallButton({ storeId, tableId, className = '' }: WaiterCal
     }
   };
 
+  // Estilos baseados na variante
+  const getButtonStyles = () => {
+    switch (variant) {
+      case 'header':
+        return `px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white flex items-center gap-2 transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium ${className}`;
+      
+      case 'compact':
+        return `p-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed ${className}`;
+      
+      case 'floating':
+      default:
+        return `p-3 rounded-full shadow-lg bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed ${className}`;
+    }
+  };
+
+  const getIconSize = () => {
+    switch (variant) {
+      case 'header':
+        return 'h-4 w-4';
+      case 'compact':
+        return 'h-5 w-5';
+      case 'floating':
+      default:
+        return 'h-6 w-6';
+    }
+  };
+
   return (
     <button
       onClick={handleCallWaiter}
       disabled={isCalling}
-      className={`p-3 rounded-full shadow-lg bg-amber-500 hover:bg-amber-600 text-white flex items-center justify-center transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
+      className={getButtonStyles()}
       title="Chamar garçom"
       aria-label="Chamar garçom"
     >
       {isCalling ? (
-        <Loader2 className="h-6 w-6 animate-spin" />
+        <Loader2 className={`${getIconSize()} animate-spin`} />
       ) : (
-        <Bell className="h-6 w-6" />
+        <Bell className={getIconSize()} />
+      )}
+      {variant === 'header' && (
+        <span className="hidden sm:inline">
+          {isCalling ? 'Chamando...' : 'Chamar Garçom'}
+        </span>
       )}
     </button>
   );

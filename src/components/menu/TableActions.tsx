@@ -3,8 +3,6 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '@/infrastructure/api/apiClient';
 import { toast } from 'react-hot-toast';
-import { useAuth } from '@/hooks/useAuth';
-import { WaiterCallButton } from './WaiterCallButton';
 
 interface TableActionsProps {
   storeId: string;
@@ -30,7 +28,6 @@ interface OrderStatusResponse {
 }
 
 export function TableActions({ storeId, tableId }: TableActionsProps) {
-  const { isAuthenticated } = useAuth();
   const [isLoadingStatus, setIsLoadingStatus] = useState(false);
   const [orderStatus, setOrderStatus] = useState<OrderStatusResponse | null>(null);
   const [showOrderStatus, setShowOrderStatus] = useState(false);
@@ -81,33 +78,10 @@ export function TableActions({ storeId, tableId }: TableActionsProps) {
     setShowOrderStatus(false);
   };
 
+  // Este componente agora só gerencia o modal de status de pedidos
+  // O botão de chamar garçom foi movido para o MenuHeader
   return (
-    <div className="fixed bottom-4 right-4 flex flex-col gap-2 z-floating-cart">
-      {/* Botão de chamar garçom - habilitado apenas para usuários autenticados */}
-      {isAuthenticated && (
-        <WaiterCallButton 
-          storeId={storeId}
-          tableId={tableId}
-        />
-      )}
-
-      {/* Botão de verificar status do pedido - só aparece se houver pedidos ativos */}
-      {(hasActiveOrders || isCheckingOrders) && (
-        <button
-          onClick={checkOrderStatus}
-          disabled={isLoadingStatus || isCheckingOrders}
-          className="p-3 rounded-full shadow-lg bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center"
-        >
-          {isLoadingStatus || isCheckingOrders ? (
-            <div className="h-6 w-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-          ) : (
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
-          )}
-        </button>
-      )}
-
+    <>
       {/* Modal de status do pedido */}
       {showOrderStatus && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-modal">
@@ -166,6 +140,6 @@ export function TableActions({ storeId, tableId }: TableActionsProps) {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 } 

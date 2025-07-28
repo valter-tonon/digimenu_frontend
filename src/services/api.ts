@@ -23,21 +23,28 @@ api.interceptors.request.use(
 );
 
 // Funções de autenticação via WhatsApp
-export const requestWhatsAppCode = async (phone: string, tenantId: string) => {
-  return api.post('/whatsapp/request-code', { phone, tenant_id: tenantId });
+export const requestWhatsAppAuth = async (phone: string, storeId: string, fingerprint: string, sessionId?: string) => {
+  return api.post('/auth/whatsapp/request', {
+    phone,
+    store_id: storeId,
+    fingerprint,
+    session_id: sessionId
+  });
 };
 
-export const verifyWhatsAppCode = async (
-  phone: string, 
-  code: string, 
-  tenantId: string, 
-  deviceName: string = 'web'
-) => {
-  return api.post('/whatsapp/verify-code', { 
-    phone, 
-    code, 
-    tenant_id: tenantId, 
-    device_name: deviceName 
+export const validateWhatsAppToken = async (token: string) => {
+  return api.post('/auth/whatsapp/validate', { token });
+};
+
+export const validateAuthToken = async (token: string) => {
+  return api.post('/auth/token/validate', {}, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+};
+
+export const refreshAuthToken = async (token: string) => {
+  return api.post('/auth/token/refresh', {}, {
+    headers: { Authorization: `Bearer ${token}` }
   });
 };
 
@@ -77,8 +84,8 @@ export const createOrder = async (orderData: any) => {
 };
 
 export const getOrderStatus = async (storeId: string, tableId: string) => {
-  return api.get('/orders/status', { 
-    params: { store_id: storeId, table_id: tableId } 
+  return api.get('/orders/status', {
+    params: { store_id: storeId, table_id: tableId }
   });
 };
 
@@ -106,6 +113,64 @@ export const getTables = async (filters = {}) => {
 // Função para chamar garçom
 export const callWaiter = async (data: any) => {
   return api.post('/waiter-calls', data);
+};
+
+// Funções de sessão
+export const createSession = async (sessionData: {
+  store_id: string;
+  table_id?: string;
+  is_delivery: boolean;
+  fingerprint: string;
+  customer_id?: string;
+}) => {
+  return api.post('/sessions', sessionData);
+};
+
+export const getSession = async (sessionId: string) => {
+  return api.get(`/sessions/${sessionId}`);
+};
+
+export const validateSessionContext = async (sessionId: string, storeId: string, tableId?: string) => {
+  return api.post(`/sessions/${sessionId}/validate`, {
+    store_id: storeId,
+    table_id: tableId
+  });
+};
+
+export const updateSessionActivity = async (sessionId: string) => {
+  return api.post(`/sessions/${sessionId}/activity`);
+};
+
+export const associateCustomerToSession = async (sessionId: string, customerId: string) => {
+  return api.post(`/sessions/${sessionId}/associate-customer`, {
+    customer_id: customerId
+  });
+};
+
+export const extendSession = async (sessionId: string, additionalMinutes: number = 30) => {
+  return api.post(`/sessions/${sessionId}/extend`, {
+    additional_minutes: additionalMinutes
+  });
+};
+
+export const invalidateSession = async (sessionId: string) => {
+  return api.delete(`/sessions/${sessionId}`);
+};
+
+// Funções de cadastro rápido de clientes
+export const quickRegisterCustomer = async (customerData: {
+  name: string;
+  phone: string;
+  email?: string;
+  store_id: string;
+}) => {
+  return api.post('/customers/quick-register', customerData);
+};
+
+export const findCustomerByPhone = async (phone: string, storeId: string) => {
+  return api.get('/customers/find-by-phone', {
+    params: { phone, store_id: storeId }
+  });
 };
 
 export default api; 

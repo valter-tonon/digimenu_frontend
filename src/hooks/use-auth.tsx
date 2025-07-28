@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { getMe, logout } from '@/services/api';
+import { getMe, logout, validateAuthToken, refreshAuthToken } from '@/services/api';
 
 interface CustomerAddress {
   id: number;
