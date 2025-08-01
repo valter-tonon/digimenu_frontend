@@ -22,7 +22,7 @@ interface AddToCartButtonProps {
 }
 
 export function AddToCartButton({ product, className = '', onAddedToCart }: AddToCartButtonProps) {
-  const { isOpen: isStoreOpen } = useStoreStatus();
+  const { isStoreOpen } = useStoreStatus();
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
   const { addItem } = useCartStore();

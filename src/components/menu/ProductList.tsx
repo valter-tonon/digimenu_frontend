@@ -44,7 +44,7 @@ interface ProductListProps {
 
 export function ProductList({ products, selectedCategoryId, onCartItemsChange, searchTerm = '' }: ProductListProps) {
   const storeStatus = useStoreStatus();
-  const { isOpen: isStoreOpen } = storeStatus;
+  const { isStoreOpen } = storeStatus;
   
   // Debug: Log the store status
   console.log('ProductList Debug - isStoreOpen:', isStoreOpen);
