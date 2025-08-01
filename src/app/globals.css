@@ -18,6 +18,50 @@ body {
   color: var(--foreground);
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
+  /* Mobile-first optimizations */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  /* Prevent horizontal scroll on mobile */
+  overflow-x: hidden;
+  /* Support for safe areas on mobile devices */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Mobile-first responsive typography */
+html {
+  font-size: 14px; /* Base font size for mobile */
+}
+
+@media (min-width: 640px) {
+  html {
+    font-size: 16px; /* Larger font size for tablets and up */
+  }
+}
+
+/* Touch-friendly minimum sizes */
+button, 
+input[type="button"], 
+input[type="submit"], 
+input[type="reset"],
+.touch-target {
+  min-height: 44px; /* Apple's recommended minimum touch target */
+  min-width: 44px;
+}
+
+/* Improved touch targets for small screens */
+@media (max-width: 640px) {
+  button, 
+  input[type="button"], 
+  input[type="submit"], 
+  input[type="reset"],
+  .touch-target {
+    min-height: 48px; /* Slightly larger for mobile */
+    min-width: 48px;
+  }
 }
 
 /* Animação de rotação para loaders */

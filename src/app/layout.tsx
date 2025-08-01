@@ -1,9 +1,11 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import '../styles/z-index.css';
-import { AuthProvider } from '@/hooks/use-auth';
-import { Toaster } from 'react-hot-toast';
+
+import { AppProviders, ProviderDebugInfo } from '@/components/providers/AppProviders';
 import { CookieConsentBanner } from '@/components/ui/CookieConsentBanner';
+import { SkipToContent } from '@/components/ui/AccessibilityEnhancements';
+import { GlobalErrorBoundary } from '@/components/error-boundaries/GlobalErrorBoundary';
 
 export const metadata: Metadata = {
   title: 'DigiMenu - Sistema de Pedidos',
@@ -23,11 +25,13 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body suppressHydrationWarning={true}>
-        <AuthProvider>
-          {children}
-          <Toaster position="top-center" />
+        <SkipToContent />
+        <GlobalErrorBoundary>
+          <main id="main-content">
+            {children}
+          </main>
           <CookieConsentBanner />
-        </AuthProvider>
+        </GlobalErrorBoundary>
       </body>
     </html>
   );

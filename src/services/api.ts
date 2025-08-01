@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost/api/v1';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -176,15 +176,36 @@ export const quickRegisterCustomer = async (customerData: {
   name: string;
   phone: string;
   email?: string;
-  store_id: string;
+  tenant_id: string;
 }) => {
   return api.post('/customers/quick-register', customerData);
 };
 
 export const findCustomerByPhone = async (phone: string, storeId: string) => {
   return api.get('/customers/find-by-phone', {
-    params: { phone, store_id: storeId }
+    params: { phone, tenant_id: storeId }
   });
+};
+
+// Funções de endereços
+export const getCustomerAddresses = async (customerId: string) => {
+  return api.get(`/customers/${customerId}/addresses`);
+};
+
+export const createCustomerAddress = async (customerId: string, addressData: any) => {
+  return api.post(`/customers/${customerId}/addresses`, addressData);
+};
+
+export const updateAddress = async (addressId: number, addressData: any) => {
+  return api.put(`/addresses/${addressId}`, addressData);
+};
+
+export const deleteAddress = async (addressId: number) => {
+  return api.delete(`/addresses/${addressId}`);
+};
+
+export const setDefaultAddress = async (addressId: number) => {
+  return api.post(`/addresses/${addressId}/set-default`);
 };
 
 export default api; 

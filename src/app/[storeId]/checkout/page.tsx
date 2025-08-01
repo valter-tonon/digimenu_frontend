@@ -73,7 +73,7 @@ export default function CheckoutPage() {
   const [selectedPayment, setSelectedPayment] = useState<string>('');
   const [changeAmount, setChangeAmount] = useState<string>('');
   const [orderNotes, setOrderNotes] = useState('');
-  const { isStoreOpen } = useStoreStatus();
+  const { isOpen: isStoreOpen } = useStoreStatus();
 
   // Configura o contexto ao carregar a página
   useEffect(() => {

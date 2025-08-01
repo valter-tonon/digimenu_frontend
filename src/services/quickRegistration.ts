@@ -1,6 +1,6 @@
 /**
  * Serviço de cadastro rápido no checkout
- * 
+ *
  * Gerencia cadastro de usuários visitantes durante o checkout,
  * validação de dados e integração com sistema de sessões.
  */
@@ -82,7 +82,7 @@ class QuickRegistrationService {
       if (existingCustomer) {
         // Se usuário existe, associa à sessão e retorna
         await this.associateExistingCustomer(data.sessionId, existingCustomer);
-        
+
         return {
           success: true,
           customerId: existingCustomer.uuid,
@@ -93,7 +93,7 @@ class QuickRegistrationService {
 
       // Cria novo cliente
       const newCustomer = await this.createQuickCustomer(data);
-      
+
       // Associa cliente à sessão
       await sessionService.associateCustomer(data.sessionId, newCustomer.uuid);
 
@@ -115,7 +115,7 @@ class QuickRegistrationService {
 
     } catch (error) {
       console.error('Erro no cadastro rápido:', error);
-      
+
       return {
         success: false,
         message: 'Erro interno no cadastro',
@@ -248,7 +248,7 @@ class QuickRegistrationService {
 
     // Determina tipo (celular ou fixo)
     const type = normalizedPhone.length === 11 ? 'mobile' : 'landline';
-    
+
     // Para celular, verifica se começa com 9
     if (type === 'mobile' && normalizedPhone[2] !== '9') {
       return {
@@ -286,7 +286,7 @@ class QuickRegistrationService {
       //   headers: { 'Content-Type': 'application/json' },
       //   body: JSON.stringify({ phone: normalizedPhone, email })
       // });
-      // 
+      //
       // if (response.ok) {
       //   const data = await response.json();
       //   return data.customer || null;
@@ -307,7 +307,6 @@ class QuickRegistrationService {
   private async createQuickCustomer(data: QuickRegistrationData): Promise<Customer> {
     const phoneValidation = this.validatePhoneNumber(data.phone);
     const normalizedPhone = phoneValidation.normalizedPhone!;
-
     const customerData = {
       name: data.name.trim(),
       phone: normalizedPhone,
@@ -328,11 +327,11 @@ class QuickRegistrationService {
       //   headers: { 'Content-Type': 'application/json' },
       //   body: JSON.stringify(customerData)
       // });
-      // 
+      //
       // if (!response.ok) {
       //   throw new Error('Erro ao criar cliente');
       // }
-      // 
+      //
       // return response.json();
 
       // Mock para desenvolvimento
@@ -376,8 +375,8 @@ class QuickRegistrationService {
    * Registra evento de cadastro rápido para auditoria
    */
   private async logQuickRegistration(
-    customerId: string, 
-    storeId: string, 
+    customerId: string,
+    storeId: string,
     fingerprint: string
   ): Promise<void> {
     try {
@@ -423,7 +422,7 @@ class QuickRegistrationService {
       //   headers: { 'Content-Type': 'application/json' },
       //   body: JSON.stringify({ email })
       // });
-      // 
+      //
       // if (response.ok) {
       //   const data = await response.json();
       //   return data.exists;
@@ -443,13 +442,13 @@ class QuickRegistrationService {
    */
   formatPhoneForDisplay(phone: string): string {
     const cleanPhone = phone.replace(/\D/g, '');
-    
+
     if (cleanPhone.length === 11) {
       return cleanPhone.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
     } else if (cleanPhone.length === 10) {
       return cleanPhone.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
     }
-    
+
     return phone;
   }
 }

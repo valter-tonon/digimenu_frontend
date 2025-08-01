@@ -43,7 +43,12 @@ interface ProductListProps {
 }
 
 export function ProductList({ products, selectedCategoryId, onCartItemsChange, searchTerm = '' }: ProductListProps) {
-  const { isStoreOpen } = useStoreStatus();
+  const storeStatus = useStoreStatus();
+  const { isOpen: isStoreOpen } = storeStatus;
+  
+  // Debug: Log the store status
+  console.log('ProductList Debug - isStoreOpen:', isStoreOpen);
+  console.log('ProductList Debug - full storeStatus:', storeStatus);
   const router = useRouter();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedAdditionals, setSelectedAdditionals] = useState<Additional[]>([]);
@@ -238,6 +243,8 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
   
   // Função para adicionar produto ao carrinho
   const handleAddToCart = (product: Product, additionals: Additional[] = []) => {
+    console.log('handleAddToCart Debug - isStoreOpen:', isStoreOpen, 'product:', product.name);
+    
     if (!isStoreOpen) {
       toast.error('Restaurante fechado. Não é possível adicionar itens ao carrinho no momento.');
       return;
@@ -302,6 +309,8 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
 
   // Função para finalizar o pedido
   const finishOrder = async () => {
+    console.log('finishOrder Debug - isStoreOpen:', isStoreOpen);
+    
     if (!isStoreOpen) {
       toast.error('Restaurante fechado. Não é possível finalizar pedidos no momento.');
       return;

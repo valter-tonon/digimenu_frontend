@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { X, Shield, Info } from 'lucide-react';
-import { useUserTracking } from '@/services/userTracking';
+import { useUserTracking } from '@/hooks/useUserTracking';
 
 interface CookieConsentBannerProps {
   onAccept?: () => void;
@@ -12,22 +12,21 @@ interface CookieConsentBannerProps {
 export function CookieConsentBanner({ onAccept, onDecline }: CookieConsentBannerProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
-  const { isOptedOut, trackUser, optOut } = useUserTracking();
+  const { isOptedOut, initializeTracking, optOut } = useUserTracking();
 
   useEffect(() => {
     // Verificar se o usuário já fez uma escolha
     const hasConsent = localStorage.getItem('cookie_consent');
-    const isUserOptedOut = isOptedOut();
     
     // Mostrar banner apenas se não há consentimento e não optou por sair
-    if (!hasConsent && !isUserOptedOut) {
+    if (!hasConsent && !isOptedOut) {
       setIsVisible(true);
     }
   }, [isOptedOut]);
 
   const handleAccept = () => {
     localStorage.setItem('cookie_consent', 'accepted');
-    trackUser(); // Iniciar rastreamento
+    initializeTracking(); // Iniciar rastreamento
     setIsVisible(false);
     onAccept?.();
   };

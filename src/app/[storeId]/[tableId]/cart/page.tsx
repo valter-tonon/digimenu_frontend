@@ -24,7 +24,7 @@ export default function CartPage() {
     setContext
   } = useCartStore();
 
-  const { isStoreOpen } = useStoreStatus();
+  const { isOpen: isStoreOpen } = useStoreStatus();
 
   // Configura o contexto ao carregar a página
   useEffect(() => {
