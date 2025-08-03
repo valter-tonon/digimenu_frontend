@@ -107,6 +107,7 @@ export function AddToCartButton({ product, className = '', onAddedToCart }: AddT
         }`}
         onClick={handleAddToCart}
         disabled={isAdding || !isStoreOpen}
+        data-testid="add-to-cart-btn"
       >
         <ShoppingCart className="w-4 h-4 mr-2" />
         <span>{isStoreOpen ? 'Adicionar' : 'Restaurante Fechado'}</span>

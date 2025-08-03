@@ -58,10 +58,15 @@ export default function CheckoutPaymentPage() {
       return;
     }
 
-    // Atualizar step atual
-    setCurrentStep('payment');
     setLoading(false);
-  }, [contextLoading, contextValid, cartItems, session, router, setCurrentStep]);
+  }, [contextLoading, contextValid, cartItems.length, router]);
+
+  // Atualizar step atual em useEffect separado
+  useEffect(() => {
+    if (!loading && session && session.currentStep !== 'payment') {
+      setCurrentStep('payment');
+    }
+  }, [loading, session?.currentStep, setCurrentStep]);
 
   const validatePayment = (): boolean => {
     const newErrors: Record<string, string> = {};

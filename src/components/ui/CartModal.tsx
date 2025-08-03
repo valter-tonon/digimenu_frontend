@@ -114,7 +114,15 @@ export function CartModal({ isOpen, onClose }: CartModalProps) {
                 </span>
               </div>
               <button
+                onClick={() => {
+                  onClose();
+                  // Navigate to checkout - use Next.js router for better navigation
+                  if (typeof window !== 'undefined') {
+                    window.location.href = '/checkout';
+                  }
+                }}
                 className="w-full bg-primary text-white py-3 rounded-lg hover:bg-primary-hover transition-colors font-medium"
+                data-testid="checkout-btn"
               >
                 Finalizar Pedido
               </button>

@@ -149,6 +149,7 @@ export const AuthenticationDecision: React.FC<AuthenticationDecisionProps> = ({
             <button
               onClick={handleGuestCheckout}
               className="w-full flex items-center justify-center space-x-3 p-4 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors group"
+              data-testid="guest-btn"
             >
               <UserPlus className="w-5 h-5 group-hover:scale-110 transition-transform" />
               <div className="text-left">

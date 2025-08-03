@@ -128,7 +128,7 @@ export default function CheckoutAuthenticationPage() {
       </div>
 
       {/* Componente de decisão de autenticação */}
-      <div className="bg-white rounded-lg shadow-sm border">
+      <div className="bg-white rounded-lg shadow-sm border" data-testid="authentication-section">
         <AuthenticationDecision
           storeId={contextData?.storeId || ''}
           allowGuestCheckout={true}

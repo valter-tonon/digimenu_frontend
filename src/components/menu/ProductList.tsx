@@ -598,6 +598,7 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
                           openProductDetails(product);
                         }} 
                         className="text-primary hover:text-primary-dark transition-colors text-sm flex items-center"
+                        data-testid="product-details-btn"
                       >
                         Ver detalhes
                       </button>
@@ -804,6 +805,7 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
                       ? 'bg-amber-500 text-white hover:bg-amber-600' 
                       : 'bg-gray-400 text-white cursor-not-allowed'
                   }`}
+                  data-testid="add-to-cart-btn"
                 >
                   {isStoreOpen ? 'Adicionar ao carrinho' : 'Restaurante Fechado'}
                 </button>

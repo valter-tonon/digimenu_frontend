@@ -1,30 +1,24 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import { requestWhatsAppAuth, validateWhatsAppToken } from '@/services/api';
+import { useState, useCallback, useEffect } from 'react';
+import { whatsappAuthService, User } from '@/services/whatsappAuth';
 import { useAuth } from './use-auth';
 
 interface WhatsAppAuthState {
   isLoading: boolean;
   isSuccess: boolean;
   error: string | null;
-  rateLimitRemaining: number | null;
-  expiresInMinutes: number | null;
+  expiresAt: Date | null;
+  isAuthenticated: boolean;
+  user: User | null;
 }
 
 interface UseWhatsAppAuthReturn {
   state: WhatsAppAuthState;
-  requestAuth: (
-    phone: string, 
-    storeId: string, 
-    fingerprint: string, 
-    sessionId?: string,
-    sessionContext?: {
-      tableId?: string;
-      isDelivery: boolean;
-    }
-  ) => Promise<void>;
-  validateToken: (token: string) => Promise<void>;
+  requestMagicLink: (phone: string, tenantId: string) => Promise<void>;
+  verifyToken: (token: string) => Promise<void>;
+  validateStoredAuth: () => Promise<boolean>;
+  logout: () => void;
   reset: () => void;
 }
 
@@ -34,98 +28,153 @@ export const useWhatsAppAuth = (): UseWhatsAppAuthReturn => {
     isLoading: false,
     isSuccess: false,
     error: null,
-    rateLimitRemaining: null,
-    expiresInMinutes: null,
+    expiresAt: null,
+    isAuthenticated: false,
+    user: null,
   });
 
-  const requestAuth = useCallback(async (
-    phone: string, 
-    storeId: string, 
-    fingerprint: string, 
-    sessionId?: string,
-    sessionContext?: {
-      tableId?: string;
-      isDelivery: boolean;
-    }
-  ) => {
-    setState(prev => ({ ...prev, isLoading: true, error: null }));
+  // Verifica autenticação armazenada ao inicializar
+  useEffect(() => {
+    const checkStoredAuth = async () => {
+      const isValid = await whatsappAuthService.validateStoredJWT();
+      if (isValid) {
+        const user = whatsappAuthService.getAuthenticatedUser();
+        const jwt = whatsappAuthService.getCurrentJWT();
+        
+        setState(prev => ({
+          ...prev,
+          isAuthenticated: true,
+          user,
+        }));
+
+        // Integra com o sistema de auth existente
+        if (jwt) {
+          login(jwt);
+        }
+      }
+    };
+
+    checkStoredAuth();
+  }, [login]);
+
+  const requestMagicLink = useCallback(async (phone: string, tenantId: string) => {
+    setState(prev => ({ ...prev, isLoading: true, error: null, isSuccess: false }));
 
     try {
-      const response = await requestWhatsAppAuth(phone, storeId, fingerprint, sessionId, sessionContext);
+      const response = await whatsappAuthService.requestMagicLink(phone, tenantId);
       
-      if (response.data.success) {
+      if (response.success) {
         setState(prev => ({
           ...prev,
           isLoading: false,
           isSuccess: true,
-          expiresInMinutes: response.data.expires_in_minutes || 15,
-          rateLimitRemaining: response.data.rate_limit_remaining || null,
+          expiresAt: response.expiresAt || null,
         }));
       } else {
         setState(prev => ({
           ...prev,
           isLoading: false,
-          error: response.data.message || 'Erro ao solicitar autenticação',
-          rateLimitRemaining: response.data.rate_limit_remaining || null,
+          error: response.message,
         }));
       }
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Erro ao solicitar autenticação via WhatsApp';
       setState(prev => ({
         ...prev,
         isLoading: false,
-        error: errorMessage,
-        rateLimitRemaining: error.response?.data?.rate_limit_remaining || null,
+        error: 'Erro ao solicitar link mágico',
       }));
     }
   }, []);
 
-  const validateToken = useCallback(async (token: string) => {
+  const verifyToken = useCallback(async (token: string) => {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
 
     try {
-      const response = await validateWhatsAppToken(token);
+      const response = await whatsappAuthService.verifyToken(token);
       
-      if (response.data.success) {
-        // Login automático com o token de autenticação
-        login(response.data.data.auth_token);
-        
+      if (response.success && response.jwt && response.user) {
         setState(prev => ({
           ...prev,
           isLoading: false,
           isSuccess: true,
+          isAuthenticated: true,
+          user: response.user || null,
         }));
+
+        // Integra com o sistema de auth existente
+        login(response.jwt);
       } else {
         setState(prev => ({
           ...prev,
           isLoading: false,
-          error: response.data.message || 'Token inválido',
+          error: response.message || 'Token inválido',
         }));
       }
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Erro ao validar token';
       setState(prev => ({
         ...prev,
         isLoading: false,
-        error: errorMessage,
+        error: 'Erro ao verificar token',
       }));
     }
   }, [login]);
 
+  const validateStoredAuth = useCallback(async (): Promise<boolean> => {
+    try {
+      const isValid = await whatsappAuthService.validateStoredJWT();
+      
+      if (isValid) {
+        const user = whatsappAuthService.getAuthenticatedUser();
+        setState(prev => ({
+          ...prev,
+          isAuthenticated: true,
+          user,
+        }));
+      } else {
+        setState(prev => ({
+          ...prev,
+          isAuthenticated: false,
+          user: null,
+        }));
+      }
+
+      return isValid;
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        isAuthenticated: false,
+        user: null,
+      }));
+      return false;
+    }
+  }, []);
+
+  const logout = useCallback(() => {
+    whatsappAuthService.clearAuth();
+    setState(prev => ({
+      ...prev,
+      isAuthenticated: false,
+      user: null,
+      isSuccess: false,
+    }));
+  }, []);
+
   const reset = useCallback(() => {
-    setState({
+    setState(prev => ({
+      ...prev,
       isLoading: false,
       isSuccess: false,
       error: null,
-      rateLimitRemaining: null,
-      expiresInMinutes: null,
-    });
+      expiresAt: null,
+    }));
   }, []);
 
   return {
     state,
-    requestAuth,
-    validateToken,
+    requestMagicLink,
+    verifyToken,
+    validateStoredAuth,
+    logout,
     reset,
   };
 };

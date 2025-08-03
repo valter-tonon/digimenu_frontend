@@ -176,6 +176,14 @@ class CheckoutSessionService {
    * Updates the current step
    */
   setCurrentStep(step: CheckoutStep): CheckoutSession | null {
+    const currentSession = this.getCurrentSession();
+    if (!currentSession) return null;
+    
+    // Evitar atualizações desnecessárias se o step já é o mesmo
+    if (currentSession.currentStep === step) {
+      return currentSession;
+    }
+    
     return this.updateSession({ currentStep: step });
   }
 

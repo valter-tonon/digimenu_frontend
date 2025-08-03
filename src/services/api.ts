@@ -46,6 +46,18 @@ export const validateWhatsAppToken = async (token: string) => {
   return api.post('/auth/whatsapp/validate', { token });
 };
 
+// Novas funções de autenticação WhatsApp com magic links
+export const requestWhatsAppMagicLink = async (phone: string, tenantId: string) => {
+  return api.post('/auth/whatsapp/request', {
+    phone,
+    tenant_id: tenantId
+  });
+};
+
+export const verifyWhatsAppMagicLink = async (token: string) => {
+  return api.get(`/auth/whatsapp/verify/${token}`);
+};
+
 export const validateAuthToken = async (token: string) => {
   return api.post('/auth/token/validate', {}, {
     headers: { Authorization: `Bearer ${token}` }

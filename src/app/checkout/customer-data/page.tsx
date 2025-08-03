@@ -75,10 +75,15 @@ export default function CheckoutCustomerDataPage() {
       });
     }
 
-    // Atualizar step atual
-    setCurrentStep('customer_data');
     setLoading(false);
-  }, [contextLoading, contextValid, cartItems, session, router, setCurrentStep]);
+  }, [contextLoading, contextValid, cartItems.length, router]);
+
+  // Atualizar step atual em useEffect separado
+  useEffect(() => {
+    if (!loading && session && session.currentStep !== 'customer_data') {
+      setCurrentStep('customer_data');
+    }
+  }, [loading, session?.currentStep, setCurrentStep]);
 
   // Formatação de telefone
   const formatPhone = (value: string) => {
@@ -202,6 +207,7 @@ export default function CheckoutCustomerDataPage() {
               <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
+                name="name"
                 value={formData.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
                 className={`w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
@@ -209,6 +215,7 @@ export default function CheckoutCustomerDataPage() {
                 }`}
                 placeholder="Seu nome completo"
                 disabled={submitting}
+                data-testid="customer-name"
               />
             </div>
             {errors.name && <p className="text-red-600 text-sm mt-1">{errors.name}</p>}
@@ -223,6 +230,7 @@ export default function CheckoutCustomerDataPage() {
               <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="tel"
+                name="phone"
                 value={formData.phone}
                 onChange={(e) => handleInputChange('phone', e.target.value)}
                 className={`w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
@@ -230,6 +238,7 @@ export default function CheckoutCustomerDataPage() {
                 }`}
                 placeholder="(11) 99999-9999"
                 disabled={submitting}
+                data-testid="customer-phone"
               />
             </div>
             {errors.phone && <p className="text-red-600 text-sm mt-1">{errors.phone}</p>}
@@ -244,6 +253,7 @@ export default function CheckoutCustomerDataPage() {
               <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="email"
+                name="email"
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
                 className={`w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
@@ -251,6 +261,7 @@ export default function CheckoutCustomerDataPage() {
                 }`}
                 placeholder="seu@email.com"
                 disabled={submitting}
+                data-testid="customer-email"
               />
             </div>
             {errors.email && <p className="text-red-600 text-sm mt-1">{errors.email}</p>}
@@ -263,6 +274,7 @@ export default function CheckoutCustomerDataPage() {
             onClick={handleSubmit}
             disabled={submitting}
             className="w-full bg-amber-500 text-white py-3 px-6 rounded-lg font-semibold hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+            data-testid="continue-btn"
           >
             {submitting && <Loader2 className="w-5 h-5 mr-2 animate-spin" />}
             Continuar para Endereço

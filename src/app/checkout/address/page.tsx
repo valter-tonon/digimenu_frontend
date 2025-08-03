@@ -24,15 +24,15 @@ export default function CheckoutAddressPage() {
   const { data: contextData, isValid: contextValid, isLoading: contextLoading } = useAppContext();
   const { items: cartItems, deliveryMode } = useCartStore();
   const { session, updateSession, setCurrentStep } = useCheckoutSession(contextData?.storeId);
-  const { 
-    addresses, 
-    selectedAddress, 
-    selectAddress, 
-    createAddress, 
+  const {
+    addresses,
+    selectedAddress,
+    selectAddress,
+    createAddress,
     isLoading: addressLoading,
-    isGuest 
+    isGuest
   } = useAddressManagement();
-  
+
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showAddressForm, setShowAddressForm] = useState(false);
@@ -80,15 +80,26 @@ export default function CheckoutAddressPage() {
     }
 
     // Se é guest mas não tem dados do cliente, voltar
-    if (session.isGuest && !session.customerData?.name) {
+    if (session.isGuest && (!session.customerData?.name || !session.customerData?.phone)) {
+      console.log('Redirecionando para customer-data:', {
+        isGuest: session.isGuest,
+        customerData: session.customerData,
+        hasName: !!session.customerData?.name,
+        hasPhone: !!session.customerData?.phone
+      });
       router.push('/checkout/customer-data');
       return;
     }
 
-    // Atualizar step atual
-    setCurrentStep('address');
     setLoading(false);
-  }, [contextLoading, contextValid, cartItems, session, deliveryMode, router, setCurrentStep]);
+  }, [contextLoading, contextValid, cartItems.length, session?.isGuest, session?.customerData?.name, session?.customerData?.phone, deliveryMode, router]);
+
+  // Atualizar step atual em useEffect separado
+  useEffect(() => {
+    if (!loading && session && session.currentStep !== 'address') {
+      setCurrentStep('address');
+    }
+  }, [loading, session?.currentStep, setCurrentStep]);
 
   // Auto-mostrar formulário se for guest ou não tiver endereços
   useEffect(() => {
@@ -102,15 +113,15 @@ export default function CheckoutAddressPage() {
   // Buscar CEP
   const handleCepChange = async (cep: string) => {
     const cleanCep = cep.replace(/\D/g, '');
-    
+
     setFormData(prev => ({ ...prev, zipCode: cep }));
-    
+
     if (cleanCep.length === 8) {
       setCepLoading(true);
       try {
         const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
         const data = await response.json();
-        
+
         if (!data.erro) {
           setFormData(prev => ({
             ...prev,
@@ -118,7 +129,7 @@ export default function CheckoutAddressPage() {
             neighborhood: data.bairro || prev.neighborhood,
             city: data.localidade || prev.city
           }));
-          
+
           // Limpar erros relacionados aos campos preenchidos
           setErrors(prev => {
             const newErrors = { ...prev };
@@ -201,7 +212,7 @@ export default function CheckoutAddressPage() {
 
       await createAddress(addressData);
       setShowAddressForm(false);
-      
+
       // Continuar para próxima etapa
       router.push('/checkout/payment');
     } catch (error: any) {
@@ -257,7 +268,7 @@ export default function CheckoutAddressPage() {
               Novo Endereço
             </button>
           </div>
-          
+
           <div className="space-y-3">
             {addresses.map((address) => (
               <button
@@ -323,12 +334,14 @@ export default function CheckoutAddressPage() {
               <div className="relative">
                 <input
                   type="text"
+                  name="zipCode"
                   value={formData.zipCode}
                   onChange={(e) => handleCepChange(formatZipCode(e.target.value))}
                   className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                   placeholder="00000-000"
                   maxLength={9}
                   disabled={submitting}
+                  data-testid="cep-input"
                 />
                 {cepLoading && (
                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -346,30 +359,32 @@ export default function CheckoutAddressPage() {
                 </label>
                 <input
                   type="text"
+                  name="street"
                   value={formData.street}
                   onChange={(e) => handleInputChange('street', e.target.value)}
-                  className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
-                    errors.street ? 'border-red-300' : 'border-gray-300'
-                  }`}
+                  className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${errors.street ? 'border-red-300' : 'border-gray-300'
+                    }`}
                   placeholder="Nome da rua ou avenida"
                   disabled={submitting}
+                  data-testid="street-input"
                 />
                 {errors.street && <p className="text-red-600 text-sm mt-1">{errors.street}</p>}
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Número *
                 </label>
                 <input
                   type="text"
+                  name="number"
                   value={formData.number}
                   onChange={(e) => handleInputChange('number', e.target.value)}
-                  className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
-                    errors.number ? 'border-red-300' : 'border-gray-300'
-                  }`}
+                  className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${errors.number ? 'border-red-300' : 'border-gray-300'
+                    }`}
                   placeholder="123"
                   disabled={submitting}
+                  data-testid="number-input"
                 />
                 {errors.number && <p className="text-red-600 text-sm mt-1">{errors.number}</p>}
               </div>
@@ -400,15 +415,14 @@ export default function CheckoutAddressPage() {
                   type="text"
                   value={formData.neighborhood}
                   onChange={(e) => handleInputChange('neighborhood', e.target.value)}
-                  className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
-                    errors.neighborhood ? 'border-red-300' : 'border-gray-300'
-                  }`}
+                  className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${errors.neighborhood ? 'border-red-300' : 'border-gray-300'
+                    }`}
                   placeholder="Nome do bairro"
                   disabled={submitting}
                 />
                 {errors.neighborhood && <p className="text-red-600 text-sm mt-1">{errors.neighborhood}</p>}
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Cidade *
@@ -417,9 +431,8 @@ export default function CheckoutAddressPage() {
                   type="text"
                   value={formData.city}
                   onChange={(e) => handleInputChange('city', e.target.value)}
-                  className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
-                    errors.city ? 'border-red-300' : 'border-gray-300'
-                  }`}
+                  className={`w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${errors.city ? 'border-red-300' : 'border-gray-300'
+                    }`}
                   placeholder="Nome da cidade"
                   disabled={submitting}
                 />

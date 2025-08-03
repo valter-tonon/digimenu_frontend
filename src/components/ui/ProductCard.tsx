@@ -31,6 +31,7 @@ export function ProductCard({
     <div 
       className={`bg-white rounded-lg shadow-md overflow-hidden cursor-pointer transform transition-all duration-200 hover:scale-105 hover:shadow-lg ${className}`}
       onClick={onClick}
+      data-testid={`product-${product.id}`}
     >
       <div className="relative">
         {/* Imagem do produto */}
