@@ -220,4 +220,21 @@ export const setDefaultAddress = async (addressId: number) => {
   return api.post(`/addresses/${addressId}/set-default`);
 };
 
+// Funções de notificações e mensagens
+export const sendOrderConfirmationWhatsApp = async (orderId: string, phone: string, orderData: any) => {
+  return api.post(`/notifications/whatsapp/order-confirmation`, {
+    order_id: orderId,
+    phone,
+    order_data: orderData
+  });
+};
+
+export const sendOrderNotificationWhatsApp = async (phone: string, message: string, templateData?: any) => {
+  return api.post('/notifications/whatsapp/send', {
+    phone,
+    message,
+    template_data: templateData
+  });
+};
+
 export default api; 

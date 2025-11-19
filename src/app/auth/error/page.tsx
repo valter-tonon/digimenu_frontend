@@ -32,7 +32,7 @@ function AuthErrorContent() {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('whatsapp_auth_jwt');
     }
-    router.push('/checkout/authentication');
+    router.push('/checkout');
   };
 
   const handleRetry = () => {

@@ -50,9 +50,28 @@ export class ApiClient {
       (config) => {
         // Só tenta acessar localStorage no cliente
         if (!this.isServer) {
-          const token = localStorage.getItem('token');
+          // Primeiro tenta buscar o JWT do WhatsApp
+          let token = null;
+
+          try {
+            const whatsappAuth = localStorage.getItem('whatsapp_auth');
+            if (whatsappAuth) {
+              const auth = JSON.parse(whatsappAuth);
+              token = auth.jwt;
+            }
+          } catch (e) {
+            // Fallback para token genérico se parsing falhar
+            token = localStorage.getItem('token');
+          }
+
+          // Se não encontrou JWT do WhatsApp, tenta o genérico
+          if (!token) {
+            token = localStorage.getItem('token');
+          }
+
           if (token) {
             config.headers.Authorization = `Bearer ${token}`;
+            console.log('ApiClient - Token adicionado ao header Authorization');
           }
         }
         return config;

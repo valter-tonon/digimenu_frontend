@@ -24,7 +24,7 @@ export function WaiterCallNotification({ tenantId }: { tenantId: number }) {
   useEffect(() => {
     // Inicializar o elemento de áudio
     audioRef.current = new Audio('/sounds/notification.mp3');
-    
+
     // Configurar o Echo para escutar eventos
     if (!window.Echo) {
       window.Pusher = Pusher;
@@ -38,15 +38,15 @@ export function WaiterCallNotification({ tenantId }: { tenantId: number }) {
         disableStats: true,
         enabledTransports: ['ws', 'wss'],
       });
-      
+
       echoRef.current = window.Echo;
     } else {
       echoRef.current = window.Echo;
     }
-    
+
     // Escutar o canal do tenant
     const channel = echoRef.current.channel(`tenant.${tenantId}`);
-    
+
     // Escutar o evento de chamada de garçom
     channel.listen('.waiter.called', (data: WaiterCall) => {
       console.log('Evento de chamada de garçom recebido:', data);

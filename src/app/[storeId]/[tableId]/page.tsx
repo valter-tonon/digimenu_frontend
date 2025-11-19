@@ -19,6 +19,15 @@ export default function StoreTablePage({ params }: StoreTablePageProps) {
   const { initializeFromParams, isLoading, isValid, error } = useAppContext();
 
   useEffect(() => {
+    // Reserved route names que não devem ser tratadas como storeId
+    const reservedRoutes = ['checkout', 'menu', 'auth', 'login', 'dashboard', 'orders', 'api', '_next', 'admin'];
+
+    // Se for uma rota reservada, deixar que o Next.js roteador trate
+    if (reservedRoutes.includes(storeId)) {
+      console.log(`StoreTablePage - "${storeId}" é uma rota reservada, ignorando`);
+      return;
+    }
+
     // Validar se os IDs têm o formato correto
     if (!storeId || storeId.length < 10) {
       console.log('StoreTablePage - StoreId inválido, redirecionando para /404-restaurant');

@@ -173,7 +173,7 @@ function WhatsAppCallbackContent() {
       
       // Redirect to checkout after a short delay
       setTimeout(() => {
-        router.push('/checkout/authentication');
+        router.push('/checkout');
       }, 2000);
       
     } catch (err: any) {
@@ -206,7 +206,7 @@ function WhatsAppCallbackContent() {
       
       // Redirect to checkout after a short delay
       setTimeout(() => {
-        router.push('/checkout/authentication');
+        router.push('/checkout');
       }, 2000);
       
     } catch (err: any) {
@@ -273,7 +273,7 @@ function WhatsAppCallbackContent() {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('whatsapp_auth_jwt');
     }
-    router.push('/checkout/authentication');
+    router.push('/checkout');
   };
 
   const renderContent = () => {

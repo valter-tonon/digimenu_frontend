@@ -114,11 +114,20 @@ class CheckoutSessionService {
     const currentSession = this.getCurrentSession();
     if (!currentSession) return null;
 
+    // Fazer merge profundo de customerData se existir
     const updatedSession: CheckoutSession = {
       ...currentSession,
       ...updates,
       lastActivity: new Date()
     };
+
+    // Se customerData está sendo atualizado, fazer merge profundo
+    if (updates.customerData) {
+      updatedSession.customerData = {
+        ...(currentSession.customerData || {}),
+        ...updates.customerData
+      };
+    }
 
     this.saveSession(updatedSession);
     return updatedSession;
@@ -278,13 +287,13 @@ export const useCheckoutSession = (storeId?: string) => {
   // FIXED: Usar useCallback para evitar recriação desnecessária
   const initializeSession = useCallback(() => {
     if (!storeId) {
-      setLoading(false);
+      // Don't set loading to false yet - wait for storeId to be available
       return;
     }
 
     // Try to get existing session
     const existingSession = checkoutSessionService.getCurrentSession();
-    
+
     if (existingSession && existingSession.storeId === storeId) {
       setSession(existingSession);
     } else {
@@ -292,7 +301,7 @@ export const useCheckoutSession = (storeId?: string) => {
       const newSession = checkoutSessionService.createSession(storeId);
       setSession(newSession);
     }
-    
+
     setLoading(false);
   }, [storeId]);
 
