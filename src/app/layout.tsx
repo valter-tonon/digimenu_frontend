@@ -27,10 +27,12 @@ export default function RootLayout({
       <body suppressHydrationWarning={true}>
         <SkipToContent />
         <GlobalErrorBoundary>
-          <main id="main-content">
-            {children}
-          </main>
-          <CookieConsentBanner />
+          <AppProviders>
+            <main id="main-content">
+              {children}
+            </main>
+            <CookieConsentBanner />
+          </AppProviders>
         </GlobalErrorBoundary>
       </body>
     </html>

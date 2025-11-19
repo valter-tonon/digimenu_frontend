@@ -1,12 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: false,
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
+  reactStrictMode: true,
   images: {
     // Disable image optimization for external URLs to avoid 500 errors
     unoptimized: true,
@@ -25,7 +19,7 @@ const nextConfig = {
   output: 'standalone',
   trailingSlash: false,
   poweredByHeader: false,
-  
+
   // Performance optimizations
   experimental: {
     optimizePackageImports: [
@@ -84,7 +78,7 @@ const nextConfig = {
       // Tree shaking for unused exports
       config.optimization.usedExports = true;
       config.optimization.sideEffects = false;
-      
+
       // Magic UI specific optimizations
       config.resolve.alias = {
         ...config.resolve.alias,
