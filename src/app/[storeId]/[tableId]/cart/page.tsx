@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useCartStore } from '@/store/cart-store';
 import { useStoreStatus } from '@/infrastructure/context/StoreStatusContext';
@@ -8,23 +8,23 @@ import { useStoreStatus } from '@/infrastructure/context/StoreStatusContext';
 export default function CartPage() {
   const router = useRouter();
   const params = useParams();
-  const [submitting, setSubmitting] = useState(false);
-  
+
+
   const storeId = params?.storeId as string;
   const tableId = params?.tableId as string;
-  
+
   // Cart store
-  const { 
-    items, 
-    totalPrice, 
-    totalItems, 
-    removeItem, 
-    updateItem, 
+  const {
+    items,
+    totalPrice,
+    totalItems,
+    removeItem,
+    updateItem,
     clearCart,
     setContext
   } = useCartStore();
 
-  const { isOpen: isStoreOpen } = useStoreStatus();
+  const { isStoreOpen } = useStoreStatus();
 
   // Configura o contexto ao carregar a página
   useEffect(() => {
@@ -46,7 +46,7 @@ export default function CartPage() {
     updateItem(id, { quantity: newQuantity });
   };
 
-  const handleSubmitOrder = async () => {
+  const handleSubmitOrder = () => {
     if (items.length === 0) {
       alert('Adicione itens ao carrinho para fazer um pedido');
       return;
@@ -56,38 +56,9 @@ export default function CartPage() {
       alert('Restaurante fechado. Não é possível finalizar pedidos no momento.');
       return;
     }
-    
-    setSubmitting(true);
-    
-    try {
-      const orderData = {
-        token_company: storeId,
-        table: tableId,
-        products: items.map(item => ({
-          identify: item.identify,
-          quantity: item.quantity,
-          notes: item.notes,
-          additionals: item.additionals?.map(add => ({
-            id: add.id,
-            quantity: add.quantity
-          }))
-        }))
-      };
-      
-      console.log('Enviando pedido:', orderData);
-      
-      // Simular envio do pedido
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      alert('Pedido realizado com sucesso!');
-      clearCart();
-      
-    } catch (error) {
-      console.error('Erro ao enviar pedido:', error);
-      alert('Não foi possível realizar o pedido. Tente novamente.');
-    } finally {
-      setSubmitting(false);
-    }
+
+    // Redirecionar para o fluxo de checkout
+    router.push('/checkout');
   };
 
   if (!storeId || !tableId) {
@@ -114,7 +85,7 @@ export default function CartPage() {
             </button>
             <h1 className="text-2xl font-bold">Carrinho</h1>
           </div>
-          
+
           <div className="bg-white rounded-lg shadow p-8 text-center">
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Carrinho vazio</h2>
             <p className="text-gray-600 mb-6">Adicione alguns itens ao seu carrinho para começar.</p>
@@ -142,7 +113,7 @@ export default function CartPage() {
           </button>
           <h1 className="text-2xl font-bold">Carrinho</h1>
         </div>
-        
+
         <div className="bg-white rounded-lg shadow overflow-hidden">
           {/* Lista de itens */}
           <ul className="divide-y divide-gray-200">
@@ -154,7 +125,7 @@ export default function CartPage() {
                     {item.notes && (
                       <p className="text-sm text-gray-500 mt-1">Obs: {item.notes}</p>
                     )}
-                    
+
                     <div className="flex items-center justify-between mt-2">
                       <div className="flex items-center">
                         <button
@@ -173,7 +144,7 @@ export default function CartPage() {
                           +
                         </button>
                       </div>
-                      
+
                       <div className="flex items-center">
                         <span className="font-medium mr-3">
                           {formatPrice(item.price * item.quantity)}
@@ -191,40 +162,33 @@ export default function CartPage() {
               </li>
             ))}
           </ul>
-          
+
           {/* Resumo do pedido */}
           <div className="p-4 bg-gray-50 border-t">
             <div className="flex justify-between mb-2">
               <span>Itens ({totalItems()})</span>
               <span>{formatPrice(totalPrice())}</span>
             </div>
-            
+
             <div className="flex justify-between font-bold text-lg mt-2 pt-2 border-t">
               <span>Total</span>
               <span>{formatPrice(totalPrice())}</span>
             </div>
           </div>
-          
+
           {/* Botão de finalização */}
           <div className="p-4 border-t">
             <button
-              className={`w-full py-3 rounded-md font-medium flex items-center justify-center transition-colors ${
-                isStoreOpen 
-                  ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                  : 'bg-gray-400 text-white cursor-not-allowed'
-              }`}
+              className={`w-full py-3 rounded-md font-medium flex items-center justify-center transition-colors ${isStoreOpen
+                ? 'bg-blue-600 text-white hover:bg-blue-700'
+                : 'bg-gray-400 text-white cursor-not-allowed'
+                }`}
               onClick={handleSubmitOrder}
-              disabled={submitting || !isStoreOpen}
+              disabled={!isStoreOpen}
             >
-              {submitting ? (
-                <>
-                  Processando...
-                </>
-              ) : (
-                isStoreOpen ? 'Finalizar pedido' : 'Restaurante Fechado'
-              )}
+              {isStoreOpen ? 'Finalizar pedido' : 'Restaurante Fechado'}
             </button>
-            
+
             <button
               className="w-full mt-2 py-2 text-gray-500 flex items-center justify-center"
               onClick={() => router.push(`/${storeId}/${tableId}`)}

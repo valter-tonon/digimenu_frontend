@@ -31,70 +31,13 @@ const nextConfig = {
     ],
   },
 
-  // Webpack optimizations
-  webpack: (config, { dev, isServer }) => {
-    // Optimize bundle size
-    if (!dev && !isServer) {
-      config.optimization = {
-        ...config.optimization,
-        splitChunks: {
-          chunks: 'all',
-          cacheGroups: {
-            vendor: {
-              test: /[\\/]node_modules[\\/]/,
-              name: 'vendors',
-              chunks: 'all',
-              priority: 10,
-            },
-            common: {
-              name: 'common',
-              minChunks: 2,
-              chunks: 'all',
-              priority: 5,
-              reuseExistingChunk: true,
-            },
-            ui: {
-              test: /[\\/]src[\\/]components[\\/]ui[\\/]/,
-              name: 'ui',
-              chunks: 'all',
-              priority: 8,
-            },
-            magicui: {
-              test: /[\\/]src[\\/](components[\\/]ui[\\/]|lib[\\/]).*magic.*\.(ts|tsx)$/i,
-              name: 'magicui',
-              chunks: 'all',
-              priority: 9,
-            },
-            animations: {
-              test: /[\\/]node_modules[\\/](canvas-confetti|framer-motion)[\\/]/,
-              name: 'animations',
-              chunks: 'async',
-              priority: 7,
-            },
-          },
-        },
-      };
-
-      // Tree shaking for unused exports
-      config.optimization.usedExports = true;
-      config.optimization.sideEffects = false;
-
-      // Magic UI specific optimizations
-      config.resolve.alias = {
-        ...config.resolve.alias,
-        // Optimize Magic UI imports - removed require.resolve for ES modules compatibility
-      };
-    }
-
+  // Webpack optimizations - Removed manual chunking to avoid runtime errors
+  webpack: (config) => {
     // SVG optimization
     config.module.rules.push({
       test: /\.svg$/,
       use: ['@svgr/webpack'],
     });
-
-    // Magic UI component optimization - simplified for compatibility
-
-    // Bundle analyzer in development - removed for ES modules compatibility
 
     return config;
   },

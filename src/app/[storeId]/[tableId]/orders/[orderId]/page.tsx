@@ -40,10 +40,10 @@ export default function OrderDetailsPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingRepeat, setLoadingRepeat] = useState(false);
-  
-  const storeId = params.storeId as string;
-  const tableId = params.tableId as string;
-  const orderId = params.orderId as string;
+
+  const storeId = params?.storeId as string;
+  const tableId = params?.tableId as string;
+  const orderId = params?.orderId as string;
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -73,7 +73,7 @@ export default function OrderDetailsPage() {
         throw new Error('Token não encontrado');
         return;
       }
-      
+
       await repeatOrder(token, orderId);
       toast.success('Pedido repetido com sucesso!');
       router.push(`/${storeId}/${tableId}/cart`);
@@ -87,7 +87,7 @@ export default function OrderDetailsPage() {
 
   const getStatusBadgeClass = (color: string) => {
     const baseClass = 'py-1 px-2 rounded-full text-xs font-medium';
-    
+
     switch (color) {
       case 'yellow':
         return `${baseClass} bg-yellow-100 text-yellow-800`;
@@ -119,7 +119,7 @@ export default function OrderDetailsPage() {
         <h1 className="text-2xl font-bold mb-6">Detalhes do Pedido</h1>
         <div className="bg-white rounded-lg shadow p-6 text-center">
           <p className="mb-4">Você precisa estar logado para ver os detalhes do pedido.</p>
-          <button 
+          <button
             className="bg-primary text-white py-2 px-4 rounded-md"
             onClick={() => router.push(`/${storeId}/${tableId}/login`)}
           >
@@ -135,7 +135,7 @@ export default function OrderDetailsPage() {
   return (
     <div className="container mx-auto p-4 pb-20">
       <div className="flex items-center mb-6">
-        <button 
+        <button
           className="mr-4 p-2"
           onClick={() => router.push(`/${storeId}/${tableId}/orders`)}
         >
@@ -170,7 +170,7 @@ export default function OrderDetailsPage() {
               </div>
               <p className="font-bold text-xl mt-2">{order.formatted_total}</p>
             </div>
-            
+
             <div className="p-4">
               <h4 className="font-medium mb-3">Itens do pedido</h4>
               <ul className="space-y-3 divide-y divide-gray-100">
@@ -194,20 +194,20 @@ export default function OrderDetailsPage() {
                 ))}
               </ul>
             </div>
-            
+
             {order.comment && (
               <div className="p-4 border-t">
                 <h4 className="font-medium mb-2">Observações</h4>
                 <p className="text-gray-700">{order.comment}</p>
               </div>
             )}
-            
+
             <div className="p-4 border-t flex justify-between items-center">
               <div>
                 <div className="text-sm text-gray-500">Total</div>
                 <div className="font-bold text-xl">{order.formatted_total}</div>
               </div>
-              
+
               {order.can_repeat && (
                 <button
                   className="bg-primary text-white py-2 px-4 rounded-md flex items-center"
@@ -226,7 +226,7 @@ export default function OrderDetailsPage() {
           </div>
         </div>
       )}
-      
+
       <div className="h-16"></div>
       <BottomNavigation storeId={storeId} tableId={tableId} />
     </div>

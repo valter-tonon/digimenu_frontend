@@ -17,13 +17,13 @@ import { useRouter } from 'next/navigation';
 const formatPriceLocal = (price: any): string => {
   // Se for null ou undefined, retorna "0.00"
   if (price == null) return "0.00";
-  
+
   // Tenta converter para número
   const numPrice = typeof price === 'number' ? price : Number(price);
-  
+
   // Verifica se é um número válido
   if (isNaN(numPrice)) return "0.00";
-  
+
   // Formata o número com 2 casas decimais
   return numPrice.toFixed(2);
 };
@@ -45,7 +45,7 @@ interface ProductListProps {
 export function ProductList({ products, selectedCategoryId, onCartItemsChange, searchTerm = '' }: ProductListProps) {
   const storeStatus = useStoreStatus();
   const { isStoreOpen } = storeStatus;
-  
+
   // Debug: Log the store status
   console.log('ProductList Debug - isStoreOpen:', isStoreOpen);
   console.log('ProductList Debug - full storeStatus:', storeStatus);
@@ -66,13 +66,13 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
     const openCartHandler = () => openCart();
     // Atribuir à função global temporariamente
     (window as any).openCartModal = openCartHandler;
-    
+
     // Limpar quando o componente for desmontado
     return () => {
       delete (window as any).openCartModal;
     };
   }, []);
-  const { 
+  const {
     cartItems,
     addToCart,
     removeFromCart,
@@ -81,14 +81,14 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
     setIsCartOpen: setContextCartOpen,
     clearCart
   } = useMenu();
-  
+
   // Usar o carrinho Zustand diretamente para ter acesso aos dados corretos
   const { items: cartItemsZustand, clearCart: clearCartZustand } = useCartStore();
   const [internalSearchTerm, setInternalSearchTerm] = useState('');
-  
+
   // Obter o contexto da aplicação
   const { data: contextData } = useAppContext();
-  
+
   // Adicionar estado para controlar o carregamento e feedback
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState<{
@@ -109,20 +109,20 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
       clearCartZustand();
       toast.error('Carrinho foi limpo devido a formato inválido. Adicione os produtos novamente.');
     }
-    
+
     // Atualizar o estado do carrinho baseado no contexto
     const cartHasItems = cartItems && cartItems.length > 0;
-    
+
     // Inicializar flags de debug
     console.log("ProductList montado, cartItems:", cartItems.length);
-    
+
     // Se tivermos itens armazenados no localStorage, mostrar o carrinho
     if (cartHasItems && window.location.hash === "#cart") {
       console.log("Abrindo carrinho automaticamente devido ao hash #cart");
       setIsCartOpen(true);
     }
   }, []);
-  
+
   // Sincronizar o estado do carrinho com o contexto
   useEffect(() => {
     // Notificar componentes pai sobre a mudança na quantidade de itens do carrinho
@@ -165,33 +165,33 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
     if (!products || !Array.isArray(products)) {
       return [];
     }
-    
+
     // Filtrar produtos inválidos
-    return products.filter(product => 
+    return products.filter(product =>
       product && (typeof product === 'object')
     );
   }, [products]);
-  
+
   // Filtrar produtos com base na categoria selecionada e termo de busca
   const filteredProducts = useMemo(() => {
     // Garantir que temos produtos válidos
     const validProducts = products.filter(product => product && product.id);
-    
+
     // Filtrar por categoria
     let filtered = validProducts;
     if (selectedCategoryId) {
       filtered = filtered.filter(product => product.category_id === selectedCategoryId);
     }
-    
+
     // Filtrar por termo de busca
     if (effectiveSearchTerm.trim()) {
       const term = effectiveSearchTerm.toLowerCase();
-      filtered = filtered.filter(product => 
-        product.name?.toLowerCase().includes(term) || 
+      filtered = filtered.filter(product =>
+        product.name?.toLowerCase().includes(term) ||
         product.description?.toLowerCase().includes(term)
       );
     }
-    
+
     return filtered;
   }, [products, selectedCategoryId, effectiveSearchTerm]);
 
@@ -214,7 +214,7 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
     setSelectedAdditionals([]);
     setSelectedQuantity(1);
   };
-  
+
   // Função para alternar a seleção de um adicional
   const toggleAdditional = (additional: Additional) => {
     setSelectedAdditionals(prev => {
@@ -226,25 +226,25 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
       }
     });
   };
-  
+
   // Calcular o preço total do produto com adicionais
   const calculateTotalPrice = (basePrice: number, additionals: Additional[] = []) => {
     // Garantir que o preço base seja um número válido
     const validBasePrice = Number(basePrice) || 0;
-    
+
     // Calcular o total dos adicionais com validação de cada preço
     const additionalsTotal = additionals.reduce((sum, item) => {
       const additionalPrice = Number(item.price) || 0;
       return sum + additionalPrice;
     }, 0);
-    
+
     return validBasePrice + additionalsTotal;
   };
-  
+
   // Função para adicionar produto ao carrinho
   const handleAddToCart = (product: Product, additionals: Additional[] = []) => {
     console.log('handleAddToCart Debug - isStoreOpen:', isStoreOpen, 'product:', product.name);
-    
+
     if (!isStoreOpen) {
       toast.error('Restaurante fechado. Não é possível adicionar itens ao carrinho no momento.');
       return;
@@ -252,9 +252,9 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
 
     // Determinar o preço correto a ser usado
     let effectivePrice = Number(product.price) || 0;
-    if (product.is_on_promotion && 
-        product.promotional_price != null && 
-        Number(product.promotional_price) > 0) {
+    if (product.is_on_promotion &&
+      product.promotional_price != null &&
+      Number(product.promotional_price) > 0) {
       effectivePrice = Number(product.promotional_price);
     }
 
@@ -272,27 +272,27 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
         quantity: 1
       }))
     });
-    
+
     // Abre o carrinho automaticamente ao adicionar um item
     setIsCartOpen(true);
   };
-  
+
   // Função para remover item do carrinho - usar a do context
   const handleRemoveFromCart = (productId: number) => {
     removeFromCart(productId.toString());
   };
-  
+
   // Função para alterar a quantidade de um item - usar a do context
   const handleUpdateQuantity = (productId: number, newQuantity: number) => {
     updateQuantity(productId.toString(), newQuantity);
   };
-  
+
   // Calcular o total do carrinho
   const cartTotal = useMemo(() => {
     return cartItems.reduce((total, item) => {
       // Verificar o preço a ser utilizado
       const price = item.price || 0;
-      
+
       // Adicionais
       const additionalsPrice = item.additionals?.reduce(
         (sum: number, additional) => {
@@ -302,7 +302,7 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
         },
         0
       ) || 0;
-      
+
       return total + (price + additionalsPrice) * item.quantity;
     }, 0);
   }, [cartItems]);
@@ -310,7 +310,7 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
   // Função para finalizar o pedido
   const finishOrder = async () => {
     console.log('finishOrder Debug - isStoreOpen:', isStoreOpen);
-    
+
     if (!isStoreOpen) {
       toast.error('Restaurante fechado. Não é possível finalizar pedidos no momento.');
       return;
@@ -329,11 +329,11 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
     // Verificar se é delivery - se for, redirecionar para checkout
     const { deliveryMode } = useCartStore.getState();
     const { tableId, storeId } = contextData;
-    
+
     if (deliveryMode) {
       console.log('Modo delivery detectado, redirecionando para checkout...');
       setIsCartOpen(false);
-      
+
       // Redirecionar para a página de checkout com URL limpa
       console.log('Redirecionando para checkout...');
       router.push('/checkout');
@@ -345,17 +345,17 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
       // Iniciar o processo de submissão
       setIsSubmitting(true);
       setOrderSuccess(null);
-      
+
       // Fechar o carrinho
       setIsCartOpen(false);
-      
-      if (!storeSlug) {
+
+      if (!storeId) {
         throw new Error('Identificador da loja não encontrado');
       }
-      
+
       // Preparar os dados do pedido usando o carrinho Zustand
       const orderData = {
-        token_company: storeSlug, // Identificador da empresa/loja
+        token_company: storeId, // Identificador da empresa/loja
         ...(tableId ? { table: tableId } : {}), // Adicionar mesa apenas se existir
         products: cartItemsZustand.map(item => ({
           identify: item.identify,
@@ -363,7 +363,7 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
           additionals: item.additionals ? item.additionals.map(add => add.id) : []
         }))
       };
-      
+
       console.log('Enviando pedido:', orderData);
       console.log('Itens do carrinho Zustand:', cartItemsZustand);
       console.log('Detalhes dos produtos:', cartItemsZustand.map(item => ({
@@ -371,13 +371,13 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
         name: item.name,
         productId: item.productId
       })));
-      
+
       // Enviar para a API
       const baseURL = process.env.NEXT_PUBLIC_API_URL || '';
       // A variável NEXT_PUBLIC_API_URL já inclui o prefixo 'api/v1'
       const url = `${baseURL}/orders-kanban`;
       console.log('URL da API:', url);
-      
+
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -386,41 +386,41 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
         },
         body: JSON.stringify(orderData)
       });
-      
+
       console.log('Resposta da API:', response.status, response.statusText);
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Texto do erro:', errorText);
-        
+
         let errorMessage = 'Erro ao finalizar o pedido';
-        
+
         try {
           const errorData = JSON.parse(errorText);
           errorMessage = errorData.message || errorMessage;
         } catch (e) {
           console.error('Erro ao processar resposta de erro:', errorText);
         }
-        
+
         throw new Error(errorMessage);
       }
-      
+
       const data = await response.json();
       console.log('Dados da resposta:', data);
-      
+
       // Limpar o carrinho
       clearCartZustand();
-      
+
       // Definir sucesso
       setOrderSuccess({
         success: true,
         message: 'Pedido finalizado com sucesso!',
         orderIdentify: data.data?.identify || 'N/A'
       });
-      
+
     } catch (error: any) {
       console.error('Erro ao finalizar pedido:', error);
-      
+
       // Definir erro
       setOrderSuccess({
         success: false,
@@ -434,9 +434,9 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
   // Adicionar componente de feedback após o carrinho
   const OrderFeedback = () => {
     if (!orderSuccess) return null;
-    
+
     return (
-              <div className={`fixed inset-0 flex items-center justify-center z-modal bg-black bg-opacity-50`}>
+      <div className={`fixed inset-0 flex items-center justify-center z-modal bg-black bg-opacity-50`}>
         <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
           <div className={`text-2xl mb-4 ${orderSuccess.success ? 'text-green-600' : 'text-red-600'}`}>
             {orderSuccess.success ? '✓ Sucesso!' : '✗ Erro!'}
@@ -458,9 +458,9 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
 
   // Função para exibir o preço correto do produto
   const displayProductPrice = (product: Product) => {
-    if (product.is_on_promotion && 
-        product.promotional_price != null && 
-        Number(product.promotional_price) > 0) {
+    if (product.is_on_promotion &&
+      product.promotional_price != null &&
+      Number(product.promotional_price) > 0) {
       // Produto com promoção válida
       return (
         <>
@@ -503,7 +503,7 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
           </div>
         </div>
       )}
-      
+
       {filteredProducts.length === 0 ? (
         <div className="text-center py-8">
           <p className="text-gray-600">
@@ -514,22 +514,21 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {filteredProducts.map((product, index) => {
             // Garantir que temos uma chave única para cada item
-            const uniqueKey = `product-${
-              product.uuid || 
-              product.id?.toString() || 
-              product.name?.replace(/\s+/g, '-').toLowerCase() || 
+            const uniqueKey = `product-${product.uuid ||
+              product.id?.toString() ||
+              product.name?.replace(/\s+/g, '-').toLowerCase() ||
               index
-            }`;
-            
+              }`;
+
             return (
-              <div 
-                key={uniqueKey} 
+              <div
+                key={uniqueKey}
                 className="bg-white rounded-lg shadow-sm overflow-hidden flex flex-col hover:shadow-md transition-shadow duration-300"
               >
                 <div className="w-full h-40 relative">
-                  <img 
-                    src={product.image || 'https://via.placeholder.com/400?text=Sem+Imagem'} 
-                    alt={product.name || 'Produto sem nome'} 
+                  <img
+                    src={product.image || 'https://via.placeholder.com/400?text=Sem+Imagem'}
+                    alt={product.name || 'Produto sem nome'}
                     className="w-full h-full object-cover"
                     onClick={() => openProductDetails(product)}
                   />
@@ -592,11 +591,11 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
                       <div className="text-base font-bold text-green-600">
                         {displayProductPrice(product)}
                       </div>
-                      <button 
+                      <button
                         onClick={(e) => {
                           e.stopPropagation();
                           openProductDetails(product);
-                        }} 
+                        }}
                         className="text-primary hover:text-primary-dark transition-colors text-sm flex items-center"
                         data-testid="product-details-btn"
                       >
@@ -618,7 +617,7 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-bold text-gray-800">{selectedProduct.name}</h2>
-                <button 
+                <button
                   onClick={closeModal}
                   className="text-gray-500 hover:text-gray-700"
                 >
@@ -627,11 +626,11 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
                   </svg>
                 </button>
               </div>
-              
+
               <div className="mb-6">
-                <img 
-                  src={selectedProduct.image || 'https://via.placeholder.com/400x300?text=Sem+Imagem'} 
-                  alt={selectedProduct.name} 
+                <img
+                  src={selectedProduct.image || 'https://via.placeholder.com/400x300?text=Sem+Imagem'}
+                  alt={selectedProduct.name}
                   className="w-full h-64 object-cover rounded-lg"
                 />
                 {/* Badges de destaque e popular */}
@@ -648,7 +647,7 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
                   )}
                   {selectedProduct.tags && selectedProduct.tags.map(tag => {
                     let badge = null;
-                    switch(tag) {
+                    switch (tag) {
                       case 'vegetariano':
                         badge = <span key={tag} className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">🌱 Vegetariano</span>;
                         break;
@@ -678,30 +677,29 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
                   })}
                 </div>
               </div>
-              
+
               <div className="mb-4">
                 <h3 className="text-lg font-semibold text-gray-800">Descrição</h3>
                 <p className="text-gray-600 mt-1">{selectedProduct.description || 'Sem descrição disponível.'}</p>
               </div>
-              
+
               {/* Adicionais */}
               {selectedProduct.additionals && selectedProduct.additionals.length > 0 && (
                 <div className="mb-6">
                   <h3 className="text-lg font-semibold text-gray-800 mb-2">Adicionais</h3>
                   <p className="text-sm text-gray-500 mb-3">Selecione os adicionais desejados:</p>
-                  
+
                   <div className="space-y-2">
                     {selectedProduct.additionals.map(additional => {
                       const isSelected = selectedAdditionals.some(item => item.id === additional.id);
-                      
+
                       return (
-                        <div 
-                          key={additional.id} 
-                          className={`p-3 border rounded-md cursor-pointer transition-colors ${
-                            isSelected 
-                              ? 'border-amber-500 bg-amber-50' 
-                              : 'border-gray-200 hover:border-amber-300'
-                          }`}
+                        <div
+                          key={additional.id}
+                          className={`p-3 border rounded-md cursor-pointer transition-colors ${isSelected
+                            ? 'border-amber-500 bg-amber-50'
+                            : 'border-gray-200 hover:border-amber-300'
+                            }`}
                           onClick={() => toggleAdditional(additional)}
                         >
                           <div className="flex justify-between items-center">
@@ -712,11 +710,10 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
                               <span className="text-green-600 font-medium">
                                 + R$ {formatPrice(additional.price)}
                               </span>
-                              <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
-                                isSelected 
-                                  ? 'bg-amber-500 border-amber-500' 
-                                  : 'border-gray-300'
-                              }`}>
+                              <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${isSelected
+                                ? 'bg-amber-500 border-amber-500'
+                                : 'border-gray-300'
+                                }`}>
                                 {isSelected && (
                                   <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-white" viewBox="0 0 20 20" fill="currentColor">
                                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -731,7 +728,7 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
                   </div>
                 </div>
               )}
-              
+
               {/* Controle de Quantidade */}
               <div className="mb-6">
                 <h3 className="text-lg font-semibold text-gray-800 mb-3">Quantidade</h3>
@@ -761,9 +758,9 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
               <div className="mb-6">
                 <h3 className="text-lg font-semibold text-gray-800">Preço</h3>
                 <div className="flex items-baseline mt-1">
-                  {selectedProduct.is_on_promotion && 
-                   selectedProduct.promotional_price !== null &&
-                   Number(selectedProduct.promotional_price) > 0 ? (
+                  {selectedProduct.is_on_promotion &&
+                    selectedProduct.promotional_price !== null &&
+                    Number(selectedProduct.promotional_price) > 0 ? (
                     <div className="flex flex-col">
                       <p className="text-sm line-through text-gray-500">
                         R$ {formatPrice(selectedProduct.price)}
@@ -778,33 +775,32 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
                   ) : (
                     <p className="text-2xl font-bold text-amber-600">
                       R$ {formatPrice(calculateTotalPrice(
-                        Number(selectedProduct.price) || 0, 
+                        Number(selectedProduct.price) || 0,
                         selectedAdditionals
                       ) * selectedQuantity)}
                     </p>
                   )}
                 </div>
               </div>
-              
+
               <div className="flex justify-end space-x-3">
-                <button 
+                <button
                   onClick={closeModal}
                   className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 transition-colors"
                 >
                   Cancelar
                 </button>
-                <button 
+                <button
                   onClick={(e) => {
                     e.stopPropagation();
                     handleAddToCart(selectedProduct, selectedAdditionals);
                     closeModal();
                   }}
                   disabled={!isStoreOpen}
-                  className={`px-4 py-2 rounded-md transition-colors ${
-                    isStoreOpen 
-                      ? 'bg-amber-500 text-white hover:bg-amber-600' 
-                      : 'bg-gray-400 text-white cursor-not-allowed'
-                  }`}
+                  className={`px-4 py-2 rounded-md transition-colors ${isStoreOpen
+                    ? 'bg-amber-500 text-white hover:bg-amber-600'
+                    : 'bg-gray-400 text-white cursor-not-allowed'
+                    }`}
                   data-testid="add-to-cart-btn"
                 >
                   {isStoreOpen ? 'Adicionar ao carrinho' : 'Restaurante Fechado'}
@@ -819,11 +815,11 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
       {isCartOpen && (
         <div className="fixed inset-0 z-modal overflow-hidden">
           <div className="absolute inset-0 overflow-hidden">
-            <div 
+            <div
               className="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
               onClick={() => setIsCartOpen(false)}
             ></div>
-            
+
             <div className="fixed inset-y-0 right-0 max-w-full flex">
               <div className="w-screen max-w-md">
                 <div className="h-full flex flex-col bg-white shadow-xl overflow-y-auto">
@@ -831,7 +827,7 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
                     <div className="flex items-start justify-between">
                       <h2 className="text-lg font-medium text-gray-900">Seu carrinho</h2>
                       <div className="ml-3 h-7 flex items-center">
-                        <button 
+                        <button
                           onClick={() => setIsCartOpen(false)}
                           className="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none"
                         >
@@ -871,11 +867,11 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
                                   // Garantir que o preço do adicional seja um número válido
                                   const additionalPrice = Number(additional.price) || 0;
                                   return sum + additionalPrice;
-                                }, 
+                                },
                                 0
                               ) || 0;
                               const totalItemPrice = (itemPrice + additionalsPrice) * item.quantity;
-                              
+
                               return (
                                 <li key={`${item.id}-${index}`} className="py-6 flex">
                                   <div className="flex-shrink-0 w-24 h-24 border border-gray-200 rounded-md overflow-hidden bg-gray-100 flex items-center justify-center">
@@ -890,7 +886,7 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
                                         <h3>{item.name}</h3>
                                         <p className="ml-4">R$ {formatPrice(totalItemPrice)}</p>
                                       </div>
-                                      
+
                                       {/* Mostrar adicionais selecionados */}
                                       {item.additionals && item.additionals.length > 0 && (
                                         <div className="mt-1">
@@ -945,7 +941,7 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
                         </div>
                       )}
                     </div>
-                    
+
                     {cartItems.length > 0 && (
                       <div className="border-t border-gray-200 py-6 px-4 sm:px-6">
                         <div className="flex justify-between text-base font-medium text-gray-900">
@@ -956,15 +952,16 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
                         <div className="mt-6">
                           <a
                             href="#"
-                            className={`flex justify-center items-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium transition-colors ${
-                              isStoreOpen 
-                                ? 'text-white bg-amber-500 hover:bg-amber-600' 
-                                : 'text-white bg-gray-400 cursor-not-allowed'
-                            }`}
+                            className={`flex justify-center items-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium transition-colors ${isStoreOpen
+                              ? 'text-white bg-amber-500 hover:bg-amber-600'
+                              : 'text-white bg-gray-400 cursor-not-allowed'
+                              }`}
                             onClick={(e) => {
                               e.preventDefault();
                               if (isStoreOpen) {
-                                finishOrder();
+                                // Redirecionar para o fluxo de checkout
+                                setIsCartOpen(false);
+                                router.push('/checkout');
                               } else {
                                 toast.error('Restaurante fechado. Não é possível finalizar pedidos no momento.');
                               }
