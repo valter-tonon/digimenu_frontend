@@ -436,7 +436,6 @@ function MenuContent({
               <StoreHeader
                 storeName={storeName || storeSlug || 'Restaurante'}
                 storeLogo={storeLogo}
-                subtitle="Cardápio digital"
                 className="text-white"
               />
             </div>
