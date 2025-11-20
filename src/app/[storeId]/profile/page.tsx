@@ -40,38 +40,38 @@ export default function ProfilePageWrapper() {
 
 function ProfilePage() {
   const params = useParams();
-  const storeId = params.storeId as string;
+  const storeId = (params?.storeId as string) || '';
   const [activeTab, setActiveTab] = useState<'profile' | 'addresses' | 'preferences' | 'notifications'>('profile');
-  
+
   // Usar o mesmo contexto do menu
   const { data, isLoading: contextLoading, error: contextError, isValid } = useAppContext();
   const { menuRepository } = useContainer();
   const [tenantData, setTenantData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  
+
   // Extrair dados do contexto para manter o contexto da mesa
   const { storeId: contextStoreId, tableId, isDelivery, storeName } = data;
-  
+
   // Hook de navegação
   const { navigateToMenu, getBreadcrumbItems, getCurrentContext } = useNavigation();
-  
+
   // Carregar dados do tenant usando o mesmo método do menu
   useEffect(() => {
     if (!isValid || contextLoading || !storeId) {
       return;
     }
-    
+
     const loadTenantData = async () => {
       try {
         setLoading(true);
         // Usar o mesmo repositório do menu para carregar dados do tenant
         const menuParams = {
           store: storeId,
-          table: null,
+          table: undefined,
           isDelivery: false
         };
         const menuData = await menuRepository.getMenu(menuParams);
-        
+
         // Extrair dados do tenant do menu
         if (menuData.tenant) {
           setTenantData(menuData.tenant);
@@ -104,9 +104,9 @@ function ProfilePage() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       <div className="relative">
-        <MenuHeader 
-          cartItemsCount={0} 
-          onCartClick={() => {}}
+        <MenuHeader
+          cartItemsCount={0}
+          onCartClick={() => { }}
           storeName={tenantData?.name || storeName || storeId}
           storeLogo={tenantData?.logo}
           openingHours={tenantData?.opening_hours}
@@ -158,11 +158,10 @@ function ProfilePage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                    activeTab === tab.id
-                      ? 'border-amber-500 text-amber-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
+                  className={`flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === tab.id
+                    ? 'border-amber-500 text-amber-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
                 >
                   <span>{tab.icon}</span>
                   {tab.label}
@@ -194,19 +193,19 @@ function ProfilePage() {
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="mb-6 md:mb-0">
-              <StoreHeader 
+              <StoreHeader
                 storeName={tenantData?.name || storeName || storeId}
                 storeLogo={tenantData?.logo}
                 className="text-white"
               />
             </div>
-            
+
             <div className="flex flex-col items-center md:items-end">
               <div className="flex flex-col items-center">
                 <div className="flex items-center mb-2">
-                  <img 
-                    src="/logo-digimenu.svg" 
-                    alt="DigiMenu" 
+                  <img
+                    src="/logo-digimenu.svg"
+                    alt="DigiMenu"
                     className="h-8 w-auto"
                   />
                 </div>
