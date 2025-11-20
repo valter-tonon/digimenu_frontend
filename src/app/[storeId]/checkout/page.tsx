@@ -41,14 +41,14 @@ export default function CheckoutPage() {
   const { isAuthenticated, customer } = useAuth();
   const { userId, source, initializeTracking, associateWithOrder } = useUserTracking();
   const [submitting, setSubmitting] = useState(false);
-  
+
   const storeId = contextData.storeId || (params.storeId as string);
-  
+
   // Cart store
-  const { 
-    items, 
-    totalPrice, 
-    totalItems, 
+  const {
+    items,
+    totalPrice,
+    totalItems,
     clearCart,
     setContext,
     setDeliveryMode
@@ -73,22 +73,22 @@ export default function CheckoutPage() {
   const [selectedPayment, setSelectedPayment] = useState<string>('');
   const [changeAmount, setChangeAmount] = useState<string>('');
   const [orderNotes, setOrderNotes] = useState('');
-  const { isOpen: isStoreOpen } = useStoreStatus();
+  const { isStoreOpen } = useStoreStatus();
 
   // Configura o contexto ao carregar a página
   useEffect(() => {
     // Se o contexto ainda está carregando, aguardar
     if (contextLoading) return;
-    
+
     // Se não tem contexto válido, redirecionar para sessão expirada
     if (!contextValid || !storeId) {
       router.push('/404-session');
       return;
     }
-    
+
     setContext(storeId);
     setDeliveryMode(contextData.isDelivery);
-    
+
     // Se não estiver autenticado, redireciona para login
     if (!isAuthenticated) {
       router.push(`/${storeId}/login?redirect=checkout`);
@@ -150,7 +150,7 @@ export default function CheckoutPage() {
     }
 
     setSubmitting(true);
-    
+
     try {
       const orderData = {
         token_company: storeId,
@@ -176,17 +176,17 @@ export default function CheckoutPage() {
           device_id: userId // Usando userId como deviceId por simplicidade
         }
       };
-      
+
       const response = await createOrder(orderData);
-      
+
       // Associar pedido ao histórico do usuário
       if (response.data?.identify) {
         associateWithOrder(response.data.identify);
       }
-      
+
       toast.success('Pedido realizado com sucesso!');
       clearCart();
-      
+
       // Redirecionar para página de sucesso
       router.push(`/${storeId}/orders/${response.data.identify}`);
     } catch (error) {
@@ -255,7 +255,7 @@ export default function CheckoutPage() {
             <input
               type="text"
               value={customerData.name}
-              onChange={(e) => setCustomerData({...customerData, name: e.target.value})}
+              onChange={(e) => setCustomerData({ ...customerData, name: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
               required
             />
@@ -267,7 +267,7 @@ export default function CheckoutPage() {
             <input
               type="tel"
               value={customerData.phone}
-              onChange={(e) => setCustomerData({...customerData, phone: e.target.value})}
+              onChange={(e) => setCustomerData({ ...customerData, phone: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
               required
             />
@@ -279,7 +279,7 @@ export default function CheckoutPage() {
             <input
               type="email"
               value={customerData.email}
-              onChange={(e) => setCustomerData({...customerData, email: e.target.value})}
+              onChange={(e) => setCustomerData({ ...customerData, email: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
@@ -301,7 +301,7 @@ export default function CheckoutPage() {
               <input
                 type="text"
                 value={deliveryAddress.street}
-                onChange={(e) => setDeliveryAddress({...deliveryAddress, street: e.target.value})}
+                onChange={(e) => setDeliveryAddress({ ...deliveryAddress, street: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 required
               />
@@ -313,7 +313,7 @@ export default function CheckoutPage() {
               <input
                 type="text"
                 value={deliveryAddress.number}
-                onChange={(e) => setDeliveryAddress({...deliveryAddress, number: e.target.value})}
+                onChange={(e) => setDeliveryAddress({ ...deliveryAddress, number: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 required
               />
@@ -326,7 +326,7 @@ export default function CheckoutPage() {
             <input
               type="text"
               value={deliveryAddress.complement}
-              onChange={(e) => setDeliveryAddress({...deliveryAddress, complement: e.target.value})}
+              onChange={(e) => setDeliveryAddress({ ...deliveryAddress, complement: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="Apartamento, bloco, etc."
             />
@@ -339,7 +339,7 @@ export default function CheckoutPage() {
               <input
                 type="text"
                 value={deliveryAddress.neighborhood}
-                onChange={(e) => setDeliveryAddress({...deliveryAddress, neighborhood: e.target.value})}
+                onChange={(e) => setDeliveryAddress({ ...deliveryAddress, neighborhood: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 required
               />
@@ -351,7 +351,7 @@ export default function CheckoutPage() {
               <input
                 type="text"
                 value={deliveryAddress.zipCode}
-                onChange={(e) => setDeliveryAddress({...deliveryAddress, zipCode: e.target.value})}
+                onChange={(e) => setDeliveryAddress({ ...deliveryAddress, zipCode: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="00000-000"
               />
@@ -364,7 +364,7 @@ export default function CheckoutPage() {
             <input
               type="text"
               value={deliveryAddress.city}
-              onChange={(e) => setDeliveryAddress({...deliveryAddress, city: e.target.value})}
+              onChange={(e) => setDeliveryAddress({ ...deliveryAddress, city: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
@@ -378,11 +378,10 @@ export default function CheckoutPage() {
           {paymentMethods.map((method) => (
             <label
               key={method.id}
-              className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${
-                selectedPayment === method.id
+              className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${selectedPayment === method.id
                   ? 'border-primary bg-primary/5'
                   : 'border-gray-200 hover:bg-gray-50'
-              }`}
+                }`}
             >
               <input
                 type="radio"
@@ -436,11 +435,10 @@ export default function CheckoutPage() {
         <button
           onClick={handleSubmitOrder}
           disabled={submitting || !isStoreOpen}
-          className={`w-full py-4 rounded-lg font-semibold text-lg flex items-center justify-center transition-colors ${
-            isStoreOpen 
-              ? 'bg-primary text-white hover:bg-primary-dark' 
+          className={`w-full py-4 rounded-lg font-semibold text-lg flex items-center justify-center transition-colors ${isStoreOpen
+              ? 'bg-primary text-white hover:bg-primary-dark'
               : 'bg-gray-400 text-white cursor-not-allowed'
-          }`}
+            }`}
         >
           {submitting ? (
             <>
