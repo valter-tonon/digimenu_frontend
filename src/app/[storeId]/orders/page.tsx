@@ -37,37 +37,37 @@ export default function OrdersPageWrapper() {
 
 function OrdersPage() {
   const params = useParams();
-  const storeId = params.storeId as string;
-  
+  const storeId = (params?.storeId as string) || '';
+
   // Usar o mesmo contexto do menu
   const { data, isLoading: contextLoading, error: contextError, isValid } = useAppContext();
   const { menuRepository } = useContainer();
   const [tenantData, setTenantData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  
+
   // Extrair dados do contexto para manter o contexto da mesa
   const { storeId: contextStoreId, tableId, isDelivery, storeName } = data;
-  
+
   // Hook de navegação
   const { navigateToMenu, getBreadcrumbItems, getCurrentContext } = useNavigation();
-  
+
   // Carregar dados do tenant usando o mesmo método do menu
   useEffect(() => {
     if (!isValid || contextLoading || !storeId) {
       return;
     }
-    
+
     const loadTenantData = async () => {
       try {
         setLoading(true);
         // Usar o mesmo repositório do menu para carregar dados do tenant
         const menuParams = {
           store: storeId,
-          table: tableId || null,
+          table: tableId || undefined,
           isDelivery: isDelivery
         };
         const menuData = await menuRepository.getMenu(menuParams);
-        
+
         // Extrair dados do tenant do menu
         if (menuData.tenant) {
           setTenantData(menuData.tenant);
@@ -100,9 +100,9 @@ function OrdersPage() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       <div className="relative">
-        <MenuHeader 
-          cartItemsCount={0} 
-          onCartClick={() => {}}
+        <MenuHeader
+          cartItemsCount={0}
+          onCartClick={() => { }}
           storeName={tenantData?.name || storeName || storeId}
           storeLogo={tenantData?.logo}
           openingHours={tenantData?.opening_hours}
@@ -143,12 +143,17 @@ function OrdersPage() {
           </div>
 
           {/* Lista de Pedidos */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+            <p className="text-gray-600">
+              Histórico de pedidos em desenvolvimento.
+            </p>
+            {/* TODO: Implementar busca de pedidos e passar props corretas para OrderHistory
             <OrderHistory 
-              storeId={storeId}
-              tableId={tableId}
-              isDelivery={isDelivery}
+              orders={[]}
+              selectedOrderId={undefined}
+              onOrderClick={(order) => {}}
             />
+            */}
           </div>
         </div>
       </main>
@@ -158,19 +163,19 @@ function OrdersPage() {
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="mb-6 md:mb-0">
-              <StoreHeader 
+              <StoreHeader
                 storeName={tenantData?.name || storeName || storeId}
                 storeLogo={tenantData?.logo}
                 className="text-white"
               />
             </div>
-            
+
             <div className="flex flex-col items-center md:items-end">
               <div className="flex flex-col items-center">
                 <div className="flex items-center mb-2">
-                  <img 
-                    src="/logo-digimenu.svg" 
-                    alt="DigiMenu" 
+                  <img
+                    src="/logo-digimenu.svg"
+                    alt="DigiMenu"
                     className="h-8 w-auto"
                   />
                 </div>

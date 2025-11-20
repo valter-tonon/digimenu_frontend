@@ -42,7 +42,7 @@ export default function CheckoutPage() {
   const { userId, source, initializeTracking, associateWithOrder } = useUserTracking();
   const [submitting, setSubmitting] = useState(false);
 
-  const storeId = contextData.storeId || (params.storeId as string);
+  const storeId = contextData.storeId || (params?.storeId as string) || '';
 
   // Cart store
   const {
@@ -379,8 +379,8 @@ export default function CheckoutPage() {
             <label
               key={method.id}
               className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${selectedPayment === method.id
-                  ? 'border-primary bg-primary/5'
-                  : 'border-gray-200 hover:bg-gray-50'
+                ? 'border-primary bg-primary/5'
+                : 'border-gray-200 hover:bg-gray-50'
                 }`}
             >
               <input
@@ -436,8 +436,8 @@ export default function CheckoutPage() {
           onClick={handleSubmitOrder}
           disabled={submitting || !isStoreOpen}
           className={`w-full py-4 rounded-lg font-semibold text-lg flex items-center justify-center transition-colors ${isStoreOpen
-              ? 'bg-primary text-white hover:bg-primary-dark'
-              : 'bg-gray-400 text-white cursor-not-allowed'
+            ? 'bg-primary text-white hover:bg-primary-dark'
+            : 'bg-gray-400 text-white cursor-not-allowed'
             }`}
         >
           {submitting ? (
