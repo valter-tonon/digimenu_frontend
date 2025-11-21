@@ -180,15 +180,18 @@ export default function CheckoutPage() {
       const response = await createOrder(orderData);
 
       // Associar pedido ao histórico do usuário
-      if (response.data?.identify) {
-        associateWithOrder(response.data.identify);
+      if (response.identify) {
+        associateWithOrder(response.identify);
+      } else {
+        console.error('❌ Resposta inválida da API:', response);
+        throw new Error('Erro ao obter ID do pedido');
       }
 
       toast.success('Pedido realizado com sucesso!');
       clearCart();
 
       // Redirecionar para página de sucesso
-      router.push(`/${storeId}/orders/${response.data.identify}`);
+      router.push(`/${storeId}/orders/${response.identify}`);
     } catch (error) {
       console.error('Erro ao enviar pedido:', error);
       toast.error('Não foi possível realizar o pedido. Tente novamente.');
