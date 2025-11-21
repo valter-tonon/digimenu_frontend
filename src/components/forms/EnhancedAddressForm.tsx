@@ -184,9 +184,19 @@ const EnhancedAddressForm: React.FC<EnhancedAddressFormProps> = ({
   const handleSubmit = form.handleSubmit(async (values) => {
     try {
       const addressData: DeliveryAddress = {
-        ...initialData,
-        ...values,
-        id: initialData?.id
+        id: initialData?.id,
+        customer_id: initialData?.customer_id,
+        label: values.label || initialData?.label || 'Meu Endereço',
+        street: values.street || '',
+        number: values.number || '',
+        complement: values.complement,
+        neighborhood: values.neighborhood || '',
+        city: values.city || '',
+        state: values.state || '',
+        zip_code: values.zip_code || '',
+        reference: values.reference,
+        is_default: values.is_default || false,
+        delivery_instructions: values.delivery_instructions
       };
 
       await onSubmit(addressData);

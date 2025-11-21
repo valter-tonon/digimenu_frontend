@@ -176,10 +176,10 @@ export const CustomerDataForm: React.FC<CustomerDataFormProps> = ({
     }
     
     setValidationState(prev => ({ ...prev, [field]: isValid }));
-    
+
     // Clear error for this field
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
+    if (errors[field as keyof FormErrors]) {
+      setErrors(prev => ({ ...prev, [field as keyof FormErrors]: undefined }));
     }
   };
 
@@ -263,7 +263,7 @@ export const CustomerDataForm: React.FC<CustomerDataFormProps> = ({
     icon?: React.ReactNode,
     maxLength?: number
   ) => {
-    const hasError = !!errors[field];
+    const hasError = !!(errors[field as keyof FormErrors]);
     const isValid = validationState[field];
     const fieldValue = formData[field] || '';
     const fieldId = `${field}-input`;
@@ -320,7 +320,7 @@ export const CustomerDataForm: React.FC<CustomerDataFormProps> = ({
             role="alert"
           >
             <AlertCircle className="w-4 h-4" />
-            <span>{errors[field]}</span>
+            <span>{errors[field as keyof FormErrors]}</span>
           </div>
         )}
       </div>

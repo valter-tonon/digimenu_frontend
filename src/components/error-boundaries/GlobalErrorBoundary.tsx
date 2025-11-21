@@ -62,7 +62,7 @@ export class GlobalErrorBoundary extends Component<
       localStorage: this.getLocalStorageSnapshot(),
       sessionStorage: this.getSessionStorageSnapshot(),
       errorStack: error.stack,
-      componentStack: errorInfo.componentStack,
+      componentStack: errorInfo.componentStack ?? undefined,
       errorBoundary: 'GlobalErrorBoundary',
       buildInfo: {
         nodeEnv: process.env.NODE_ENV,

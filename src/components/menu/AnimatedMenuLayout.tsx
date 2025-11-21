@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect, useState } from "react";
-import { motion, useInView, useAnimation, useScroll, useTransform } from "framer-motion";
+import { motion, useInView, useAnimation, useScroll, useTransform, easeOut } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { AnimatedBeam } from "@/components/ui/animated-beam";
 import { Particles } from "@/components/ui/particles";
@@ -48,7 +48,7 @@ const AnimatedMenuLayout: React.FC<AnimatedMenuLayoutProps> = ({
       y: 0,
       transition: {
         duration: 0.8,
-        ease: "easeOut",
+        ease: easeOut,
         staggerChildren: 0.2,
       },
     },
@@ -66,7 +66,7 @@ const AnimatedMenuLayout: React.FC<AnimatedMenuLayoutProps> = ({
       scale: 1,
       transition: {
         duration: 0.6,
-        ease: "easeOut",
+        ease: easeOut,
       },
     },
   };
@@ -101,9 +101,9 @@ const AnimatedMenuLayout: React.FC<AnimatedMenuLayoutProps> = ({
       {showBeams && headerRef.current && contentRef.current && (
         <AnimatedBeam
           className="z-10"
-          containerRef={containerRef}
-          fromRef={headerRef}
-          toRef={contentRef}
+          containerRef={containerRef as React.RefObject<HTMLElement>}
+          fromRef={headerRef as React.RefObject<HTMLElement>}
+          toRef={contentRef as React.RefObject<HTMLElement>}
           curvature={-50}
           gradientStartColor="#3b82f6"
           gradientStopColor="#8b5cf6"

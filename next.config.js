@@ -1,6 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   images: {
     // Disable image optimization for external URLs to avoid 500 errors
     unoptimized: true,

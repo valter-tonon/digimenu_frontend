@@ -65,7 +65,7 @@ export class ProviderErrorBoundary extends Component<
       url: typeof window !== 'undefined' ? window.location.href : 'Unknown',
       retryCount: this.state.retryCount,
       errorStack: error.stack,
-      componentStack: errorInfo.componentStack,
+      componentStack: errorInfo.componentStack ?? undefined,
       errorBoundary: 'ProviderErrorBoundary'
     };
 

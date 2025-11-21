@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, easeOut } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Category } from "@/domain/entities/Category";
 
@@ -38,7 +38,7 @@ const CategorySwitcher: React.FC<CategorySwitcherProps> = ({
       transition: {
         delay: index * 0.1,
         duration: 0.5,
-        ease: "easeOut",
+        ease: easeOut,
       },
     }),
     hover: {
@@ -46,7 +46,7 @@ const CategorySwitcher: React.FC<CategorySwitcherProps> = ({
       y: -2,
       transition: {
         duration: 0.2,
-        ease: "easeOut",
+        ease: easeOut,
       },
     },
     tap: {
@@ -67,7 +67,7 @@ const CategorySwitcher: React.FC<CategorySwitcherProps> = ({
       opacity: 1,
       transition: {
         duration: 0.3,
-        ease: "easeOut",
+        ease: easeOut,
       },
     },
   };
@@ -82,7 +82,7 @@ const CategorySwitcher: React.FC<CategorySwitcherProps> = ({
       scale: 1,
       transition: {
         duration: 0.3,
-        ease: "easeOut",
+        ease: easeOut,
       },
     },
   };
@@ -97,7 +97,7 @@ const CategorySwitcher: React.FC<CategorySwitcherProps> = ({
         className="relative bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-2xl p-2 shadow-lg border border-gray-200/50 dark:border-gray-700/50"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
+        transition={{ duration: 0.6, ease: easeOut }}
       >
         <div className="flex flex-wrap gap-2">
           {/* All Categories Button */}

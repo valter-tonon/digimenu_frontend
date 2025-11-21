@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 
 export function Sidebar() {
-  const pathname = usePathname();
+  const pathname = usePathname() || '';
   const { logoutUser } = useAuth();
 
   const menuItems = [

@@ -139,7 +139,7 @@ const FormField = forwardRef<HTMLInputElement | HTMLTextAreaElement | HTMLSelect
         className: getFieldClasses(),
         maxLength,
         autoComplete,
-        'aria-invalid': hasError ? 'true' : 'false',
+        'aria-invalid': !!hasError as boolean,
         'aria-describedby': `${name}-help ${name}-error`,
         ...props
       };

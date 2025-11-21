@@ -183,6 +183,22 @@ export const invalidateSession = async (sessionId: string) => {
   return api.delete(`/sessions/${sessionId}`);
 };
 
+// Funções para WhatsApp code verification
+export const requestWhatsAppCode = async (phone: string, storeId: string) => {
+  return api.post('/auth/whatsapp/request-code', {
+    phone,
+    store_id: storeId
+  });
+};
+
+export const verifyWhatsAppCode = async (phone: string, code: string, storeId: string) => {
+  return api.post('/auth/whatsapp/verify-code', {
+    phone,
+    code,
+    store_id: storeId
+  });
+};
+
 // Funções de cadastro rápido de clientes
 export const quickRegisterCustomer = async (customerData: {
   name: string;
