@@ -51,8 +51,8 @@ interface OrderItem {
 }
 
 export default function OrdersPage() {
-  const params = useParams();
-  const storeId = params.storeId as string;
+  const params = useParams() as Record<string, string | string[]> | null;
+  const storeId = (params?.storeId as string) || '';
   
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -89,13 +89,13 @@ export default function OrdersPage() {
           response = await api.get(`/api/v1/orders/history`);
         } catch (err: any) {
           // Se não conseguir carregar pedidos do cliente, tentar pedidos da mesa
-          if (params.tableId) {
+          if (params?.tableId) {
             response = await api.get(`/api/v1/orders/table/${params.tableId}/history`);
           } else {
             throw err;
           }
         }
-        
+
         setOrders(response.data.data || []);
       } catch (err: any) {
         console.error('Erro ao carregar histórico de pedidos:', err);
@@ -106,7 +106,7 @@ export default function OrdersPage() {
     };
 
     loadOrders();
-  }, [storeId, params.tableId]);
+  }, [storeId, params?.tableId]);
 
   // WebSocket para atualizações em tempo real
   useEffect(() => {
@@ -235,10 +235,9 @@ export default function OrdersPage() {
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="container mx-auto px-4 py-4">
-          <StoreHeader 
+          <StoreHeader
             storeName={storeData?.name || storeId}
             storeLogo={storeData?.logo}
-            subtitle="Histórico de Pedidos"
           />
         </div>
       </header>

@@ -113,17 +113,22 @@ export const AddressSelection: React.FC<AddressSelectionProps> = ({
     const isSettingDefault = settingDefaultId === address.id;
 
     return (
-      <MagicCard
+      <div
         key={address.id}
         className={cn(
-          "p-4 cursor-pointer transition-all duration-200",
-          isSelected 
-            ? "ring-2 ring-blue-500 bg-blue-50" 
-            : "hover:shadow-md",
+          "cursor-pointer transition-all duration-200",
           isDeleting && "opacity-50 pointer-events-none"
         )}
         onClick={() => !isDeleting && onAddressSelect(address)}
       >
+        <MagicCard
+          className={cn(
+            "p-4",
+            isSelected
+              ? "ring-2 ring-blue-500 bg-blue-50"
+              : "hover:shadow-md"
+          )}
+        >
         <div className="flex items-start justify-between">
           <div className="flex-1 space-y-2">
             {/* Address Label and Default Badge */}
@@ -235,7 +240,8 @@ export const AddressSelection: React.FC<AddressSelectionProps> = ({
             </div>
           </div>
         )}
-      </MagicCard>
+        </MagicCard>
+      </div>
     );
   };
 

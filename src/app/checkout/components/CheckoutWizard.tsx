@@ -77,7 +77,7 @@ export default function CheckoutWizard() {
     // Se passou nas validações, inicializar o wizard
     if (!initialized) {
       console.log('✅ Validações passadas, inicializando wizard...');
-      initSession(contextData?.storeId || '', contextData?.customerId);
+      initSession(contextData?.storeId || '');
       setInitialized(true);
     }
   }, [contextLoading, contextValid, cartItems.length, contextData, initialized, initSession, router]);
@@ -96,7 +96,7 @@ export default function CheckoutWizard() {
       if (storedAuth) {
         console.log('✅ Autenticação restaurada do storage');
         setJWT(jwt);
-        setAuthentication(storedAuth.user, false, 'whatsapp');
+        setAuthentication(storedAuth.user, false, 'phone');
       }
       return;
     }

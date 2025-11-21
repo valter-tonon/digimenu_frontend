@@ -10,8 +10,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useWhatsAppAuth } from '@/hooks/use-whatsapp-auth';
-import { useSession } from '@/hooks/use-session';
-import { useAppContext } from '@/hooks/use-app-context';
+import { useAppContext } from '@/hooks/useAppContext';
 
 interface WhatsAppAuthProps {
   storeId: string;
@@ -29,8 +28,7 @@ export const WhatsAppAuth: React.FC<WhatsAppAuthProps> = ({
   const [phone, setPhone] = useState('');
   const [countdown, setCountdown] = useState<number | null>(null);
   
-  const { state, requestAuth, reset } = useWhatsAppAuth();
-  const { session } = useSession();
+  const { state, requestMagicLink, reset } = useWhatsAppAuth();
   const { data: appContext } = useAppContext();
 
   // Gera fingerprint simples (em produção, usar biblioteca mais robusta)
@@ -54,24 +52,20 @@ export const WhatsAppAuth: React.FC<WhatsAppAuthProps> = ({
    */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const fingerprint = generateFingerprint();
-    
-    // Obtém contexto da sessão atual
-    const sessionContext = {
-      tableId: appContext?.tableId || session?.table_id,
-      isDelivery: appContext?.isDelivery || session?.is_delivery || false
-    };
-    
+
     try {
-      await requestAuth(phone, storeId, fingerprint, session?.id, sessionContext);
-      
+      await requestMagicLink(phone, storeId);
+
       if (state.isSuccess) {
         // Inicia countdown se há expiração
-        if (state.expiresInMinutes) {
-          startCountdown(state.expiresInMinutes);
+        if (state.expiresAt) {
+          const now = new Date();
+          const minutes = Math.max(0, Math.floor((state.expiresAt.getTime() - now.getTime()) / 60000));
+          if (minutes > 0) {
+            startCountdown(minutes);
+          }
         }
-        onSuccess?.(session?.id || '');
+        onSuccess?.(storeId);
       }
     } catch (error) {
       onError?.(state.error || 'Erro ao solicitar acesso via WhatsApp');
@@ -199,11 +193,6 @@ export const WhatsAppAuth: React.FC<WhatsAppAuthProps> = ({
                   className="p-3 bg-red-50 border border-red-200 rounded-lg"
                 >
                   <p className="text-sm text-red-600">{state.error}</p>
-                  {state.rateLimitRemaining !== null && (
-                    <p className="text-xs text-red-500 mt-1">
-                      Tentativas restantes: {state.rateLimitRemaining}
-                    </p>
-                  )}
                 </motion.div>
               )}
 
@@ -263,12 +252,6 @@ export const WhatsAppAuth: React.FC<WhatsAppAuthProps> = ({
                 >
                   Solicitar novo link
                 </button>
-
-                {state.rateLimitRemaining !== null && state.rateLimitRemaining > 0 && (
-                  <p className="text-xs text-gray-500">
-                    Você pode solicitar mais {state.rateLimitRemaining} link(s) hoje
-                  </p>
-                )}
               </div>
             </motion.div>
           )}
@@ -310,7 +293,7 @@ export const WhatsAppAuthModal: React.FC<WhatsAppAuthProps & {
 /**
  * Hook para usar WhatsApp Auth programaticamente
  */
-export const useWhatsAppAuth = (storeId: string) => {
+export const useWhatsAppAuthModal = (storeId: string) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [authState, setAuthState] = useState<{
     isLoading: boolean;

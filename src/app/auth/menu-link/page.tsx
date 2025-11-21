@@ -13,7 +13,7 @@ interface VerificationState {
 }
 
 export default function MenuLinkAuthPage() {
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams() || new URLSearchParams();
   const router = useRouter();
   const [state, setState] = useState<VerificationState>({
     loading: true,
@@ -23,8 +23,8 @@ export default function MenuLinkAuthPage() {
     restaurantName: null,
   });
 
-  const token = searchParams.get('token');
-  const phone = searchParams.get('phone');
+  const token = searchParams?.get('token');
+  const phone = searchParams?.get('phone');
 
   useEffect(() => {
     verifyToken();

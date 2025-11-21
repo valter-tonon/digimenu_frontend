@@ -6,13 +6,13 @@ import { AlertCircle, RefreshCw, ArrowLeft } from 'lucide-react';
 
 function AuthErrorContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams() || new URLSearchParams();
   const [errorCode, setErrorCode] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
 
   useEffect(() => {
-    const code = searchParams.get('code') || 'UNKNOWN_ERROR';
-    const message = searchParams.get('message') || 'Ocorreu um erro durante a autenticação';
+    const code = searchParams?.get('code') || 'UNKNOWN_ERROR';
+    const message = searchParams?.get('message') || 'Ocorreu um erro durante a autenticação';
     
     setErrorCode(code);
     setErrorMessage(decodeURIComponent(message));

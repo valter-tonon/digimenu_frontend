@@ -1,10 +1,18 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import Echo from 'laravel-echo';
-import Pusher from 'pusher-js';
+import toast from 'react-hot-toast';
+
+// These are optional dependencies that may not be installed
+let Echo: any;
+let Pusher: any;
+
+try {
+  Echo = require('laravel-echo').default;
+  Pusher = require('pusher-js').default;
+} catch (e) {
+  // Dependencies not available
+}
 
 interface WaiterCall {
   id: number;
@@ -19,9 +27,15 @@ interface WaiterCall {
 export function WaiterCallNotification({ tenantId }: { tenantId: number }) {
   const [calls, setCalls] = useState<WaiterCall[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const echoRef = useRef<Echo | null>(null);
+  const echoRef = useRef<any | null>(null);
 
   useEffect(() => {
+    // Skip if dependencies are not available
+    if (!Echo || !Pusher) {
+      console.warn('WaiterCallNotification: laravel-echo or pusher-js not available');
+      return;
+    }
+
     // Inicializar o elemento de áudio
     audioRef.current = new Audio('/sounds/notification.mp3');
 
@@ -62,21 +76,19 @@ export function WaiterCallNotification({ tenantId }: { tenantId: number }) {
       }
       
       // Mostrar notificação toast
-      toast.info(
-        <div>
-          <h4 className="font-bold">Chamada de Garçom</h4>
-          <p>{data.message}</p>
-          <p className="text-xs mt-1">
-            {new Date(data.created_at).toLocaleTimeString()}
-          </p>
-        </div>,
+      toast.custom(
+        (t: any) => (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 shadow-lg">
+            <h4 className="font-bold text-blue-900">Chamada de Garçom</h4>
+            <p className="text-blue-800">{data.message}</p>
+            <p className="text-xs text-blue-600 mt-1">
+              {new Date(data.created_at).toLocaleTimeString()}
+            </p>
+          </div>
+        ),
         {
-          position: "top-right",
-          autoClose: 10000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
+          duration: 10000,
+          position: 'top-right',
         }
       );
     });
@@ -91,8 +103,6 @@ export function WaiterCallNotification({ tenantId }: { tenantId: number }) {
   
   return (
     <>
-      <ToastContainer />
-      
       {/* Lista de chamadas recentes (opcional) */}
       {calls.length > 0 && (
         <div className="mt-4">

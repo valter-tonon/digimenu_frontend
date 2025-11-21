@@ -33,14 +33,14 @@ interface Order {
 }
 
 export default function OrdersHistoryPage() {
-  const params = useParams();
+  const params = useParams() as Record<string, string | string[]> | null;
   const { isAuthenticated, token } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingRepeat, setLoadingRepeat] = useState<string | null>(null);
-  
-  const storeId = params.storeId as string;
-  const tableId = params.tableId as string;
+
+  const storeId = (params?.storeId as string) || '';
+  const tableId = (params?.tableId as string) || '';
 
   useEffect(() => {
     if (isAuthenticated) {

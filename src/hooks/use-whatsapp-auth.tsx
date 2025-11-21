@@ -22,7 +22,7 @@ interface UseWhatsAppAuthReturn {
   reset: () => void;
 }
 
-export const useWhatsAppAuth = (): UseWhatsAppAuthReturn => {
+export function useWhatsAppAuth(): UseWhatsAppAuthReturn {
   const { login } = useAuth();
   const [state, setState] = useState<WhatsAppAuthState>({
     isLoading: false,
@@ -177,4 +177,4 @@ export const useWhatsAppAuth = (): UseWhatsAppAuthReturn => {
     logout,
     reset,
   };
-};
+}

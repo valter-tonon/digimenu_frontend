@@ -52,9 +52,9 @@ interface OrderItem {
 }
 
 export default function OrderDetailsPage() {
-  const params = useParams();
+  const params = useParams() as Record<string, string | string[]> | null;
   const router = useRouter();
-  const orderId = params.orderId as string;
+  const orderId = (params?.orderId as string) || '';
   
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
@@ -207,10 +207,9 @@ export default function OrderDetailsPage() {
       <header className="bg-white shadow-sm border-b">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <StoreHeader 
+            <StoreHeader
               storeName={storeData?.name || 'Restaurante'}
               storeLogo={storeData?.logo}
-              subtitle={`Pedido #${order.order_number}`}
             />
             <button
               onClick={handleBackToMenu}
@@ -229,9 +228,13 @@ export default function OrderDetailsPage() {
           {/* Status do Pedido */}
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Status do Pedido</h2>
-            <OrderStatusTracker 
-              status={order.status}
-              estimatedTime={order.estimated_delivery_time}
+            <OrderStatusTracker
+              order={{
+                id: order.id,
+                status: order.status,
+                updated_at: new Date().toISOString(),
+                estimated_delivery_time: order.estimated_delivery_time,
+              }}
             />
           </div>
 

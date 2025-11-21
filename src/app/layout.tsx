@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import '../styles/z-index.css';
 
-import { AppProviders, ProviderDebugInfo } from '@/components/providers/AppProviders';
+import { AppProviders } from '@/components/providers/AppProviders';
 import { CookieConsentBanner } from '@/components/ui/CookieConsentBanner';
 import { SkipToContent } from '@/components/ui/AccessibilityEnhancements';
 import { GlobalErrorBoundary } from '@/components/error-boundaries/GlobalErrorBoundary';

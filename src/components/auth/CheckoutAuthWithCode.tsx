@@ -15,15 +15,15 @@ import { useAuth } from '@/hooks/useAuth';
 export const CheckoutAuthWithCode: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { authenticate } = useAuth();
+  const { login } = useAuth();
 
   const storeId = searchParams?.get('store_id') || 'default';
 
   const handleAuthSuccess = async (token: string, user: any) => {
     try {
       // Autenticar no contexto da aplicação
-      if (authenticate) {
-        await authenticate(token, user);
+      if (login && token) {
+        login(token);
       }
 
       console.log('Usuário autenticado com sucesso:', user);

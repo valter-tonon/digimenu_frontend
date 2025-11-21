@@ -431,7 +431,6 @@ export const CheckoutWithQuickRegistration: React.FC<CheckoutWithQuickRegistrati
                 onError={(error) => {
                   onError?.(error);
                 }}
-                showUI={true}
               />
               
               <button

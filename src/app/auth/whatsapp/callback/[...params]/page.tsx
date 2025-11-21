@@ -14,7 +14,7 @@ interface CallbackError {
 
 function WhatsAppCallbackContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams() || new URLSearchParams();
   const params = useParams();
   const { verifyToken } = useWhatsAppAuth();
   const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'expired' | 'invalid'>('loading');
@@ -26,10 +26,10 @@ function WhatsAppCallbackContent() {
   // Log access for audit purposes
   useEffect(() => {
     const logAccess = () => {
-      const token = searchParams.get('token');
-      const user = searchParams.get('user');
-      const errorCode = searchParams.get('code');
-      const errorMessage = searchParams.get('message');
+      const token = searchParams?.get('token');
+      const user = searchParams?.get('user');
+      const errorCode = searchParams?.get('code');
+      const errorMessage = searchParams?.get('message');
       const pathParams = params?.params as string[] | undefined;
       
       // Log callback access

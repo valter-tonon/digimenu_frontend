@@ -32,7 +32,7 @@ const WhatsAppVerifyContent: React.FC = () => {
     customerId: null
   });
 
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams() || new URLSearchParams();
   const router = useRouter();
   const auth = useAuth();
   const [redirectCountdown, setRedirectCountdown] = useState<number | null>(null);
@@ -41,7 +41,7 @@ const WhatsAppVerifyContent: React.FC = () => {
    * Processa token na montagem do componente
    */
   useEffect(() => {
-    const token = searchParams.get('token');
+    const token = searchParams?.get('token');
     
     if (!token) {
       setState({
@@ -63,31 +63,31 @@ const WhatsAppVerifyContent: React.FC = () => {
    */
   const validateToken = async (token: string) => {
     try {
-      setState(prev => ({ 
-        ...prev, 
-        isValidating: true, 
-        error: null 
+      setState(prev => ({
+        ...prev,
+        isValidating: true,
+        error: null
       }));
 
       // Valida e cria sessão a partir do token
-      const result = await whatsappAuthService.createSessionFromToken(token);
+      const result = await whatsappAuthService.verifyToken(token);
 
-      if (result.success) {
+      if (result.success && result.user) {
         setState({
           isValidating: false,
           isSuccess: true,
           isError: false,
           error: null,
-          sessionId: result.sessionId || null,
-          customerId: result.customerId || null
+          sessionId: result.user.uuid || null,
+          customerId: result.user.id?.toString() || null
         });
 
         // Inicia countdown para redirecionamento
         startRedirectCountdown();
 
         console.log('Sessão criada via WhatsApp:', {
-          sessionId: result.sessionId,
-          customerId: result.customerId
+          sessionId: result.user.uuid,
+          customerId: result.user.id
         });
 
       } else {
@@ -103,7 +103,7 @@ const WhatsAppVerifyContent: React.FC = () => {
 
     } catch (error) {
       console.error('Erro ao validar token:', error);
-      
+
       setState({
         isValidating: false,
         isSuccess: false,
