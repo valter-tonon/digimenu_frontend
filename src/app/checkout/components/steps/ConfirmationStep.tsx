@@ -102,9 +102,10 @@ export default function ConfirmationStep({
 
       // Criar o pedido
       const orderResponse = await createOrder(orderData);
-      const orderId = orderResponse.data?.identify;
+      const orderId = orderResponse.identify;
 
       if (!orderId) {
+        console.error('❌ Resposta da API inválida:', orderResponse);
         throw new Error('Erro ao obter ID do pedido');
       }
 
