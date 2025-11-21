@@ -182,21 +182,31 @@ export default function CheckoutPage() {
         }
       };
 
+      console.log('📤 Enviando pedido:', orderData);
+      console.log('📤 JSON enviado:', JSON.stringify(orderData, null, 2));
+
       const response = await createOrder(orderData);
+      console.log('📥 Resposta da API (completa):', response);
+      console.log('📥 Resposta JSON:', JSON.stringify(response, null, 2));
+      console.log('📥 Tipo da resposta:', typeof response);
+      console.log('📥 Properties da resposta:', Object.keys(response));
+
+      const orderId = response?.identify || response?.data?.identify;
+
+      if (!orderId) {
+        console.error('❌ Resposta inválida da API:', response);
+        console.error('❌ Esperado campo "identify" em:', response);
+        throw new Error('Erro ao obter ID do pedido - resposta inválida');
+      }
 
       // Associar pedido ao histórico do usuário
-      if (response.identify) {
-        associateWithOrder(response.identify);
-      } else {
-        console.error('❌ Resposta inválida da API:', response);
-        throw new Error('Erro ao obter ID do pedido');
-      }
+      associateWithOrder(orderId);
 
       toast.success('Pedido realizado com sucesso!');
       clearCart();
 
       // Redirecionar para página de sucesso
-      router.push(`/${storeId}/orders/${response.identify}`);
+      router.push(`/${storeId}/orders/${orderId}`);
     } catch (error) {
       console.error('Erro ao enviar pedido:', error);
       toast.error('Não foi possível realizar o pedido. Tente novamente.');

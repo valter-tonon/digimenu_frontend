@@ -105,14 +105,21 @@ export default function ConfirmationStep({
       };
 
       console.log('📤 Enviando pedido:', orderData);
+      console.log('📤 JSON enviado:', JSON.stringify(orderData, null, 2));
 
       // Criar o pedido
       const orderResponse = await createOrder(orderData);
-      const orderId = orderResponse.identify;
+      console.log('📥 Resposta da API (completa):', orderResponse);
+      console.log('📥 Resposta JSON:', JSON.stringify(orderResponse, null, 2));
+      console.log('📥 Tipo da resposta:', typeof orderResponse);
+      console.log('📥 Properties da resposta:', Object.keys(orderResponse));
+
+      const orderId = orderResponse?.identify || orderResponse?.data?.identify;
 
       if (!orderId) {
         console.error('❌ Resposta da API inválida:', orderResponse);
-        throw new Error('Erro ao obter ID do pedido');
+        console.error('❌ Esperado campo "identify" em:', orderResponse);
+        throw new Error('Erro ao obter ID do pedido - resposta inválida');
       }
 
       console.log('✅ Pedido criado com ID:', orderId);
