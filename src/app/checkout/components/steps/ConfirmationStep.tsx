@@ -75,6 +75,12 @@ export default function ConfirmationStep({
       // Preparar dados do pedido
       const orderData = {
         token_company: state.storeId,
+        customer_id: state.customerId,
+        customer: {
+          name: state.customerData.name,
+          phone: state.customerData.phone,
+          email: state.customerData.email
+        },
         products: cartItems.map(item => ({
           identify: item.identify,
           quantity: item.quantity,

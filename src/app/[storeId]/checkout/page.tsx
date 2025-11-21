@@ -154,6 +154,12 @@ export default function CheckoutPage() {
     try {
       const orderData = {
         token_company: storeId,
+        customer_id: customer?.id,
+        customer: {
+          name: customerData.name,
+          phone: customerData.phone,
+          email: customerData.email
+        },
         products: items.map(item => ({
           identify: item.identify,
           quantity: item.quantity,
@@ -165,7 +171,6 @@ export default function CheckoutPage() {
         })),
         comment: orderNotes,
         type: 'delivery',
-        customer_id: customer?.id,
         delivery_address: deliveryAddress,
         payment_method: selectedPayment,
         change_amount: selectedPayment === 'money' ? parseFloat(changeAmount) : undefined,
