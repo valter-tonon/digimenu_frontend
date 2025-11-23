@@ -82,6 +82,22 @@ export default function CheckoutWizard() {
     }
   }, [contextLoading, contextValid, cartItems.length, contextData, initialized, initSession, router]);
 
+  // CAMADA 1.5: Garantir que sessões restauradas não mostrem modal novamente
+  useEffect(() => {
+    if (!initialized || !state.isAuthenticated) return;
+
+    // Se este é um checkout restaurado (currentStep não é 'authentication' OU authModalConfirmed já é true)
+    // e ainda assim a modal está marcada para ser mostrada, desativar
+    if (state.showAuthModal && (state.currentStep !== 'authentication' || state.authModalConfirmed)) {
+      console.log('🔄 Ocultando modal de confirmação para sessão restaurada');
+      showAuthModal(false);
+      // Se não confirmou ainda, marcar como confirmado para que não mostre novamente
+      if (!state.authModalConfirmed) {
+        confirmIdentity();
+      }
+    }
+  }, [initialized, state.isAuthenticated, state.showAuthModal, state.currentStep, state.authModalConfirmed, showAuthModal, confirmIdentity]);
+
   // CAMADA 2: Validação e Restauração de Autenticação
   useEffect(() => {
     if (!initialized) return;
@@ -97,6 +113,12 @@ export default function CheckoutWizard() {
         console.log('✅ Autenticação restaurada do storage');
         setJWT(jwt);
         setAuthentication(storedAuth.user, false, 'phone');
+        // Se estamos restaurando uma sessão anterior (não no step inicial de autenticação),
+        // marcar identidade como confirmada para não mostrar modal novamente
+        if (state.currentStep !== 'authentication') {
+          console.log('✅ Sessão restaurada em step avançado, marcando identidade como confirmada');
+          confirmIdentity();
+        }
       }
       return;
     }
@@ -114,7 +136,7 @@ export default function CheckoutWizard() {
     if (state.currentStep === 'authentication' && !state.isAuthenticated) {
       console.log('📝 Wizard no step de autenticação, aguardando login');
     }
-  }, [initialized, state.currentStep, state.isAuthenticated, goToStep, setJWT, setAuthentication]);
+  }, [initialized, state.currentStep, state.isAuthenticated, goToStep, setJWT, setAuthentication, confirmIdentity]);
 
   // CAMADA 3: Modal de Confirmação de Identidade (para usuários autenticados)
   useEffect(() => {
