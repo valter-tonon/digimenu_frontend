@@ -29,7 +29,11 @@ export default function CheckoutDeliveryPage() {
   // Get storeId from context or URL query parameter
   const effectiveStoreId = contextData?.storeId || searchParams.get('store');
 
-  // Validate that we have store context
+  const handleIdentificationComplete = useCallback(() => {
+    setCurrentPage('final_data');
+  }, []);
+
+  // Validate that we have store context (after all hooks)
   if (!effectiveStoreId) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -69,10 +73,6 @@ export default function CheckoutDeliveryPage() {
   if (!checkoutStore.storeId && effectiveStoreId) {
     checkoutStore.setContext(effectiveStoreId);
   }
-
-  const handleIdentificationComplete = useCallback(() => {
-    setCurrentPage('final_data');
-  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">

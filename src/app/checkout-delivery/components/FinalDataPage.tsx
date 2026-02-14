@@ -80,21 +80,6 @@ export default function FinalDataPage({ onBack }: FinalDataPageProps) {
     fetchCustomerAddresses();
   }, [customer?.phone]);
 
-  // Ensure customer is set
-  if (!customer) {
-    return (
-      <div className="text-center py-8">
-        <p className="text-red-600 font-medium">Dados de autenticação não encontrados</p>
-        <button
-          onClick={onBack}
-          className="mt-4 px-4 py-2 bg-amber-500 text-white rounded-lg"
-        >
-          Voltar
-        </button>
-      </div>
-    );
-  }
-
   const handleOrderTypeChange = useCallback((delivery: boolean) => {
     setIsDelivery(delivery);
     // Update store
@@ -193,6 +178,21 @@ export default function FinalDataPage({ onBack }: FinalDataPageProps) {
     clearCart,
     router
   ]);
+
+  // Ensure customer is set (after all hooks)
+  if (!customer) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-red-600 font-medium">Dados de autenticação não encontrados</p>
+        <button
+          onClick={onBack}
+          className="mt-4 px-4 py-2 bg-amber-500 text-white rounded-lg"
+        >
+          Voltar
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

@@ -28,49 +28,13 @@ export default function CheckoutTablePage() {
   const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Validate cart
-  if (cartItems.length === 0) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center max-w-md">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Carrinho Vazio</h1>
-          <p className="text-gray-600 mb-4">Adicione itens ao carrinho antes de finalizar</p>
-          <button
-            onClick={() => router.back()}
-            className="px-6 py-2 bg-amber-500 text-white rounded-lg font-semibold hover:bg-amber-600"
-          >
-            Voltar ao Menu
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Validate store and table context
-  if (!contextData?.storeId || !contextData?.tableId) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center max-w-md">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Erro</h1>
-          <p className="text-gray-600 mb-4">Contexto da loja ou mesa não encontrado</p>
-          <button
-            onClick={() => router.back()}
-            className="px-6 py-2 bg-amber-500 text-white rounded-lg font-semibold hover:bg-amber-600"
-          >
-            Voltar
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Set context if not already set
+  // All hooks must be called before any conditional returns
   useEffect(() => {
-    if (!checkoutStore.storeId) {
+    if (!checkoutStore.storeId && contextData?.storeId) {
       checkoutStore.setContext(contextData.storeId, contextData.tableId);
       checkoutStore.setOrderType('table');
     }
-  }, [contextData.storeId, contextData.tableId, checkoutStore]);
+  }, [contextData?.storeId, contextData?.tableId, checkoutStore]);
 
   const handlePaymentSelect = useCallback((method: string) => {
     setPaymentMethod(method);
@@ -119,6 +83,42 @@ export default function CheckoutTablePage() {
       setSubmitting(false);
     }
   }, [paymentMethod, contextData?.storeId, contextData?.tableId, cartItems, clearCart, router]);
+
+  // Validate cart (after all hooks)
+  if (cartItems.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center max-w-md">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Carrinho Vazio</h1>
+          <p className="text-gray-600 mb-4">Adicione itens ao carrinho antes de finalizar</p>
+          <button
+            onClick={() => router.back()}
+            className="px-6 py-2 bg-amber-500 text-white rounded-lg font-semibold hover:bg-amber-600"
+          >
+            Voltar ao Menu
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Validate store and table context
+  if (!contextData?.storeId || !contextData?.tableId) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center max-w-md">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Erro</h1>
+          <p className="text-gray-600 mb-4">Contexto da loja ou mesa não encontrado</p>
+          <button
+            onClick={() => router.back()}
+            className="px-6 py-2 bg-amber-500 text-white rounded-lg font-semibold hover:bg-amber-600"
+          >
+            Voltar
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
