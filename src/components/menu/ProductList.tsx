@@ -43,12 +43,9 @@ interface ProductListProps {
 }
 
 export function ProductList({ products, selectedCategoryId, onCartItemsChange, searchTerm = '' }: ProductListProps) {
+  // Usar o hook com fallback seguro
   const storeStatus = useStoreStatus();
-  const { isStoreOpen } = storeStatus;
-
-  // Debug: Log the store status
-  console.log('ProductList Debug - isStoreOpen:', isStoreOpen);
-  console.log('ProductList Debug - full storeStatus:', storeStatus);
+  const isStoreOpen = storeStatus?.isStoreOpen ?? true;
   const router = useRouter();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedAdditionals, setSelectedAdditionals] = useState<Additional[]>([]);
@@ -326,21 +323,31 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
       return;
     }
 
-    // Verificar se é delivery - se for, redirecionar para checkout
-    const { deliveryMode } = useCartStore.getState();
-    const { tableId, storeId } = contextData;
+    // Verificar se é delivery ou sem mesa - se for, redirecionar para checkout
+    const { deliveryMode, storeId: cartStoreId } = useCartStore.getState();
+    const { tableId, storeId: contextStoreId } = contextData;
 
-    if (deliveryMode) {
-      console.log('Modo delivery detectado, redirecionando para checkout...');
+    // Usar storeId do context ou do cart store
+    const effectiveStoreId = contextStoreId || cartStoreId;
+
+    if (deliveryMode || !tableId) {
+      console.log('Modo delivery detectado ou sem mesa, redirecionando para checkout-delivery...');
+      console.log('ContextStoreId:', contextStoreId, 'CartStoreId:', cartStoreId, 'EffectiveStoreId:', effectiveStoreId);
       setIsCartOpen(false);
 
-      // Redirecionar para a página de checkout com URL limpa
-      console.log('Redirecionando para checkout...');
-      router.push('/checkout');
+      // Redirecionar para a nova página de checkout de delivery com storeId na URL
+      if (!effectiveStoreId) {
+        toast.error('Erro: Identificador da loja não encontrado');
+        console.error('Nenhum storeId disponível!');
+        return;
+      }
+
+      console.log('Redirecionando para checkout-delivery com storeId:', effectiveStoreId);
+      router.push(`/checkout-delivery?store=${effectiveStoreId}`);
       return;
     }
 
-    // Se não for delivery, continuar com o fluxo normal (mesa)
+    // Se não for delivery e temos tableId, continuar com o fluxo de mesa (sem autenticação)
     try {
       // Iniciar o processo de submissão
       setIsSubmitting(true);
@@ -353,29 +360,31 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
         throw new Error('Identificador da loja não encontrado');
       }
 
-      // Preparar os dados do pedido usando o carrinho Zustand
+      if (!tableId) {
+        throw new Error('Identificador da mesa não encontrado');
+      }
+
+      // Preparar os dados do pedido de mesa usando o carrinho Zustand
       const orderData = {
-        token_company: storeId, // Identificador da empresa/loja
-        ...(tableId ? { table: tableId } : {}), // Adicionar mesa apenas se existir
+        token_company: storeId,
+        table: tableId,
         products: cartItemsZustand.map(item => ({
           identify: item.identify,
           quantity: item.quantity,
-          additionals: item.additionals ? item.additionals.map(add => add.id) : []
+          notes: item.notes || '',
+          additionals: item.additionals ? item.additionals.map(add => ({
+            id: add.id,
+            quantity: add.quantity || 1
+          })) : []
         }))
       };
 
-      console.log('Enviando pedido:', orderData);
+      console.log('📤 Enviando pedido de mesa:', orderData);
       console.log('Itens do carrinho Zustand:', cartItemsZustand);
-      console.log('Detalhes dos produtos:', cartItemsZustand.map(item => ({
-        identify: item.identify,
-        name: item.name,
-        productId: item.productId
-      })));
 
-      // Enviar para a API
+      // Usar novo endpoint de pedidos de mesa (não requer autenticação)
       const baseURL = process.env.NEXT_PUBLIC_API_URL || '';
-      // A variável NEXT_PUBLIC_API_URL já inclui o prefixo 'api/v1'
-      const url = `${baseURL}/orders-kanban`;
+      const url = `${baseURL}/orders/table`;
       console.log('URL da API:', url);
 
       const response = await fetch(url, {
@@ -411,12 +420,21 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
       // Limpar o carrinho
       clearCartZustand();
 
+      // Verificar se foi adicionado a pedido existente ou novo
+      const isExistingOrder = data.is_existing_order === true;
+      const successMessage = isExistingOrder 
+        ? 'Itens adicionados à sua conta!' 
+        : 'Pedido enviado com sucesso!';
+
       // Definir sucesso
       setOrderSuccess({
         success: true,
-        message: 'Pedido finalizado com sucesso!',
+        message: successMessage,
         orderIdentify: data.data?.identify || 'N/A'
       });
+
+      // Toast de sucesso
+      toast.success(successMessage);
 
     } catch (error: any) {
       console.error('Erro ao finalizar pedido:', error);
@@ -948,27 +966,38 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
                           <p>Subtotal</p>
                           <p>R$ {formatPrice(cartTotal)}</p>
                         </div>
-                        <p className="mt-0.5 text-sm text-gray-500">Frete e taxas calculados no checkout.</p>
+                        <p className="mt-0.5 text-sm text-gray-500">
+                          {contextData?.isDelivery ? 'Frete e taxas calculados no checkout.' : 'Pedido será adicionado à sua conta.'}
+                        </p>
                         <div className="mt-6">
-                          <a
-                            href="#"
-                            className={`flex justify-center items-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium transition-colors ${isStoreOpen
+                          <button
+                            type="button"
+                            disabled={!isStoreOpen || isSubmitting}
+                            className={`w-full flex justify-center items-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium transition-colors ${isStoreOpen && !isSubmitting
                               ? 'text-white bg-amber-500 hover:bg-amber-600'
                               : 'text-white bg-gray-400 cursor-not-allowed'
                               }`}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              if (isStoreOpen) {
-                                // Redirecionar para o fluxo de checkout
-                                setIsCartOpen(false);
-                                router.push('/checkout');
-                              } else {
-                                toast.error('Restaurante fechado. Não é possível finalizar pedidos no momento.');
+                            onClick={() => {
+                              if (isStoreOpen && !isSubmitting) {
+                                // Chamar finishOrder diretamente - a função decide se é delivery ou mesa
+                                finishOrder();
                               }
                             }}
                           >
-                            {isStoreOpen ? 'Finalizar pedido' : 'Restaurante Fechado'}
-                          </a>
+                            {isSubmitting ? (
+                              <>
+                                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Enviando...
+                              </>
+                            ) : isStoreOpen ? (
+                              contextData?.isDelivery ? 'Ir para checkout' : 'Enviar pedido'
+                            ) : (
+                              'Restaurante Fechado'
+                            )}
+                          </button>
                         </div>
                         <div className="mt-6 flex justify-center text-sm text-center text-gray-500">
                           <p>

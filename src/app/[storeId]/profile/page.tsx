@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useAppContext } from '@/hooks/useAppContext';
 import { MenuProvider, useMenu } from '@/infrastructure/context/MenuContext';
 import { LayoutProvider } from '@/infrastructure/context/LayoutContext';
@@ -40,8 +40,15 @@ export default function ProfilePageWrapper() {
 
 function ProfilePage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const storeId = (params?.storeId as string) || '';
-  const [activeTab, setActiveTab] = useState<'profile' | 'addresses' | 'preferences' | 'notifications'>('profile');
+
+  // Ler aba inicial da URL (?tab=addresses, ?tab=preferences, etc.)
+  const tabFromUrl = searchParams.get('tab') as 'profile' | 'addresses' | 'preferences' | 'notifications' | null;
+  const validTabs = ['profile', 'addresses', 'preferences', 'notifications'] as const;
+  const initialTab = tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : 'profile';
+
+  const [activeTab, setActiveTab] = useState<'profile' | 'addresses' | 'preferences' | 'notifications'>(initialTab);
 
   // Usar o mesmo contexto do menu
   const { data, isLoading: contextLoading, error: contextError, isValid } = useAppContext();

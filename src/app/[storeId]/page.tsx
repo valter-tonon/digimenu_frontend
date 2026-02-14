@@ -424,6 +424,7 @@ function MenuContent({
             products={filteredProducts}
             selectedCategoryId={selectedCategoryId}
             onCartItemsChange={handleCartItemsChange}
+            searchTerm={searchTerm}
           />
         </div>
       </main>

@@ -144,21 +144,38 @@ export function MenuProvider({ children, initialTableId, initialStoreSlug }: {
       price: item.price,
       quantity: item.quantity,
       notes: item.observation,
-      additionals: item.additionals?.map(add => ({
-        id: parseInt(add.id),
-        name: add.name,
-        price: add.price,
-        quantity: 1
-      }))
+      additionals: item.additionals?.map(add => {
+        // Tentar converter ID para número, senão usar um valor único baseado no nome
+        const additionalId = typeof add.id === 'string' 
+          ? (parseInt(add.id) || add.name.charCodeAt(0) * 1000 + Math.random() * 1000) 
+          : add.id;
+        return {
+          id: Math.floor(additionalId),
+          name: add.name,
+          price: add.price,
+          quantity: 1
+        };
+      })
     });
+  };
+
+  // Função auxiliar para encontrar item no store
+  const findStoreItem = (itemId: string) => {
+    return store.items.find(item => 
+      item.id.toString() === itemId || 
+      item.identify === itemId ||
+      item.productId?.toString() === itemId
+    );
   };
 
   // Função para remover item do carrinho
   const removeFromCart = async (itemId: string): Promise<void> => {
     // Remover apenas do store zustand
-    const storeItem = store.items.find(item => item.id.toString() === itemId || item.identify === itemId);
+    const storeItem = findStoreItem(itemId);
     if (storeItem) {
       store.removeItem(storeItem.id);
+    } else {
+      console.warn(`Item não encontrado no carrinho: ${itemId}`);
     }
     
     return Promise.resolve();
@@ -172,9 +189,11 @@ export function MenuProvider({ children, initialTableId, initialStoreSlug }: {
     }
     
     // Atualizar apenas no store zustand
-    const storeItem = store.items.find(item => item.id.toString() === itemId || item.identify === itemId);
+    const storeItem = findStoreItem(itemId);
     if (storeItem) {
       store.updateItem(storeItem.id, { quantity });
+    } else {
+      console.warn(`Item não encontrado para atualização: ${itemId}`);
     }
   };
 

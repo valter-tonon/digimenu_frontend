@@ -105,6 +105,29 @@ export const createOrder = async (orderData: any) => {
   return api.post('/orders', orderData);
 };
 
+// Pedidos de mesa - fluxo simplificado sem autenticação
+export const createTableOrder = async (orderData: {
+  token_company: string;
+  table: string;
+  products: Array<{
+    identify: string;
+    quantity: number;
+    notes?: string;
+    additionals?: Array<{ id: number; quantity: number }>;
+  }>;
+  comment?: string;
+  payment_method?: string;
+}) => {
+  const response = await api.post('/orders/table', orderData);
+  return response.data;
+};
+
+// Verificar se há pedido aberto na mesa
+export const getOpenTableOrder = async (tableUuid: string) => {
+  const response = await api.get(`/orders/table/${tableUuid}/open`);
+  return response.data;
+};
+
 export const getOrderStatus = async (storeId: string, tableId: string) => {
   return api.get('/orders/status', {
     params: { store_id: storeId, table_id: tableId }

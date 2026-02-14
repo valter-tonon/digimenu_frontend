@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { CheckoutState } from '@/services/checkoutStateMachine';
 import { createOrder, createCustomerAddress } from '@/services/api';
 import { sendOrderConfirmation } from '@/services/orderNotificationService';
 import { useCartStore } from '@/store/cart-store';
+import { useAppContext } from '@/hooks/useAppContext';
 import { toast } from 'react-hot-toast';
-import { Loader2, CheckCircle, MapPin, CreditCard, User, ShoppingCart } from 'lucide-react';
+import { Loader2, CheckCircle, MapPin, CreditCard, User, ShoppingCart, Utensils } from 'lucide-react';
 
 interface ConfirmationStepProps {
   state: CheckoutState;
@@ -39,7 +40,32 @@ export default function ConfirmationStep({
 }: ConfirmationStepProps) {
   const router = useRouter();
   const { items: cartItems, clearCart } = useCartStore();
+  const { data: contextData } = useAppContext();
   const [submitting, setSubmitting] = useState(false);
+
+  // Verificar se é delivery ou pedido de mesa
+  const isDelivery = contextData?.isDelivery ?? false;
+  const tableId = contextData?.tableId;
+
+  // Calcular total do carrinho dinamicamente
+  const cartTotal = useMemo(() => {
+    return cartItems.reduce((total, item) => {
+      const itemPrice = item.price || 0;
+      const additionalsPrice = item.additionals?.reduce(
+        (sum, add) => sum + ((Number(add.price) || 0) * (add.quantity || 1)),
+        0
+      ) || 0;
+      return total + (itemPrice + additionalsPrice) * item.quantity;
+    }, 0);
+  }, [cartItems]);
+
+  // Formatar preço
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(price);
+  };
 
   // Handle order confirmation
   const handleConfirm = useCallback(async () => {
@@ -62,7 +88,8 @@ export default function ConfirmationStep({
       if (!state.customerData) {
         throw new Error('Dados do cliente não preenchidos');
       }
-      if (!state.selectedAddress) {
+      // Só exigir endereço se for delivery
+      if (isDelivery && !state.selectedAddress) {
         throw new Error('Endereço não selecionado');
       }
       if (!state.paymentMethod) {
@@ -73,7 +100,7 @@ export default function ConfirmationStep({
       }
 
       // Preparar dados do pedido
-      const orderData = {
+      const orderData: Record<string, unknown> = {
         token_company: state.storeId,
         customer_id: state.customerId,
         customer: {
@@ -90,8 +117,14 @@ export default function ConfirmationStep({
             quantity: add.quantity
           }))
         })),
-        type: 'delivery',
-        delivery_address: {
+        type: isDelivery ? 'delivery' : 'local',
+        payment_method: state.paymentMethod,
+        comment: state.orderNotes || ''
+      };
+
+      // Adicionar endereço apenas se for delivery
+      if (isDelivery && state.selectedAddress) {
+        orderData.delivery_address = {
           street: state.selectedAddress.street,
           number: state.selectedAddress.number,
           complement: state.selectedAddress.complement,
@@ -99,10 +132,13 @@ export default function ConfirmationStep({
           city: state.selectedAddress.city,
           zipcode: state.selectedAddress.zipCode,
           reference: state.selectedAddress.reference
-        },
-        payment_method: state.paymentMethod,
-        comment: state.orderNotes || ''
-      };
+        };
+      }
+
+      // Adicionar tableId se for pedido de mesa
+      if (!isDelivery && tableId) {
+        orderData.table_id = tableId;
+      }
 
       console.log('📤 Enviando pedido:', orderData);
       console.log('📤 JSON enviado:', JSON.stringify(orderData, null, 2));
@@ -227,8 +263,8 @@ export default function ConfirmationStep({
         </div>
       )}
 
-      {/* Address Information */}
-      {state.selectedAddress && (
+      {/* Address Information (Delivery) ou Mesa (Local) */}
+      {isDelivery && state.selectedAddress ? (
         <div className="bg-white rounded-lg shadow-sm border p-6">
           <div className="flex items-center gap-3 mb-4">
             <MapPin className="w-5 h-5 text-amber-600" />
@@ -269,6 +305,25 @@ export default function ConfirmationStep({
             )}
           </div>
         </div>
+      ) : !isDelivery && (
+        <div className="bg-white rounded-lg shadow-sm border p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <Utensils className="w-5 h-5 text-amber-600" />
+            <h3 className="font-semibold text-gray-900">Consumo no Local</h3>
+          </div>
+          <div className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Tipo:</span>
+              <span className="font-medium text-gray-900">Pedido para consumo no estabelecimento</span>
+            </div>
+            {tableId && (
+              <div className="flex justify-between">
+                <span className="text-gray-600">Mesa:</span>
+                <span className="font-medium text-gray-900">Mesa identificada</span>
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       {/* Payment Information */}
@@ -293,18 +348,31 @@ export default function ConfirmationStep({
           <ShoppingCart className="w-5 h-5 text-amber-600" />
           Resumo do Pedido
         </h3>
-        <div className="space-y-2">
+        
+        {/* Lista de itens */}
+        <div className="space-y-2 mb-4">
+          {cartItems.map((item, index) => (
+            <div key={item.identify || index} className="flex justify-between text-sm">
+              <span className="text-gray-600">{item.quantity}x {item.name}</span>
+              <span className="font-medium">{formatPrice(item.price * item.quantity)}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="border-t border-amber-200 pt-2 space-y-2">
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">Subtotal:</span>
-            <span className="font-medium">R$ 35,00</span>
+            <span className="font-medium">{formatPrice(cartTotal)}</span>
           </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Frete:</span>
-            <span className="font-medium">Calculado na entrega</span>
-          </div>
+          {isDelivery && (
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">Frete:</span>
+              <span className="font-medium">Calculado na entrega</span>
+            </div>
+          )}
           <div className="border-t border-amber-200 pt-2 flex justify-between font-semibold text-lg">
             <span>Total:</span>
-            <span className="text-amber-600">R$ 35,00</span>
+            <span className="text-amber-600">{formatPrice(cartTotal)}</span>
           </div>
         </div>
       </div>

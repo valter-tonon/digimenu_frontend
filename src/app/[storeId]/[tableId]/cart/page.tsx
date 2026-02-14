@@ -1,14 +1,15 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useCartStore } from '@/store/cart-store';
 import { useStoreStatus } from '@/infrastructure/context/StoreStatusContext';
+import { Loader2 } from 'lucide-react';
 
 export default function CartPage() {
   const router = useRouter();
   const params = useParams();
-
+  const [isLoading, setIsLoading] = useState(true);
 
   const storeId = params?.storeId as string;
   const tableId = params?.tableId as string;
@@ -24,7 +25,17 @@ export default function CartPage() {
     setContext
   } = useCartStore();
 
-  const { isStoreOpen } = useStoreStatus();
+  // Store status com fallback seguro
+  const storeStatus = useStoreStatus();
+  const isStoreOpen = storeStatus?.isStoreOpen ?? true;
+  
+  // Simular carregamento inicial
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Configura o contexto ao carregar a página
   useEffect(() => {
@@ -57,8 +68,14 @@ export default function CartPage() {
       return;
     }
 
-    // Redirecionar para o fluxo de checkout
-    router.push('/checkout');
+    // Redirecionar para o checkout apropriado baseado no tipo de pedido
+    if (tableId) {
+      // Pedido de mesa: redireciona para checkout-table
+      router.push('/checkout-table');
+    } else {
+      // Pedido de delivery/retirada: redireciona para checkout-delivery
+      router.push('/checkout-delivery');
+    }
   };
 
   if (!storeId || !tableId) {

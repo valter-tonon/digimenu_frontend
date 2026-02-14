@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   ShoppingCart,
   User,
@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useAppContext } from '@/hooks/useAppContext';
 import { useAuth } from '@/hooks/useAuth';
+import { whatsappAuthService } from '@/services/whatsappAuth';
 import { CompactStoreHeader } from './StoreHeader';
 import { NotificationBadge } from '../notifications/NotificationBadge';
 import { WaiterCallButton } from './WaiterCallButton';
@@ -34,6 +35,14 @@ interface MenuHeaderProps {
   storeId?: string | null;
 }
 
+/** Dados unificados do cliente (auth tradicional + WhatsApp) */
+interface UnifiedCustomer {
+  name: string;
+  phone?: string;
+  email?: string;
+  source: 'traditional' | 'whatsapp';
+}
+
 export function MenuHeader({ 
   cartItemsCount, 
   onCartClick, 
@@ -45,9 +54,53 @@ export function MenuHeader({
   storeId
 }: MenuHeaderProps) {
   const { data } = useAppContext();
-  const { isAuthenticated, customer, logoutUser } = useAuth();
+  const { isAuthenticated: isTraditionalAuth, customer: traditionalCustomer, logoutUser } = useAuth();
   const [profileOpen, setProfileOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+
+  // Estado unificado de autenticação (auth tradicional + WhatsApp)
+  const [whatsappUser, setWhatsappUser] = useState<UnifiedCustomer | null>(null);
+
+  // Verificar autenticação WhatsApp ao montar e quando o perfil abre
+  useEffect(() => {
+    const checkWhatsAppAuth = () => {
+      try {
+        const jwt = whatsappAuthService.getCurrentJWT();
+        if (jwt) {
+          const storedAuth = whatsappAuthService.getStoredAuth();
+          if (storedAuth?.user) {
+            setWhatsappUser({
+              name: storedAuth.user.name,
+              phone: storedAuth.user.phone,
+              email: storedAuth.user.email,
+              source: 'whatsapp',
+            });
+            return;
+          }
+        }
+        setWhatsappUser(null);
+      } catch {
+        setWhatsappUser(null);
+      }
+    };
+
+    checkWhatsAppAuth();
+
+    // Re-verificar a cada 30s para capturar login feito em outra aba/checkout
+    const interval = setInterval(checkWhatsAppAuth, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Estado unificado: autenticado se qualquer sistema tiver sessão
+  const isUserAuthenticated = isTraditionalAuth || !!whatsappUser;
+  const unifiedCustomer: UnifiedCustomer | null = traditionalCustomer
+    ? {
+        name: traditionalCustomer.name,
+        phone: traditionalCustomer.phone || traditionalCustomer.mobile_phone,
+        email: traditionalCustomer.email,
+        source: 'traditional',
+      }
+    : whatsappUser;
 
   // Detectar scroll para animar o header
   useEffect(() => {
@@ -62,14 +115,20 @@ export function MenuHeader({
   const finalStoreName = propStoreName || data?.storeName || 'Restaurante';
   const finalStoreLogo = propStoreLogo;
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     try {
+      // Limpar auth tradicional
       await logoutUser();
+      // Limpar auth WhatsApp
+      whatsappAuthService.clearAuth();
+      setWhatsappUser(null);
+      // Limpar dados do cliente salvos localmente
+      localStorage.removeItem('customer_phone');
       setProfileOpen(false);
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
     }
-  };
+  }, [logoutUser]);
 
   const getCurrentContext = () => {
     if (tableId) {
@@ -165,7 +224,7 @@ export function MenuHeader({
           {/* Ações do Header */}
           <div className="flex items-center gap-2">
             {/* Notificações - Habilitado apenas para usuários autenticados */}
-            {isAuthenticated && (
+            {isUserAuthenticated && (
               <NotificationBadge storeId={storeId || undefined} tableId={tableId || undefined} />
             )}
 
@@ -196,8 +255,8 @@ export function MenuHeader({
               )}
             </button>
 
-            {/* Perfil do Usuário - Habilitado apenas para usuários autenticados */}
-            {isAuthenticated && (
+            {/* Perfil do Usuário - Visível para qualquer usuário autenticado (tradicional ou WhatsApp) */}
+            {isUserAuthenticated && unifiedCustomer && (
               <div className="relative">
                 <button
                   onClick={() => setProfileOpen(!profileOpen)}
@@ -207,6 +266,10 @@ export function MenuHeader({
                   <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center">
                     <User className="h-4 w-4 text-amber-600" />
                   </div>
+                  {/* Nome abreviado em telas maiores */}
+                  <span className="hidden sm:block text-sm font-medium text-gray-700 max-w-[100px] truncate">
+                    {unifiedCustomer.name.split(' ')[0]}
+                  </span>
                   <ChevronDown 
                     className={`h-4 w-4 transition-transform duration-200 ${
                       profileOpen ? 'rotate-180' : ''
@@ -216,7 +279,7 @@ export function MenuHeader({
 
                 {/* Dropdown do Perfil */}
                 {profileOpen && (
-                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 z-50 overflow-hidden">
+                  <div className="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-xl border border-gray-200 z-50 overflow-hidden">
                     {/* Contexto atual */}
                     {tableId && (
                       <div className="px-4 py-3 bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-100">
@@ -278,13 +341,20 @@ export function MenuHeader({
                         <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
                           <User className="h-5 w-5 text-amber-600" />
                         </div>
-                        <div>
-                          <p className="font-medium text-gray-900">
-                            {customer?.name || 'Usuário'}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-900 truncate">
+                            {unifiedCustomer.name}
                           </p>
-                          <p className="text-sm text-gray-500">
-                            {customer?.email || 'Cliente autenticado'}
-                          </p>
+                          {unifiedCustomer.phone && (
+                            <p className="text-sm text-gray-500">
+                              {unifiedCustomer.phone}
+                            </p>
+                          )}
+                          {unifiedCustomer.email && (
+                            <p className="text-xs text-gray-400 truncate">
+                              {unifiedCustomer.email}
+                            </p>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -292,21 +362,27 @@ export function MenuHeader({
                     {/* Links do menu */}
                     <div className="py-2">
                       <Link
-                        href={`/${storeId}/profile`}
-                        className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors"
-                        onClick={() => setProfileOpen(false)}
-                      >
-                        <User className="w-4 h-4" />
-                        <span>Meu Perfil</span>
-                      </Link>
-
-                      <Link
                         href={`/${storeId}/orders`}
                         className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors"
                         onClick={() => setProfileOpen(false)}
                       >
                         <Clock className="w-4 h-4" />
-                        <span>Histórico de Pedidos</span>
+                        <div>
+                          <span className="block">Meus Pedidos</span>
+                          <span className="block text-xs text-gray-400">Acompanhe e veja o histórico</span>
+                        </div>
+                      </Link>
+
+                      <Link
+                        href={`/${storeId}/profile?tab=addresses`}
+                        className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors"
+                        onClick={() => setProfileOpen(false)}
+                      >
+                        <MapPin className="w-4 h-4" />
+                        <div>
+                          <span className="block">Meus Endereços</span>
+                          <span className="block text-xs text-gray-400">Editar ou escolher o principal</span>
+                        </div>
                       </Link>
 
                       <Link
@@ -331,10 +407,7 @@ export function MenuHeader({
                     {/* Botão de logout */}
                     <div className="p-2 border-t border-gray-100">
                       <button
-                        onClick={() => {
-                          handleLogout();
-                          setProfileOpen(false);
-                        }}
+                        onClick={handleLogout}
                         className="flex items-center gap-3 w-full px-4 py-3 text-red-600 hover:bg-red-50 transition-colors rounded-md"
                       >
                         <LogOut className="w-4 h-4" />

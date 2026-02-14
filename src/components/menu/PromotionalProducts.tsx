@@ -28,7 +28,7 @@ export function PromotionalProducts({ products, onProductClick }: PromotionalPro
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {promotionalProducts.slice(0, 6).map((product) => (
                                     <ProductCard
-                          key={product.id}
+                          key={`promo-${product.uuid || product.id}`}
                           product={product}
                           onClick={() => {
                             // Usar a função global do ProductList se disponível

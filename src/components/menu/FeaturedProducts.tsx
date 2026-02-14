@@ -24,7 +24,7 @@ export function FeaturedProducts({ products, onProductClick }: FeaturedProductsP
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {featuredProducts.slice(0, 6).map((product) => (
                                     <ProductCard
-                          key={product.id}
+                          key={`featured-${product.uuid || product.id}`}
                           product={product}
                           onClick={() => {
                             // Usar a função global do ProductList se disponível

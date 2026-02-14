@@ -99,8 +99,15 @@ const nextConfig = {
 
   // Rewrites for API optimization
   async rewrites() {
+    // Use laravel.test for Docker environment, localhost for local development
+    const backendUrl = process.env.NODE_ENV === 'development'
+      ? 'http://laravel.test'
+      : process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost';
     return [
-      // Add any necessary rewrites here
+      {
+        source: '/api/:path*',
+        destination: `${backendUrl}/api/:path*`,
+      },
     ];
   },
 
