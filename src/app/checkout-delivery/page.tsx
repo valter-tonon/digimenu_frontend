@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { Suspense, useState, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCartStore } from '@/store/cart-store';
 import { useCheckoutStore } from '@/store/checkout-store';
@@ -17,6 +17,18 @@ type Page = 'identification' | 'final_data';
  * Página 2: Endereço (condicional), pagamento e confirmação
  */
 export default function CheckoutDeliveryPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500" />
+      </div>
+    }>
+      <CheckoutDeliveryContent />
+    </Suspense>
+  );
+}
+
+function CheckoutDeliveryContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const cartItems = useCartStore(state => state.items);
