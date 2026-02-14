@@ -85,9 +85,14 @@ export default function MyOrdersPage() {
       'pendente': { bg: 'bg-yellow-100', text: 'text-yellow-800', icon: '⏳' },
       'aceito': { bg: 'bg-blue-100', text: 'text-blue-800', icon: '✓' },
       'em_preparo': { bg: 'bg-purple-100', text: 'text-purple-800', icon: '👨‍🍳' },
-      'pronto': { bg: 'bg-green-100', text: 'text-green-800', icon: '✓' },
+      'pronto': { bg: 'bg-green-100', text: 'text-green-800', icon: '✅' },
+      'saiu_entrega': { bg: 'bg-orange-100', text: 'text-orange-800', icon: '🚗' },
+      'entregue': { bg: 'bg-green-100', text: 'text-green-800', icon: '✓' },
       'finalizado': { bg: 'bg-green-100', text: 'text-green-800', icon: '✓' },
       'cancelado': { bg: 'bg-red-100', text: 'text-red-800', icon: '✗' },
+      'pagamento_pendente': { bg: 'bg-yellow-100', text: 'text-yellow-800', icon: '💳' },
+      'pagamento_aprovado': { bg: 'bg-green-100', text: 'text-green-800', icon: '✓' },
+      'pagamento_rejeitado': { bg: 'bg-red-100', text: 'text-red-800', icon: '✗' },
     };
     return colorMap[status] || { bg: 'bg-gray-100', text: 'text-gray-800', icon: '•' };
   };
@@ -98,8 +103,13 @@ export default function MyOrdersPage() {
       'aceito': 'Aceito',
       'em_preparo': 'Em Preparo',
       'pronto': 'Pronto',
+      'saiu_entrega': 'Saiu para Entrega',
+      'entregue': 'Entregue',
       'finalizado': 'Finalizado',
       'cancelado': 'Cancelado',
+      'pagamento_pendente': 'Pagamento Pendente',
+      'pagamento_aprovado': 'Pagamento Aprovado',
+      'pagamento_rejeitado': 'Pagamento Rejeitado',
     };
     return statusMap[status] || status;
   };
@@ -114,7 +124,7 @@ export default function MyOrdersPage() {
   };
 
   const isCurrentOrder = (status: string) => {
-    return ['pendente', 'aceito', 'em_preparo', 'pronto'].includes(status);
+    return ['pendente', 'aceito', 'em_preparo', 'pronto', 'saiu_entrega'].includes(status);
   };
 
   const handleManualRefresh = async () => {
