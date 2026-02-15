@@ -10,6 +10,12 @@ import AddressForm from '@/components/checkout/AddressForm';
 import OrderSummary from '@/components/checkout/OrderSummary';
 import { toast } from 'react-hot-toast';
 import { Loader2 } from 'lucide-react';
+import { whatsappAuthService } from '@/services/whatsappAuth';
+import {
+  getCustomerAddresses,
+  findCustomerByPhone,
+  type CustomerAddress,
+} from '@/services/customerService';
 
 interface FinalDataPageProps {
   onBack: () => void;
@@ -41,34 +47,59 @@ export default function FinalDataPage({ onBack }: FinalDataPageProps) {
 
   const [isDelivery, setIsDelivery] = useState(true); // true = delivery, false = takeout
   const [submitting, setSubmitting] = useState(false);
-  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [addresses, setAddresses] = useState<(Address & { label?: string; is_default?: boolean })[]>([]);
   const [loadingAddresses, setLoadingAddresses] = useState(false);
 
-  // Buscar endereços salvos do cliente
+  // Buscar endereços salvos do cliente via customerService
   useEffect(() => {
     const fetchCustomerAddresses = async () => {
-      if (!customer?.phone) return;
-
       setLoadingAddresses(true);
       try {
-        // Buscar endereços via API
-        const response = await fetch(`/api/v1/customers/find-by-phone?phone=${customer.phone}`);
-        if (response.ok) {
-          const data = await response.json();
-          if (data.customer?.addresses) {
-            const formattedAddresses: Address[] = data.customer.addresses.map((addr: any) => ({
-              id: addr.id,
-              street: addr.street,
-              number: addr.number,
-              complement: addr.complement || '',
-              neighborhood: addr.neighborhood,
-              city: addr.city,
-              state: addr.state,
-              zip_code: addr.zip_code,
-            }));
-            setAddresses(formattedAddresses);
-            console.log('📍 Endereços do cliente carregados:', formattedAddresses.length);
+        // Resolver customer ID pelo telefone
+        const storedAuth = whatsappAuthService.getStoredAuth();
+        const phone = customer?.phone || storedAuth?.user?.phone;
+        const tenantId = storedAuth?.user?.tenant_id;
+
+        if (!phone) {
+          setLoadingAddresses(false);
+          return;
+        }
+
+        const customerResult = await findCustomerByPhone(phone, tenantId);
+        if (!customerResult.success || !customerResult.data?.id) {
+          setLoadingAddresses(false);
+          return;
+        }
+
+        const customerId = customerResult.data.id;
+
+        // Buscar endereços
+        const addressResult = await getCustomerAddresses(customerId);
+        if (addressResult.success && addressResult.data && addressResult.data.length > 0) {
+          const formattedAddresses = addressResult.data.map((addr: CustomerAddress) => ({
+            id: addr.id,
+            street: addr.street,
+            number: addr.number,
+            complement: addr.complement || '',
+            neighborhood: addr.neighborhood,
+            city: addr.city,
+            state: addr.state,
+            zip_code: addr.zip_code,
+            label: addr.label,
+            is_default: addr.is_default,
+          }));
+          setAddresses(formattedAddresses);
+
+          // Auto-selecionar endereço padrão (is_default) ou primeiro endereço
+          if (!selectedAddress) {
+            const defaultAddr = formattedAddresses.find((a: any) => a.is_default) || formattedAddresses[0];
+            if (defaultAddr) {
+              setAddress(defaultAddr);
+              console.log('📍 Endereço padrão auto-selecionado:', defaultAddr.label || defaultAddr.street);
+            }
           }
+
+          console.log('📍 Endereços do cliente carregados:', formattedAddresses.length);
         }
       } catch (error) {
         console.error('Erro ao buscar endereços:', error);
@@ -78,6 +109,7 @@ export default function FinalDataPage({ onBack }: FinalDataPageProps) {
     };
 
     fetchCustomerAddresses();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [customer?.phone]);
 
   const handleOrderTypeChange = useCallback((delivery: boolean) => {
