@@ -2,23 +2,41 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { CheckCircle, Clock, MapPin, Phone, ArrowRight } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { CheckCircle, Clock, ArrowRight } from 'lucide-react';
+
+interface OrderAddon {
+  id: number;
+  name: string;
+  price: string | number;
+  quantity: number;
+}
+
+interface OrderItem {
+  product_name?: string;
+  name?: string;
+  quantity: number;
+  price: number;
+  total?: number;
+  qty?: number;
+  comments?: string;
+  notes?: string;
+  addons?: OrderAddon[] | string;
+}
 
 interface OrderDetails {
   identify: string;
   total: number;
   status: string;
+  status_code?: string;
   date: string;
   type: string;
   customer_name?: string;
   payment_method?: string;
-  items?: Array<{
-    product_name: string;
-    quantity: number;
-    price: number;
-  }>;
+  products?: OrderItem[];
+  items?: OrderItem[];
 }
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost/api/v1';
 
 export default function OrderSuccessPage() {
   const params = useParams();
@@ -26,26 +44,27 @@ export default function OrderSuccessPage() {
   const orderId = params.orderId as string;
   const [order, setOrder] = useState<OrderDetails | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
-    // Simular busca de detalhes do pedido
-    // Em produção, isso viria de uma API
-    setOrder({
-      identify: orderId,
-      total: 35,
-      status: 'pendente',
-      date: new Date().toLocaleDateString('pt-BR'),
-      type: 'delivery',
-      payment_method: 'pix',
-      items: [
-        {
-          product_name: 'Batata Frita Média',
-          quantity: 1,
-          price: 35
-        }
-      ]
-    });
-    setLoading(false);
+    async function fetchOrder() {
+      try {
+        const response = await fetch(`${API_BASE}/orders/${orderId}`);
+        if (!response.ok) throw new Error('Pedido não encontrado');
+        const data = await response.json();
+        const orderData = data.data || data;
+        setOrder(orderData);
+      } catch (err) {
+        console.error('Erro ao buscar pedido:', err);
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (orderId) {
+      fetchOrder();
+    }
   }, [orderId]);
 
   const getStatusColor = (status: string) => {
@@ -72,6 +91,44 @@ export default function OrderSuccessPage() {
     return statusMap[status] || status;
   };
 
+  const getTypeLabel = (type: string) => {
+    const typeMap: Record<string, string> = {
+      'delivery': '🚗 Delivery',
+      'takeout': '🏪 Retirada',
+      'table': '🍽️ Mesa',
+    };
+    return typeMap[type] || type;
+  };
+
+  const getPaymentLabel = (method: string) => {
+    const paymentMap: Record<string, string> = {
+      'cash': 'Dinheiro',
+      'dinheiro': 'Dinheiro',
+      'credit_card': 'Cartão de Crédito',
+      'debit_card': 'Cartão de Débito',
+      'pix': 'PIX',
+    };
+    return paymentMap[method] || method;
+  };
+
+  const parseAddons = (addons: OrderAddon[] | string | undefined): OrderAddon[] => {
+    if (!addons) return [];
+    if (typeof addons === 'string') {
+      try {
+        return JSON.parse(addons);
+      } catch {
+        return [];
+      }
+    }
+    return addons;
+  };
+
+  const getOrderItems = (): OrderItem[] => {
+    if (!order) return [];
+    // Prefer 'products' (from OrderItemsResource) or fallback to 'items'
+    return order.products || order.items || [];
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-amber-50 flex items-center justify-center">
@@ -80,7 +137,7 @@ export default function OrderSuccessPage() {
     );
   }
 
-  if (!order) {
+  if (error || !order) {
     return (
       <div className="min-h-screen bg-amber-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-lg p-8 text-center">
@@ -96,6 +153,9 @@ export default function OrderSuccessPage() {
       </div>
     );
   }
+
+  const statusKey = order.status_code || order.status;
+  const items = getOrderItems();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-50 to-amber-50 p-4">
@@ -117,12 +177,12 @@ export default function OrderSuccessPage() {
           <h2 className="text-lg font-bold text-gray-900 mb-4">Detalhes do Pedido</h2>
 
           {/* Status */}
-          <div className={`border-2 rounded-lg p-4 mb-4 ${getStatusColor(order.status)}`}>
+          <div className={`border-2 rounded-lg p-4 mb-4 ${getStatusColor(statusKey)}`}>
             <div className="flex items-center gap-3">
               <Clock className="w-5 h-5" />
               <div>
                 <p className="text-sm text-gray-600">Status</p>
-                <p className="font-bold text-gray-900">{getStatusLabel(order.status)}</p>
+                <p className="font-bold text-gray-900">{getStatusLabel(statusKey)}</p>
               </div>
             </div>
           </div>
@@ -130,16 +190,48 @@ export default function OrderSuccessPage() {
           {/* Order Items */}
           <div className="mb-4">
             <p className="text-sm font-bold text-gray-600 mb-2">Itens</p>
-            <div className="space-y-2">
-              {order.items?.map((item, index) => (
-                <div key={index} className="flex justify-between items-center pb-2 border-b border-gray-200 last:border-b-0">
-                  <div>
-                    <p className="text-gray-900 font-medium">{item.product_name}</p>
-                    <p className="text-sm text-gray-600">Quantidade: {item.quantity}</p>
+            <div className="space-y-3">
+              {items.map((item, index) => {
+                const itemName = item.product_name || item.name || 'Produto';
+                const itemQty = item.qty || item.quantity;
+                const itemPrice = item.price;
+                const addons = parseAddons(item.addons);
+                const itemNotes = item.notes || item.comments;
+
+                return (
+                  <div key={index} className="pb-3 border-b border-gray-200 last:border-b-0">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="text-gray-900 font-medium">{itemName}</p>
+                        <p className="text-sm text-gray-600">Qtd: {itemQty}</p>
+                      </div>
+                      <p className="font-bold text-gray-900">
+                        R$ {(itemPrice * itemQty).toFixed(2)}
+                      </p>
+                    </div>
+
+                    {/* Addons/Adicionais */}
+                    {addons.length > 0 && (
+                      <div className="mt-1 ml-2">
+                        {addons.map((addon, addonIndex) => (
+                          <p key={addonIndex} className="text-xs text-gray-500">
+                            + {addon.name}
+                            {addon.quantity > 1 ? ` (x${addon.quantity})` : ''}
+                            {addon.price ? ` R$ ${Number(addon.price).toFixed(2)}` : ''}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Notes */}
+                    {itemNotes && (
+                      <p className="text-xs text-gray-500 mt-1 italic">
+                        Obs: {itemNotes}
+                      </p>
+                    )}
                   </div>
-                  <p className="font-bold text-gray-900">R$ {item.price.toFixed(2)}</p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -157,21 +249,21 @@ export default function OrderSuccessPage() {
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <span className="text-gray-600 font-medium">Tipo:</span>
-              <span className="text-gray-900">
-                {order.type === 'delivery' ? '🚗 Delivery' : order.type === 'takeout' ? '🏪 Retirada' : '🍽️ Mesa'}
-              </span>
+              <span className="text-gray-900">{getTypeLabel(order.type)}</span>
             </div>
 
             {order.payment_method && (
               <div className="flex items-center gap-2">
                 <span className="text-gray-600 font-medium">Pagamento:</span>
-                <span className="text-gray-900 capitalize">{order.payment_method}</span>
+                <span className="text-gray-900">{getPaymentLabel(order.payment_method)}</span>
               </div>
             )}
 
             <div className="flex items-center gap-2">
               <span className="text-gray-600 font-medium">Data:</span>
-              <span className="text-gray-900">{order.date}</span>
+              <span className="text-gray-900">
+                {new Date(order.date).toLocaleDateString('pt-BR')}
+              </span>
             </div>
           </div>
         </div>

@@ -14,8 +14,29 @@ export interface CreateOrderPayload {
     identify: string;
     quantity: number;
     notes?: string;
+    additionals?: Array<{
+      id: number;
+      quantity: number;
+    }>;
   }>;
   comment?: string;
+}
+
+/**
+ * Maps cart items to order product payload including additionals
+ */
+function mapCartItemsToProducts(cartItems: CartItem[]) {
+  return cartItems.map(item => ({
+    identify: item.identify,
+    quantity: item.quantity,
+    notes: item.notes,
+    additionals: item.additionals && item.additionals.length > 0
+      ? item.additionals.map(add => ({
+          id: add.id,
+          quantity: add.quantity || 1,
+        }))
+      : undefined,
+  }));
 }
 
 /**
@@ -51,11 +72,7 @@ export const orderService = {
         zip_code: address.zip_code
       },
       payment_method: paymentMethod,
-      products: cartItems.map(item => ({
-        identify: item.identify,
-        quantity: item.quantity,
-        notes: item.notes
-      })),
+      products: mapCartItemsToProducts(cartItems),
       comment: notes
     };
 
@@ -85,11 +102,7 @@ export const orderService = {
         email: customer.email
       },
       payment_method: paymentMethod,
-      products: cartItems.map(item => ({
-        identify: item.identify,
-        quantity: item.quantity,
-        notes: item.notes
-      })),
+      products: mapCartItemsToProducts(cartItems),
       comment: notes
     };
 
@@ -115,11 +128,7 @@ export const orderService = {
       type: 'table',
       table_id: tableId,
       payment_method: paymentMethod,
-      products: cartItems.map(item => ({
-        identify: item.identify,
-        quantity: item.quantity,
-        notes: item.notes
-      })),
+      products: mapCartItemsToProducts(cartItems),
       comment: notes
     };
 
