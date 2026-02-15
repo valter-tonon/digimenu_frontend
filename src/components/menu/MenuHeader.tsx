@@ -5,8 +5,6 @@ import {
   ShoppingCart,
   User,
   LogOut,
-  Settings,
-  Heart,
   Clock,
   MapPin,
   ChevronDown,
@@ -401,23 +399,6 @@ export function MenuHeader({
                         </div>
                       </Link>
 
-                      <Link
-                        href={`/${storeId}/favorites`}
-                        className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors"
-                        onClick={() => setProfileOpen(false)}
-                      >
-                        <Heart className="w-4 h-4" />
-                        <span>Favoritos</span>
-                      </Link>
-
-                      <Link
-                        href={`/${storeId}/settings`}
-                        className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors"
-                        onClick={() => setProfileOpen(false)}
-                      >
-                        <Settings className="w-4 h-4" />
-                        <span>Configurações</span>
-                      </Link>
                     </div>
 
                     {/* Botão de logout */}
