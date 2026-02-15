@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronRight, Clock, CheckCircle, AlertCircle, MapPin, Phone, Home, RotateCw } from 'lucide-react';
-import { orderTrackingService, Order } from '@/services/orderTrackingService';
+import { orderTrackingService, Order, OrderItem as OrderItemType } from '@/services/orderTrackingService';
 import { useCheckoutStore } from '@/store/checkout-store';
 
 const POLLING_INTERVAL = 30000; // 30 segundos
@@ -177,6 +177,37 @@ export default function MyOrdersPage() {
   const currentOrders = orders.filter(o => isCurrentOrder(o.status));
   const pastOrders = orders.filter(o => !isCurrentOrder(o.status));
 
+  const renderOrderItem = (item: OrderItemType, index: number) => {
+    const addons = [...(item.addons || []), ...(item.additionals || [])];
+    return (
+      <div key={index} className="flex flex-col text-sm bg-white rounded-lg p-2">
+        <div className="flex justify-between items-start">
+          <div className="flex-1">
+            <p className="font-medium text-gray-800">{item.product_name}</p>
+            <p className="text-gray-500 text-xs">Qtd: {item.quantity} x R$ {item.price.toFixed(2)}</p>
+            {item.comments && (
+              <p className="text-gray-400 text-xs mt-0.5 italic">Obs: {item.comments}</p>
+            )}
+          </div>
+          <span className="font-semibold text-gray-700 ml-2">R$ {(item.price * item.quantity).toFixed(2)}</span>
+        </div>
+        {addons.length > 0 && (
+          <div className="mt-1.5 ml-3 pl-2 border-l-2 border-amber-200 space-y-0.5">
+            <p className="text-xs font-semibold text-amber-700">Adicionais:</p>
+            {addons.map((addon, i) => (
+              <div key={i} className="flex justify-between items-center text-xs text-gray-600">
+                <span>+ {addon.name}{addon.quantity && addon.quantity > 1 ? ` (x${addon.quantity})` : ''}</span>
+                {addon.price != null && addon.price > 0 && (
+                  <span className="text-gray-500 ml-2">R$ {Number(addon.price).toFixed(2)}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -308,13 +339,8 @@ export default function MyOrdersPage() {
                             {/* Items */}
                             <div className="space-y-2">
                               <p className="text-sm font-bold text-gray-900">Itens</p>
-                              <div className="space-y-1">
-                                {order.items?.map((item, index) => (
-                                  <div key={index} className="flex justify-between text-sm text-gray-600">
-                                    <span>{item.product_name} x{item.quantity}</span>
-                                    <span>R$ {(item.price * item.quantity).toFixed(2)}</span>
-                                  </div>
-                                ))}
+                              <div className="space-y-2">
+                                {order.items?.map((item, index) => renderOrderItem(item, index))}
                               </div>
                             </div>
 
@@ -379,12 +405,7 @@ export default function MyOrdersPage() {
                         {/* Order Details */}
                         {isExpanded && (
                           <div className="border-t bg-gray-50 p-3 space-y-2 text-sm">
-                            {order.items?.map((item, index) => (
-                              <div key={index} className="flex justify-between text-gray-600">
-                                <span>{item.product_name} x{item.quantity}</span>
-                                <span>R$ {(item.price * item.quantity).toFixed(2)}</span>
-                              </div>
-                            ))}
+                            {order.items?.map((item, index) => renderOrderItem(item, index))}
                             <button className="w-full mt-2 border border-amber-500 text-amber-600 px-3 py-1 rounded text-xs font-medium hover:bg-amber-50">
                               Repetir Pedido
                             </button>

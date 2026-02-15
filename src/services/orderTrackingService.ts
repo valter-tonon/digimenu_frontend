@@ -1,9 +1,19 @@
 import { apiClient } from '@/infrastructure/api/apiClient';
 
+export interface OrderItemAddon {
+  name: string;
+  price?: number;
+  quantity?: number;
+}
+
 export interface OrderItem {
   product_name: string;
   quantity: number;
   price: number;
+  image?: string;
+  comments?: string;
+  addons?: OrderItemAddon[];
+  additionals?: OrderItemAddon[];
 }
 
 export interface Order {
@@ -22,6 +32,28 @@ export interface Order {
     name: string;
     email?: string;
   };
+}
+
+/**
+ * Mapeia items do pedido a partir de 'products' (sempre presente) ou 'items' (quando carregado)
+ * products usa: { name, qty, price, image, comments }
+ * items usa: { product_name, quantity, price, notes }
+ */
+function mapOrderItems(order: any): OrderItem[] {
+  // Priorizar 'products' que sempre vem na API
+  const source = order.products?.length ? order.products : order.items;
+
+  if (!source || !Array.isArray(source)) return [];
+
+  return source.map((item: any) => ({
+    product_name: item.product_name || item.name || 'Produto',
+    quantity: item.quantity || item.qty || 1,
+    price: parseFloat(item.price || 0),
+    image: item.image || undefined,
+    comments: item.comments || item.notes || undefined,
+    addons: item.addons || [],
+    additionals: item.additionals || [],
+  }));
 }
 
 /**
@@ -63,11 +95,7 @@ export const orderTrackingService = {
             type: order.type || 'delivery',
             customer_name: order.customer?.name || order.client?.name || 'Cliente',
             payment_method: order.payment_method,
-            items: order.items?.map((item: any) => ({
-              product_name: item.product_name || item.name,
-              quantity: item.quantity || item.qty,
-              price: parseFloat(item.price || 0)
-            })) || [],
+            items: mapOrderItems(order),
             created_at: order.created_at || order.date
           };
         });
@@ -106,11 +134,7 @@ export const orderTrackingService = {
             type: order.type || 'delivery',
             customer_name: order.customer?.name || order.client?.name || 'Cliente',
             payment_method: order.payment_method,
-            items: order.items?.map((item: any) => ({
-              product_name: item.product_name || item.name,
-              quantity: item.quantity || item.qty,
-              price: parseFloat(item.price || 0)
-            })) || [],
+            items: mapOrderItems(order),
             created_at: order.created_at || order.date
           };
         });
@@ -143,11 +167,7 @@ export const orderTrackingService = {
           type: order.type || 'delivery',
           customer_name: order.customer?.name || order.client || 'Cliente',
           payment_method: order.payment_method,
-          items: order.items?.map((item: any) => ({
-            product_name: item.name || item.product_name,
-            quantity: item.quantity || item.qty,
-            price: parseFloat(item.price || 0)
-          })) || [],
+          items: mapOrderItems(order),
           created_at: order.created_at
         };
       }
