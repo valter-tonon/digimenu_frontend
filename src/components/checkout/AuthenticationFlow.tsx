@@ -7,6 +7,15 @@ import { User, Phone, Mail, Lock, UserPlus, LogIn, Loader2, MessageCircle, Check
 import { toast } from 'react-hot-toast';
 import { findCustomerByPhone, quickRegisterCustomer } from '@/services/api';
 
+/** Filtra emails fake gerados pelo sistema (ex: whatsapp_xxx@temp.local) */
+function filterFakeEmail(email?: string | null): string {
+  if (!email) return '';
+  if (email.endsWith('@temp.local')) return '';
+  if (email.endsWith('@placeholder.local')) return '';
+  if (email.startsWith('whatsapp_')) return '';
+  return email;
+}
+
 export interface AuthenticationFlowProps {
   storeId: string;
   onAuthenticationComplete: (customer: any, isGuest: boolean) => void;
@@ -54,7 +63,7 @@ export const AuthenticationFlow: React.FC<AuthenticationFlowProps> = ({
           id: whatsappState.user.id,
           name: whatsappState.user.name,
           phone: whatsappState.user.phone,
-          email: whatsappState.user.email || '',
+          email: filterFakeEmail(whatsappState.user.email),
           isExisting: true
         });
       } else if (isAuthenticated && customer) {
@@ -69,7 +78,7 @@ export const AuthenticationFlow: React.FC<AuthenticationFlowProps> = ({
             id: whatsappState.user.id,
             name: whatsappState.user.name,
             phone: whatsappState.user.phone,
-            email: whatsappState.user.email || '',
+            email: filterFakeEmail(whatsappState.user.email),
             isExisting: true
           });
         }
@@ -95,7 +104,7 @@ export const AuthenticationFlow: React.FC<AuthenticationFlowProps> = ({
         id: whatsappState.user.id,
         name: whatsappState.user.name,
         phone: whatsappState.user.phone,
-        email: whatsappState.user.email || '',
+        email: filterFakeEmail(whatsappState.user.email),
         isExisting: true
       });
     }
@@ -613,9 +622,9 @@ export const AuthenticationFlow: React.FC<AuthenticationFlowProps> = ({
           <p className="text-sm text-green-800">
             <strong>Telefone:</strong> {whatsappState.user?.phone || customerData.phone}
           </p>
-          {(whatsappState.user?.email || customerData.email) && (
+          {filterFakeEmail(whatsappState.user?.email || customerData.email) && (
             <p className="text-sm text-green-800">
-              <strong>E-mail:</strong> {whatsappState.user?.email || customerData.email}
+              <strong>E-mail:</strong> {filterFakeEmail(whatsappState.user?.email || customerData.email)}
             </p>
           )}
         </div>

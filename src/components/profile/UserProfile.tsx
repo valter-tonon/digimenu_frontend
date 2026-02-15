@@ -11,6 +11,15 @@ import {
   type CustomerUpdateData,
 } from '@/services/customerService';
 
+/** Filtra emails fake gerados pelo sistema (ex: whatsapp_xxx@temp.local) */
+function filterFakeEmail(email?: string | null): string {
+  if (!email) return '';
+  if (email.endsWith('@temp.local')) return '';
+  if (email.endsWith('@placeholder.local')) return '';
+  if (email.startsWith('whatsapp_')) return '';
+  return email;
+}
+
 interface UserProfileProps {
   /** ID do cliente (opcional - se não informado, detecta automaticamente via auth) */
   customerId?: number;
@@ -97,17 +106,18 @@ export function UserProfile({ customerId: propCustomerId }: UserProfileProps) {
       // Último fallback: usar dados do auth local
       if (storedAuth?.user) {
         const user = storedAuth.user;
+        const cleanEmail = filterFakeEmail(user.email);
         const localCustomer: CustomerData = {
           id: user.id,
           name: user.name,
-          email: user.email || '',
+          email: cleanEmail,
           phone: user.phone,
           active: true,
         };
         setCustomer(localCustomer);
         setFormData({
           name: user.name || '',
-          email: user.email || '',
+          email: cleanEmail,
           phone: user.phone || '',
           mobile_phone: '',
         });
@@ -158,6 +168,28 @@ export function UserProfile({ customerId: propCustomerId }: UserProfileProps) {
         } else {
           setCustomer(prev => prev ? { ...prev, ...updateData } : prev);
         }
+
+        // Atualizar dados do storedAuth para refletir no header
+        try {
+          const storedAuth = whatsappAuthService.getStoredAuth();
+          if (storedAuth?.user) {
+            const updatedAuth = {
+              ...storedAuth,
+              user: {
+                ...storedAuth.user,
+                name: formData.name || storedAuth.user.name,
+                email: formData.email || undefined,
+              },
+            };
+            // Salvar auth atualizado no localStorage (mesma chave do whatsappAuthService)
+            localStorage.setItem('whatsapp_auth_jwt', JSON.stringify(updatedAuth));
+            // Disparar evento para o header atualizar
+            window.dispatchEvent(new Event('profile-updated'));
+          }
+        } catch (err) {
+          console.error('Erro ao atualizar auth local:', err);
+        }
+
         setIsEditing(false);
         setSuccessMessage('Perfil atualizado com sucesso!');
         setTimeout(() => setSuccessMessage(null), 3000);
@@ -270,7 +302,7 @@ export function UserProfile({ customerId: propCustomerId }: UserProfileProps) {
               {isSaving ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                <Save className="w-4 h-4" />
+              <Save className="w-4 h-4" />
               )}
               {isSaving ? 'Salvando...' : 'Salvar'}
             </button>
@@ -297,11 +329,11 @@ export function UserProfile({ customerId: propCustomerId }: UserProfileProps) {
                 )}
               </div>
             </div>
-
+            
             <h3 className="text-lg font-medium text-gray-900 mb-1">
               {customer?.name || 'Sem nome'}
             </h3>
-
+            
             {customer?.created_at && (
               <p className="text-sm text-gray-500">
                 Cliente desde {new Date(customer.created_at).getFullYear()}
@@ -354,7 +386,7 @@ export function UserProfile({ customerId: propCustomerId }: UserProfileProps) {
                     <p className="text-gray-900">{customer?.email || '-'}</p>
                   )}
                 </div>
-
+                
                 {/* Telefone */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -372,7 +404,7 @@ export function UserProfile({ customerId: propCustomerId }: UserProfileProps) {
                   ) : (
                     <p className="text-gray-900">{customer?.phone || '-'}</p>
                   )}
-                </div>
+            </div>
 
                 {/* Telefone alternativo */}
                 <div>
@@ -397,51 +429,51 @@ export function UserProfile({ customerId: propCustomerId }: UserProfileProps) {
 
             {/* Preferências alimentares (somente leitura por enquanto) */}
             {customer?.preferences && (
-              <div>
+            <div>
                 <h4 className="text-lg font-medium text-gray-900 mb-4">Preferências</h4>
                 <div className="space-y-3">
                   {customer.preferences.dietary_restrictions && customer.preferences.dietary_restrictions.length > 0 && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Restrições Dietéticas
-                      </label>
-                      <div className="flex flex-wrap gap-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Restrições Dietéticas
+                  </label>
+                    <div className="flex flex-wrap gap-2">
                         {customer.preferences.dietary_restrictions.map((restriction) => (
-                          <span key={restriction} className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
-                            {restriction}
-                          </span>
-                        ))}
+                        <span key={restriction} className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+                          {restriction}
+                        </span>
+                      ))}
                       </div>
                     </div>
                   )}
 
                   {customer.preferences.allergies && customer.preferences.allergies.length > 0 && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Alergias
-                      </label>
-                      <div className="flex flex-wrap gap-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Alergias
+                  </label>
+                    <div className="flex flex-wrap gap-2">
                         {customer.preferences.allergies.map((allergy) => (
-                          <span key={allergy} className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm">
-                            {allergy}
-                          </span>
-                        ))}
+                        <span key={allergy} className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm">
+                          {allergy}
+                        </span>
+                      ))}
                       </div>
                     </div>
                   )}
 
                   {customer.preferences.preferred_payment_method && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                         Método de Pagamento Preferido
-                      </label>
+                  </label>
                       <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
                         {customer.preferences.preferred_payment_method === 'pix' ? 'PIX' :
                           customer.preferences.preferred_payment_method === 'credit_card' ? 'Cartão de Crédito' :
                           customer.preferences.preferred_payment_method === 'debit_card' ? 'Cartão de Débito' :
                           customer.preferences.preferred_payment_method === 'cash' ? 'Dinheiro' :
                           customer.preferences.preferred_payment_method}
-                      </span>
+                        </span>
                     </div>
                   )}
                 </div>
@@ -452,4 +484,4 @@ export function UserProfile({ customerId: propCustomerId }: UserProfileProps) {
       </div>
     </div>
   );
-}
+} 

@@ -61,6 +61,15 @@ export function MenuHeader({
   // Estado unificado de autenticação (auth tradicional + WhatsApp)
   const [whatsappUser, setWhatsappUser] = useState<UnifiedCustomer | null>(null);
 
+  // Filtrar emails fake gerados pelo sistema
+  const isRealEmail = (email?: string | null): boolean => {
+    if (!email) return false;
+    if (email.endsWith('@temp.local')) return false;
+    if (email.endsWith('@placeholder.local')) return false;
+    if (email.startsWith('whatsapp_')) return false;
+    return true;
+  };
+
   // Verificar autenticação WhatsApp ao montar e quando o perfil abre
   useEffect(() => {
     const checkWhatsAppAuth = () => {
@@ -72,7 +81,7 @@ export function MenuHeader({
             setWhatsappUser({
               name: storedAuth.user.name,
               phone: storedAuth.user.phone,
-              email: storedAuth.user.email,
+              email: isRealEmail(storedAuth.user.email) ? storedAuth.user.email : undefined,
               source: 'whatsapp',
             });
             return;
@@ -86,9 +95,16 @@ export function MenuHeader({
 
     checkWhatsAppAuth();
 
+    // Escutar evento de atualização do perfil para refletir mudanças no header
+    const handleProfileUpdate = () => checkWhatsAppAuth();
+    window.addEventListener('profile-updated', handleProfileUpdate);
+
     // Re-verificar a cada 30s para capturar login feito em outra aba/checkout
     const interval = setInterval(checkWhatsAppAuth, 30000);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('profile-updated', handleProfileUpdate);
+    };
   }, []);
 
   // Estado unificado: autenticado se qualquer sistema tiver sessão

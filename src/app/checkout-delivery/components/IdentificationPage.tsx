@@ -6,6 +6,15 @@ import { CheckoutWhatsAppAuth } from '@/components/checkout/CheckoutWhatsAppAuth
 import { whatsappAuthService } from '@/services/whatsappAuth';
 import { User, MapPin, RotateCcw, Loader2 } from 'lucide-react';
 
+/** Filtra emails fake gerados pelo sistema (ex: whatsapp_xxx@temp.local) */
+function filterFakeEmail(email?: string | null): string | undefined {
+  if (!email) return undefined;
+  if (email.endsWith('@temp.local')) return undefined;
+  if (email.endsWith('@placeholder.local')) return undefined;
+  if (email.startsWith('whatsapp_')) return undefined;
+  return email;
+}
+
 interface IdentificationPageProps {
   storeId: string;
   onComplete: () => void;
@@ -45,7 +54,7 @@ export default function IdentificationPage({ storeId, onComplete }: Identificati
             setAuthenticatedUser({
               name: storedAuth.user.name,
               phone: storedAuth.user.phone,
-              email: storedAuth.user.email,
+              email: filterFakeEmail(storedAuth.user.email),
             });
             setIsChecking(false);
             return;
@@ -72,11 +81,11 @@ export default function IdentificationPage({ storeId, onComplete }: Identificati
     console.log('✅ [checkout-delivery] Identidade confirmada:', authenticatedUser);
 
     // Salvar dados do cliente no store
-    setCustomer({
-      name: authenticatedUser.name,
-      phone: authenticatedUser.phone,
-      email: authenticatedUser.email,
-    });
+      setCustomer({
+        name: authenticatedUser.name,
+        phone: authenticatedUser.phone,
+        email: filterFakeEmail(authenticatedUser.email),
+      });
 
     // Salvar telefone em localStorage
     if (authenticatedUser.phone) {
@@ -104,7 +113,7 @@ export default function IdentificationPage({ storeId, onComplete }: Identificati
       setCustomer({
         name: user.name,
         phone: user.phone,
-        email: user.email,
+        email: filterFakeEmail(user.email),
       });
 
       // Salvar telefone em localStorage
