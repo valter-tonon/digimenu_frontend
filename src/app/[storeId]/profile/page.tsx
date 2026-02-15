@@ -1,21 +1,16 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { useAppContext } from '@/hooks/useAppContext';
-import { MenuProvider, useMenu } from '@/infrastructure/context/MenuContext';
-import { LayoutProvider } from '@/infrastructure/context/LayoutContext';
 import { MenuHeader } from '@/components/menu';
 import { UserProfile } from '@/components/profile/UserProfile';
 import { AddressManager } from '@/components/profile/AddressManager';
-import { PreferencesSettings } from '@/components/profile/PreferencesSettings';
-import { NotificationSettings } from '@/components/profile/NotificationSettings';
+// import { PreferencesSettings } from '@/components/profile/PreferencesSettings';
+// import { NotificationSettings } from '@/components/profile/NotificationSettings';
 import { StoreHeader } from '@/components/menu/StoreHeader';
 import { useContainer } from '@/infrastructure/di';
-import { StoreStatusProvider } from '@/infrastructure/context/StoreStatusContext';
-import { ArrowLeft } from 'lucide-react';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
-import { useNavigation } from '@/hooks/useNavigation';
 
 // Componente de carregamento para o Suspense
 function ProfileLoading() {
@@ -43,24 +38,21 @@ function ProfilePage() {
   const searchParams = useSearchParams();
   const storeId = (params?.storeId as string) || '';
 
-  // Ler aba inicial da URL (?tab=addresses, ?tab=preferences, etc.)
-  const tabFromUrl = searchParams.get('tab') as 'profile' | 'addresses' | 'preferences' | 'notifications' | null;
-  const validTabs = ['profile', 'addresses', 'preferences', 'notifications'] as const;
+  // Ler aba inicial da URL (?tab=addresses)
+  const tabFromUrl = searchParams.get('tab') as 'profile' | 'addresses' | null;
+  const validTabs = ['profile', 'addresses'] as const;
   const initialTab = tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : 'profile';
 
-  const [activeTab, setActiveTab] = useState<'profile' | 'addresses' | 'preferences' | 'notifications'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'profile' | 'addresses'>(initialTab);
 
   // Usar o mesmo contexto do menu
-  const { data, isLoading: contextLoading, error: contextError, isValid } = useAppContext();
+  const { data, isLoading: contextLoading } = useAppContext();
   const { menuRepository } = useContainer();
   const [tenantData, setTenantData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   // Extrair dados do contexto para manter o contexto da mesa
-  const { storeId: contextStoreId, tableId, isDelivery, storeName } = data;
-
-  // Hook de navegação
-  const { navigateToMenu, getBreadcrumbItems, getCurrentContext } = useNavigation();
+  const { tableId, storeName } = data;
 
   // Carregar dados do tenant usando o mesmo método do menu
   useEffect(() => {
@@ -136,28 +128,23 @@ function ProfilePage() {
           {/* Breadcrumb */}
           <div className="mb-4">
             <Breadcrumb
-              items={getBreadcrumbItems('Meu Perfil')}
+              items={[
+                {
+                  label: 'Cardápio',
+                  href: tableId ? `/${storeId}/${tableId}` : `/${storeId}`
+                },
+                {
+                  label: 'Meu Perfil',
+                  current: true
+                }
+              ]}
             />
           </div>
 
-          {/* Título da página com botão voltar */}
+          {/* Título da página */}
           <div className="mb-8">
-            <div className="flex items-center gap-4 mb-4">
-              <button
-                onClick={navigateToMenu}
-                className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5" />
-                <span>Voltar ao Cardápio</span>
-              </button>
-            </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Meu Perfil</h1>
-            <p className="text-gray-600">Gerencie suas informações pessoais e preferências</p>
-            {tableId && (
-              <p className="text-sm text-gray-500 mt-2">
-                Contexto: {getCurrentContext()} • {isDelivery ? 'Delivery' : 'Presencial'}
-              </p>
-            )}
+            <p className="text-gray-600">Gerencie suas informações pessoais e endereços</p>
           </div>
 
           {/* Navegação por abas */}
@@ -166,8 +153,8 @@ function ProfilePage() {
               {[
                 { id: 'profile', label: 'Perfil', icon: '👤' },
                 { id: 'addresses', label: 'Endereços', icon: '📍' },
-                { id: 'preferences', label: 'Preferências', icon: '⚙️' },
-                { id: 'notifications', label: 'Notificações', icon: '🔔' }
+                // { id: 'preferences', label: 'Preferências', icon: '⚙️' },
+                // { id: 'notifications', label: 'Notificações', icon: '🔔' }
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -192,12 +179,13 @@ function ProfilePage() {
             {activeTab === 'addresses' && (
               <AddressManager />
             )}
-            {activeTab === 'preferences' && (
+            {/* Abas desativadas temporariamente */}
+            {/* {activeTab === 'preferences' && (
               <PreferencesSettings />
             )}
             {activeTab === 'notifications' && (
               <NotificationSettings />
-            )}
+            )} */}
           </div>
         </div>
       </main>

@@ -5,13 +5,7 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  color-scheme: light;
 }
 
 body {
@@ -126,20 +120,23 @@ input[type="reset"],
   overflow: hidden;
 }
 
-/* Melhorias de legibilidade para inputs */
+/* Forçar tema light em todos os inputs */
 input[type="text"],
 input[type="number"],
 input[type="email"],
 input[type="password"],
 input[type="search"],
+input[type="tel"],
 textarea,
 select {
   color: #111827 !important; /* text-gray-900 */
+  background-color: #ffffff !important; /* fundo branco */
+  -webkit-appearance: none;
 }
 
 input::placeholder,
 textarea::placeholder {
-  color: #6b7280 !important; /* text-gray-500 */
+  color: #9ca3af !important; /* text-gray-400 - placeholder mais suave */
 }
 
 /* Melhorias para textos em geral */

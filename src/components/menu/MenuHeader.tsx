@@ -14,7 +14,7 @@ import { useAppContext } from '@/hooks/useAppContext';
 import { useAuth } from '@/hooks/useAuth';
 import { whatsappAuthService } from '@/services/whatsappAuth';
 import { CompactStoreHeader } from './StoreHeader';
-import { NotificationBadge } from '../notifications/NotificationBadge';
+// import { NotificationBadge } from '../notifications/NotificationBadge';
 import { WaiterCallButton } from './WaiterCallButton';
 import Link from 'next/link';
 
@@ -237,10 +237,10 @@ export function MenuHeader({
 
           {/* Ações do Header */}
           <div className="flex items-center gap-2">
-            {/* Notificações - Habilitado apenas para usuários autenticados */}
-            {isUserAuthenticated && (
+            {/* Notificações desativadas - notificações serão via WhatsApp */}
+            {/* {isUserAuthenticated && (
               <NotificationBadge storeId={storeId || undefined} tableId={tableId || undefined} />
-            )}
+            )} */}
 
             {/* Botão de chamar garçom - apenas para mesas quando a loja está aberta */}
             {tableId && storeId && openingHours?.is_open && (

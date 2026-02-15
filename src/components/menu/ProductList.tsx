@@ -50,6 +50,7 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedAdditionals, setSelectedAdditionals] = useState<Additional[]>([]);
   const [selectedQuantity, setSelectedQuantity] = useState(1);
+  const [selectedNotes, setSelectedNotes] = useState('');
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   // Função para abrir o carrinho
@@ -210,6 +211,7 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
     setSelectedProduct(null);
     setSelectedAdditionals([]);
     setSelectedQuantity(1);
+    setSelectedNotes('');
   };
 
   // Função para alternar a seleção de um adicional
@@ -239,7 +241,7 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
   };
 
   // Função para adicionar produto ao carrinho
-  const handleAddToCart = (product: Product, additionals: Additional[] = []) => {
+  const handleAddToCart = (product: Product, additionals: Additional[] = [], notes: string = '') => {
     console.log('handleAddToCart Debug - isStoreOpen:', isStoreOpen, 'product:', product.name);
 
     if (!isStoreOpen) {
@@ -262,6 +264,7 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
       name: product.name,
       price: effectivePrice,
       quantity: selectedQuantity,
+      observation: notes.trim() || undefined,
       additionals: additionals.map(add => ({
         id: add.id,
         name: add.name,
@@ -747,6 +750,21 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
                 </div>
               )}
 
+              {/* Observação */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">Observação</h3>
+                <p className="text-sm text-gray-500 mb-2">Alguma observação para este item? (opcional)</p>
+                <textarea
+                  value={selectedNotes}
+                  onChange={(e) => setSelectedNotes(e.target.value)}
+                  placeholder="Ex: Sem cebola, bem passado, molho à parte..."
+                  maxLength={200}
+                  rows={2}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 resize-none"
+                />
+                <p className="text-xs text-gray-400 mt-1 text-right">{selectedNotes.length}/200</p>
+              </div>
+
               {/* Controle de Quantidade */}
               <div className="mb-6">
                 <h3 className="text-lg font-semibold text-gray-800 mb-3">Quantidade</h3>
@@ -811,7 +829,7 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleAddToCart(selectedProduct, selectedAdditionals);
+                    handleAddToCart(selectedProduct, selectedAdditionals, selectedNotes);
                     closeModal();
                   }}
                   disabled={!isStoreOpen}
@@ -918,6 +936,12 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
                                             ))}
                                           </ul>
                                         </div>
+                                      )}
+                                      {/* Mostrar observação */}
+                                      {(item.observation || item.notes) && (
+                                        <p className="mt-1 text-xs text-gray-500 italic">
+                                          Obs: {item.observation || item.notes}
+                                        </p>
                                       )}
                                     </div>
                                     <div className="flex-1 flex items-end justify-between text-sm">

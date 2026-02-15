@@ -22,12 +22,12 @@ interface AddressManagerProps {
 
 const EMPTY_FORM: AddressFormData = {
   label: '',
-  street: '',
-  number: '',
-  complement: '',
-  neighborhood: '',
-  city: '',
-  state: '',
+    street: '',
+    number: '',
+    complement: '',
+    neighborhood: '',
+    city: '',
+    state: '',
   zip_code: '',
   reference: '',
   delivery_instructions: '',
@@ -262,7 +262,7 @@ export function AddressManager({ customerId: propCustomerId }: AddressManagerPro
       if (result.success) {
         setAddresses(prev =>
           prev.map(addr => ({
-            ...addr,
+        ...addr,
             is_default: addr.id === addressId,
           }))
         );
@@ -368,13 +368,13 @@ export function AddressManager({ customerId: propCustomerId }: AddressManagerPro
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold text-gray-900">Gerenciar Endereços</h2>
         {!showForm && (
-          <button
-            onClick={handleAddNew}
-            className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            Adicionar Endereço
-          </button>
+        <button
+          onClick={handleAddNew}
+          className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          Adicionar Endereço
+        </button>
         )}
       </div>
 
@@ -386,7 +386,7 @@ export function AddressManager({ customerId: propCustomerId }: AddressManagerPro
               key={address.id}
               className={`p-4 border rounded-lg ${
                 address.is_default
-                  ? 'border-amber-300 bg-amber-50'
+                  ? 'border-amber-300 bg-amber-50' 
                   : 'border-gray-200 bg-white'
               }`}
             >
@@ -402,7 +402,7 @@ export function AddressManager({ customerId: propCustomerId }: AddressManagerPro
                       </span>
                     )}
                   </div>
-
+                  
                   <p className="text-gray-700 mb-1">
                     {address.street}, {address.number}
                     {address.complement && ` - ${address.complement}`}
@@ -683,4 +683,4 @@ export function AddressManager({ customerId: propCustomerId }: AddressManagerPro
       )}
     </div>
   );
-}
+} 

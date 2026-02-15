@@ -137,22 +137,45 @@ export default function OrderSummary({
         </div>
 
         {/* List of items */}
-        <div className="space-y-2 mb-4">
-          {items.map((item, index) => (
-            <div key={item.identify || index} className="flex justify-between text-sm">
-              <div className="text-gray-600">
-                {item.quantity}x {item.name}
+        <div className="space-y-3 mb-4">
+          {items.map((item, index) => {
+            const additionalsPrice = item.additionals?.reduce(
+              (sum, add) => sum + ((Number(add.price) || 0) * (add.quantity || 1)),
+              0
+            ) || 0;
+            const itemTotal = ((item.price || 0) + additionalsPrice) * item.quantity;
+
+            return (
+              <div key={item.identify || index}>
+                <div className="flex justify-between text-sm">
+                  <div className="text-gray-700">
+                    {item.quantity}x {item.name}
+                  </div>
+                  <span className="font-semibold text-gray-900">{formatPrice(itemTotal)}</span>
+                </div>
+                {item.additionals && item.additionals.length > 0 && (
+                  <div className="ml-6 mt-1 space-y-0.5">
+                    {item.additionals.map((add, addIdx) => (
+                      <div key={addIdx} className="flex justify-between text-xs text-gray-600">
+                        <span>+ {add.quantity > 1 ? `${add.quantity}x ` : ''}{add.name}</span>
+                        <span className="text-gray-700">{formatPrice(Number(add.price) * (add.quantity || 1))}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {item.notes && (
+                  <p className="ml-6 mt-0.5 text-xs text-gray-500 italic">Obs: {item.notes}</p>
+                )}
               </div>
-              <span className="font-medium">{formatPrice((item.price || 0) * item.quantity)}</span>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Totals */}
         <div className="border-t border-amber-200 pt-3 space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Subtotal:</span>
-            <span className="font-medium">{formatPrice(cartTotal)}</span>
+            <span className="text-gray-700">Subtotal:</span>
+            <span className="font-semibold text-gray-900">{formatPrice(cartTotal)}</span>
           </div>
           <div className="border-t border-amber-200 pt-2 flex justify-between font-semibold">
             <span>Total:</span>

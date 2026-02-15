@@ -377,11 +377,25 @@ export function OrderSummary({ onClose, isDelivery = false, isStoreOpen = true, 
                 <div className="space-y-4">
                   <div className="border-b pb-4">
                     <h3 className="font-medium text-gray-700 mb-2">Resumo do Pedido</h3>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {cartItems.map((item: CartItem) => (
-                        <div key={item.id} className="flex justify-between">
-                          <span>{item.quantity}x {item.name}</span>
-                          <span>{formatPrice(item.price * item.quantity)}</span>
+                        <div key={item.id}>
+                          <div className="flex justify-between">
+                            <span>{item.quantity}x {item.name}</span>
+                            <span>{formatPrice(item.price * item.quantity)}</span>
+                          </div>
+                          {item.additionals && item.additionals.length > 0 && (
+                            <ul className="mt-1 ml-6 text-sm text-gray-600">
+                              {item.additionals.map((additional) => (
+                                <li key={additional.id}>
+                                  + {additional.name} ({formatPrice(additional.price)})
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                          {item.observation && (
+                            <p className="mt-1 ml-6 text-sm text-gray-500 italic">Obs: {item.observation}</p>
+                          )}
                         </div>
                       ))}
                     </div>
