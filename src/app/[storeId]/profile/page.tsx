@@ -64,7 +64,14 @@ function ProfilePage() {
 
   // Carregar dados do tenant usando o mesmo método do menu
   useEffect(() => {
-    if (!isValid || contextLoading || !storeId) {
+    // Se ainda estamos carregando o contexto, aguardar
+    if (contextLoading) {
+      return;
+    }
+
+    // Se não temos storeId, não tem o que carregar
+    if (!storeId) {
+      setLoading(false);
       return;
     }
 
@@ -102,7 +109,7 @@ function ProfilePage() {
     };
 
     loadTenantData();
-  }, [isValid, contextLoading, storeId, storeName, menuRepository]);
+  }, [contextLoading, storeId, storeName, menuRepository]);
 
   if (loading || contextLoading) {
     return <ProfileLoading />;
