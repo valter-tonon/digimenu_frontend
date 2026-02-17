@@ -18,6 +18,7 @@ import {
 } from '@/services/customerService';
 
 interface FinalDataPageProps {
+  storeId: string;
   onBack: () => void;
 }
 
@@ -29,14 +30,13 @@ interface FinalDataPageProps {
  * - Resumo do pedido
  * - Confirmação
  */
-export default function FinalDataPage({ onBack }: FinalDataPageProps) {
+export default function FinalDataPage({ storeId: propStoreId, onBack }: FinalDataPageProps) {
   const router = useRouter();
   const cartItems = useCartStore(state => state.items);
   const clearCart = useCartStore(state => state.clearCart);
 
   const checkoutStore = useCheckoutStore();
   const {
-    storeId,
     customer,
     selectedAddress,
     paymentMethod,
@@ -44,6 +44,9 @@ export default function FinalDataPage({ onBack }: FinalDataPageProps) {
     setAddress,
     setPaymentMethod
   } = checkoutStore;
+
+  // Use prop storeId as primary source
+  const storeId = propStoreId || checkoutStore.storeId;
 
   const [isDelivery, setIsDelivery] = useState(true); // true = delivery, false = takeout
   const [submitting, setSubmitting] = useState(false);
@@ -188,9 +191,9 @@ export default function FinalDataPage({ onBack }: FinalDataPageProps) {
         duration: 3000,
       });
 
-      // Redirecionar para página de sucesso
+      // Redirecionar para página de sucesso com storeId
       setTimeout(() => {
-        router.push(`/order-success/${orderId}`);
+        router.push(`/order-success/${orderId}?store=${storeId}`);
       }, 1000);
     } catch (error: any) {
       console.error('❌ Erro ao criar pedido:', error);
@@ -259,12 +262,19 @@ export default function FinalDataPage({ onBack }: FinalDataPageProps) {
 
       {/* Endereço (apenas para delivery) */}
       {isDelivery && (
-        <AddressForm
-          addresses={addresses}
-          selected={selectedAddress}
-          onSelect={handleAddressSelect}
-          disabled={submitting || loadingAddresses}
-        />
+        loadingAddresses ? (
+          <div className="bg-gray-50 rounded-lg border p-6 flex items-center gap-3 text-gray-500">
+            <Loader2 className="w-5 h-5 animate-spin text-amber-500" />
+            <span className="text-sm">Carregando endereços...</span>
+          </div>
+        ) : (
+          <AddressForm
+            addresses={addresses}
+            selected={selectedAddress}
+            onSelect={handleAddressSelect}
+            disabled={submitting}
+          />
+        )
       )}
 
       {/* Forma de Pagamento */}

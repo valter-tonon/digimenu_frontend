@@ -124,8 +124,9 @@ function CheckoutDeliveryContent() {
               onComplete={handleIdentificationComplete}
             />
           )}
-          {currentPage === 'final_data' && (
+          {currentPage === 'final_data' && effectiveStoreId && (
             <FinalDataPage
+              storeId={effectiveStoreId}
               onBack={() => setCurrentPage('identification')}
             />
           )}

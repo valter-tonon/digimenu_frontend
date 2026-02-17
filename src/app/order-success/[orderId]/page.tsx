@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { CheckCircle, Clock, ArrowRight } from 'lucide-react';
 
 interface OrderAddon {
@@ -40,8 +40,10 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost/api/v1';
 
 export default function OrderSuccessPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const orderId = params.orderId as string;
+  const storeId = searchParams.get('store');
   const [order, setOrder] = useState<OrderDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -144,7 +146,7 @@ export default function OrderSuccessPage() {
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Pedido não encontrado</h1>
           <p className="text-gray-600 mb-6">Desculpe, não conseguimos encontrar informações sobre este pedido.</p>
           <button
-            onClick={() => router.push('/')}
+            onClick={() => router.push(storeId ? `/${storeId}` : '/')}
             className="bg-amber-500 text-white px-6 py-2 rounded-lg font-medium hover:bg-amber-600"
           >
             Voltar ao Menu
@@ -281,7 +283,7 @@ export default function OrderSuccessPage() {
         {/* Action Buttons */}
         <div className="space-y-3">
           <button
-            onClick={() => router.push('/my-orders')}
+            onClick={() => router.push(storeId ? `/${storeId}/orders` : '/my-orders')}
             className="w-full bg-amber-500 text-white px-6 py-3 rounded-lg font-bold hover:bg-amber-600 flex items-center justify-center gap-2"
           >
             Ver Meus Pedidos
@@ -289,7 +291,7 @@ export default function OrderSuccessPage() {
           </button>
 
           <button
-            onClick={() => router.push('/')}
+            onClick={() => router.push(storeId ? `/${storeId}` : '/')}
             className="w-full bg-white border-2 border-amber-500 text-amber-600 px-6 py-3 rounded-lg font-bold hover:bg-amber-50"
           >
             Fazer Novo Pedido

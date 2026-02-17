@@ -11,7 +11,9 @@ import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { useNavigation } from '@/hooks/useNavigation';
 import { orderTrackingService, Order, OrderItem as OrderItemType, OrderItemAddon } from '@/services/orderTrackingService';
 import { useCheckoutStore } from '@/store/checkout-store';
+import { useCartStore } from '@/store/cart-store';
 import { whatsappAuthService } from '@/services/whatsappAuth';
+import { toast } from 'react-hot-toast';
 
 const POLLING_INTERVAL = 30000; // 30 segundos
 
@@ -163,6 +165,36 @@ function OrdersPage() {
     await fetchOrders(customerPhone || undefined);
   };
 
+  const handleRepeatOrder = (order: Order) => {
+    if (!order.items || order.items.length === 0) {
+      toast.error('Este pedido não possui itens');
+      return;
+    }
+
+    // Adicionar todos os itens do pedido ao carrinho
+    order.items.forEach((item) => {
+      const cartItem = {
+        productId: 0,
+        identify: `${item.product_name}-${Date.now()}`,
+        name: item.product_name,
+        price: item.price,
+        quantity: item.quantity,
+        notes: item.comments,
+        additionals: item.addons?.map((addon) => ({
+          id: Math.random(),
+          name: addon.name,
+          price: addon.price || 0,
+          quantity: addon.quantity || 1,
+        })),
+      };
+      useCartStore.getState().addItem(cartItem);
+    });
+
+    toast.success(`Pedido repetido! ${order.items.length} item(ns) adicionado ao carrinho`);
+    // Redirecionar para o menu com storeId
+    router.push(`/${storeId}`);
+  };
+
   // Helpers de status
   const getStatusColor = (status: string) => {
     const colorMap: Record<string, { bg: string; text: string }> = {
@@ -205,6 +237,39 @@ function OrdersPage() {
       'table': '🍽️',
     };
     return typeMap[type] || '📦';
+  };
+
+  const getTypeLabel = (type: string) => {
+    const typeMap: Record<string, string> = {
+      'delivery': 'Delivery',
+      'takeout': 'Retirada',
+      'table': 'Mesa',
+    };
+    return typeMap[type] || type;
+  };
+
+  const getPaymentLabel = (method: string | undefined) => {
+    if (!method) return null;
+    const paymentMap: Record<string, string> = {
+      'cash': 'Dinheiro',
+      'dinheiro': 'Dinheiro',
+      'credit_card': 'Cartão de Crédito',
+      'debit_card': 'Cartão de Débito',
+      'pix': 'PIX',
+    };
+    return paymentMap[method] || method;
+  };
+
+  const formatDateTime = (dateString: string | undefined) => {
+    if (!dateString) return { date: '', time: '' };
+    try {
+      const date = new Date(dateString);
+      const formattedDate = date.toLocaleDateString('pt-BR');
+      const formattedTime = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      return { date: formattedDate, time: formattedTime };
+    } catch {
+      return { date: dateString, time: '' };
+    }
   };
 
   const isCurrentOrder = (status: string) => {
@@ -375,7 +440,22 @@ function OrdersPage() {
                           <div className="text-3xl">{getTypeIcon(order.type)}</div>
                           <div className="text-left flex-1">
                             <p className="font-bold text-gray-900">Pedido #{order.identify}</p>
-                            <p className="text-sm text-gray-600">{order.date}</p>
+                            <div className="text-sm text-gray-600 space-y-1">
+                              <div>
+                                {formatDateTime(order.created_at).time && (
+                                  <span>{formatDateTime(order.created_at).date} às {formatDateTime(order.created_at).time}</span>
+                                )}
+                                {!formatDateTime(order.created_at).time && (
+                                  <span>{order.date}</span>
+                                )}
+                              </div>
+                              <div className="flex gap-3 flex-wrap">
+                                <span className="inline-block px-2 py-0.5 bg-gray-100 rounded text-xs">{getTypeLabel(order.type)}</span>
+                                {getPaymentLabel(order.payment_method) && (
+                                  <span className="inline-block px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-xs">{getPaymentLabel(order.payment_method)}</span>
+                                )}
+                              </div>
+                            </div>
                           </div>
                         </div>
 
@@ -426,6 +506,7 @@ function OrdersPage() {
                               </div>
                             </div>
                           )}
+
                         </div>
                       )}
                     </div>
@@ -459,9 +540,24 @@ function OrdersPage() {
                       >
                         <div className="flex items-center gap-4 flex-1 text-sm">
                           <div className="text-2xl">{getTypeIcon(order.type)}</div>
-                          <div className="text-left">
+                          <div className="text-left flex-1">
                             <p className="font-bold text-gray-900">#{order.identify}</p>
-                            <p className="text-gray-600">{order.date}</p>
+                            <div className="text-gray-600 space-y-1">
+                              <div>
+                                {formatDateTime(order.created_at).time && (
+                                  <span>{formatDateTime(order.created_at).date} às {formatDateTime(order.created_at).time}</span>
+                                )}
+                                {!formatDateTime(order.created_at).time && (
+                                  <span>{order.date}</span>
+                                )}
+                              </div>
+                              <div className="flex gap-2 flex-wrap">
+                                <span className="inline-block px-1.5 py-0.5 bg-gray-100 rounded text-xs">{getTypeLabel(order.type)}</span>
+                                {getPaymentLabel(order.payment_method) && (
+                                  <span className="inline-block px-1.5 py-0.5 bg-blue-100 text-blue-800 rounded text-xs">{getPaymentLabel(order.payment_method)}</span>
+                                )}
+                              </div>
+                            </div>
                           </div>
                         </div>
 
@@ -477,7 +573,10 @@ function OrdersPage() {
                       {isExpanded && (
                         <div className="border-t bg-gray-50 p-3 space-y-2 text-sm">
                           {order.items?.map((item, index) => renderOrderItem(item, index))}
-                          <button className="w-full mt-2 border border-amber-500 text-amber-600 px-3 py-1 rounded text-xs font-medium hover:bg-amber-50">
+                          <button
+                            onClick={() => handleRepeatOrder(order)}
+                            className="w-full mt-2 border border-amber-500 text-amber-600 px-3 py-1 rounded text-xs font-medium hover:bg-amber-50"
+                          >
                             Repetir Pedido
                           </button>
                         </div>

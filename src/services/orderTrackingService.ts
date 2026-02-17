@@ -23,6 +23,7 @@ export interface Order {
   status: string;
   date: string;
   type: string;
+  storeId?: string;
   customer_name?: string;
   payment_method?: string;
   items?: OrderItem[];
@@ -93,6 +94,7 @@ export const orderTrackingService = {
             status: order.status_code || order.status || 'pendente',
             date: formattedDate,
             type: order.type || 'delivery',
+            storeId: order.store_id || order.tenant_id,
             customer_name: order.customer?.name || order.client?.name || 'Cliente',
             payment_method: order.payment_method,
             items: mapOrderItems(order),
@@ -132,6 +134,7 @@ export const orderTrackingService = {
             status: order.status_code || order.status || 'pendente',
             date: formattedDate,
             type: order.type || 'delivery',
+            storeId: order.store_id || order.tenant_id,
             customer_name: order.customer?.name || order.client?.name || 'Cliente',
             payment_method: order.payment_method,
             items: mapOrderItems(order),
