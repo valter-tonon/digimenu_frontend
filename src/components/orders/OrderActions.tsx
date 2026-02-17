@@ -88,7 +88,7 @@ export function OrderActions({
       <h3 className="text-lg font-semibold text-gray-800 mb-4">Ações do Pedido</h3>
       
       <div className="grid grid-cols-2 gap-3">
-        {/* Repetir Pedido */}
+        {/* Repetir Pedido - apenas para pedidos entregues/finalizados */}
         {canRepeat && (
           <button
             onClick={handleRepeatOrder}
@@ -127,14 +127,16 @@ export function OrderActions({
           </button>
         )}
 
-        {/* Contatar Suporte */}
-        <button
-          onClick={() => onContactSupport?.(orderId)}
-          className="flex items-center justify-center gap-2 p-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-        >
-          <MessageCircle className="w-4 h-4" />
-          <span className="text-sm font-medium">Suporte</span>
-        </button>
+        {/* Contatar Suporte - apenas para pedidos não entregues */}
+        {status.toLowerCase() !== 'delivered' && status.toLowerCase() !== 'cancelled' && (
+          <button
+            onClick={() => onContactSupport?.(orderId)}
+            className="flex items-center justify-center gap-2 p-3 border border-green-300 rounded-lg text-green-700 hover:bg-green-50 transition-colors"
+          >
+            <MessageCircle className="w-4 h-4" />
+            <span className="text-sm font-medium">Contatar</span>
+          </button>
+        )}
 
         {/* Compartilhar */}
         <button

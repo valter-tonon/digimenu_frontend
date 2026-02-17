@@ -245,7 +245,17 @@ export default function OrderDetailsPage() {
               onClose={() => {}}
               onRepeatOrder={() => {}}
               onRateOrder={() => {}}
-              onContactSupport={() => {}}
+              onContactSupport={(orderId: number) => {
+                const whatsappPhone = storeData?.whatsapp_contact_phone;
+                if (!whatsappPhone) {
+                  toast.error("Número de WhatsApp não configurado para esta loja.");
+                  return;
+                }
+                const message = `Olá! Gostaria de falar sobre o pedido #${order?.order_number}.`;
+                const cleanPhone = whatsappPhone.replace(/\D/g, "");
+                const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+                window.open(whatsappUrl, "_blank");
+              }}
             />
           </div>
 

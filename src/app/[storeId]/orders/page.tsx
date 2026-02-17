@@ -195,6 +195,21 @@ function OrdersPage() {
     router.push(`/${storeId}`);
   };
 
+  const handleContactStore = (order: Order) => {
+    const whatsappPhone = tenantData?.whatsapp_contact_phone;
+
+    if (!whatsappPhone) {
+      toast.error("Número de WhatsApp não configurado para esta loja.");
+      return;
+    }
+
+    const message = `Olá! Gostaria de falar sobre o pedido #${order.identify}.`;
+    const cleanPhone = whatsappPhone.replace(/\D/g, "");
+    const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+
+    window.open(whatsappUrl, "_blank");
+  };
+
   // Helpers de status
   const getStatusColor = (status: string) => {
     const colorMap: Record<string, { bg: string; text: string }> = {
@@ -507,6 +522,26 @@ function OrdersPage() {
                             </div>
                           )}
 
+                          {/* Botões de Ação */}
+                          <div className="flex flex-col gap-2 mt-4">
+                            {(order.status === 'entregue' || order.status === 'finalizado') && (
+                              <button
+                                onClick={() => handleRepeatOrder(order)}
+                                className="w-full border border-amber-500 text-amber-600 px-3 py-2 rounded text-xs font-medium hover:bg-amber-50"
+                              >
+                                Repetir Pedido
+                              </button>
+                            )}
+                            {order.status !== 'entregue' && order.status !== 'finalizado' && (
+                              <button
+                                onClick={() => handleContactStore(order)}
+                                className="w-full border border-green-500 text-green-600 px-3 py-2 rounded text-xs font-medium hover:bg-green-50"
+                              >
+                                Contatar Loja
+                              </button>
+                            )}
+                          </div>
+
                         </div>
                       )}
                     </div>
@@ -579,6 +614,14 @@ function OrdersPage() {
                           >
                             Repetir Pedido
                           </button>
+                          {order.status !== 'entregue' && order.status !== 'finalizado' && (
+                            <button
+                              onClick={() => handleContactStore(order)}
+                              className="w-full mt-1 border border-green-500 text-green-600 px-3 py-1 rounded text-xs font-medium hover:bg-green-50"
+                            >
+                              Contatar Loja
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>

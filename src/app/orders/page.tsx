@@ -183,8 +183,21 @@ export default function OrdersPage() {
   };
 
   const handleContactSupport = (orderId: number) => {
-    // Implementar contato com suporte
-    console.log('Contatando suporte para pedido:', orderId);
+    const whatsappPhone = storeData?.whatsapp_contact_phone;
+
+    if (!whatsappPhone) {
+      alert('Número de WhatsApp não configurado para esta loja.');
+      return;
+    }
+
+    const order = orders.find(o => o.id === orderId);
+    const message = `Olá! Gostaria de falar sobre o pedido #${order?.order_number}.`;
+
+    // Format: Remove cualquier caracter que no sea dígito
+    const cleanPhone = whatsappPhone.replace(/\D/g, '');
+    const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+
+    window.open(whatsappUrl, '_blank');
   };
 
   const handleStatusUpdate = (orderId: number, newStatus: string) => {
