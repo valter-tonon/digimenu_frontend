@@ -1,7 +1,19 @@
-export interface Additional {
-  id: string;
+export interface AdditionalItem {
+  id: number;
   name: string;
   price: number;
+}
+
+/** @deprecated Use AdditionalItem */
+export type Additional = AdditionalItem;
+
+export interface AdditionalGroup {
+  id: number;
+  name: string;
+  description?: string;
+  min_qty: number;
+  max_qty?: number;
+  additionals: AdditionalItem[];
 }
 
 export type ProductTag = 
@@ -41,5 +53,6 @@ export interface Product {
     description: string;
   };
   extras?: string[];
-  additionals?: Additional[];
+  additional_groups?: AdditionalGroup[];
+  additionals?: AdditionalItem[];
 } 
