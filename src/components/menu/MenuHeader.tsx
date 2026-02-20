@@ -27,6 +27,7 @@ interface MenuHeaderProps {
     opens_at: string;
     closes_at: string;
     is_open: boolean;
+    close_reason?: 'temporarily_closed' | 'outside_hours' | 'day_off' | null;
   };
   minOrderValue?: number;
   tableId?: string | null;

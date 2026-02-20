@@ -15,6 +15,7 @@ export interface MenuRepository {
         opens_at: string; // formato "HH:MM"
         closes_at: string; // formato "HH:MM"
         is_open: boolean;
+        close_reason?: 'temporarily_closed' | 'outside_hours' | 'day_off' | null;
       };
       min_order_value?: number; // valor mínimo do pedido
       delivery_fee?: number; // taxa de entrega

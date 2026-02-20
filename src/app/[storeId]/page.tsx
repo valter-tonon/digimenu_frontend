@@ -75,6 +75,7 @@ function MenuPage({ storeId }: { storeId: string }) {
       opens_at: string;
       closes_at: string;
       is_open: boolean;
+      close_reason?: 'temporarily_closed' | 'outside_hours' | 'day_off' | null;
     };
     min_order_value?: number;
     delivery_fee?: number;
@@ -237,6 +238,7 @@ function MenuContent({
       opens_at: string;
       closes_at: string;
       is_open: boolean;
+      close_reason?: 'temporarily_closed' | 'outside_hours' | 'day_off' | null;
     };
     min_order_value?: number;
     delivery_fee?: number;
@@ -362,11 +364,18 @@ function MenuContent({
       {tenantData?.opening_hours && !tenantData.opening_hours.is_open && (
         <div className="bg-red-50 border-t border-b border-red-100 px-4 py-3">
           <div className="flex justify-center items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-400 mr-2 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
             </svg>
             <p className="text-sm text-red-600">
-              Loja fechada no momento. Você pode ver o cardápio, mas só poderá fazer pedidos a partir das {tenantData.opening_hours.opens_at}.
+              {tenantData.opening_hours.close_reason === 'temporarily_closed'
+                ? `Loja temporariamente fechada.${tenantData.opening_hours.opens_at ? ` Horário normal: ${tenantData.opening_hours.opens_at.replace(':', 'h')} - ${tenantData.opening_hours.closes_at.replace(':', 'h')}` : ''}`
+                : tenantData.opening_hours.close_reason === 'day_off'
+                  ? 'Loja não abre hoje.'
+                  : tenantData.opening_hours.close_reason === 'outside_hours'
+                    ? `Loja fechada no momento. Abre às ${tenantData.opening_hours.opens_at.replace(':', 'h')}.`
+                    : `Loja fechada no momento. Você pode ver o cardápio, mas só poderá fazer pedidos a partir das ${tenantData.opening_hours.opens_at}.`
+              }
             </p>
           </div>
         </div>

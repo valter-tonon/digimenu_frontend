@@ -17,6 +17,7 @@ export class ApiMenuRepository implements MenuRepository {
         opens_at: string;
         closes_at: string;
         is_open: boolean;
+        close_reason?: 'temporarily_closed' | 'outside_hours' | 'day_off' | null;
       };
       min_order_value?: number;
       delivery_fee?: number;
@@ -58,6 +59,7 @@ export class ApiMenuRepository implements MenuRepository {
               opens_at: string;
               closes_at: string;
               is_open: boolean;
+              close_reason?: 'temporarily_closed' | 'outside_hours' | 'day_off' | null;
             };
             min_order_value?: number;
             delivery_fee?: number;
