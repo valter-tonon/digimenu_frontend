@@ -2,6 +2,7 @@ import { Category } from '@/domain/entities/Category';
 import { Product } from '@/domain/entities/Product';
 import { MenuRepository } from '@/domain/repositories/MenuRepository';
 import { apiClient } from '../api/apiClient';
+import i18n from '@/i18n/config';
 
 export class ApiMenuRepository implements MenuRepository {
   async getMenu(params: { store?: string, table?: string, isDelivery?: boolean }): Promise<{
@@ -22,6 +23,13 @@ export class ApiMenuRepository implements MenuRepository {
       min_order_value?: number;
       delivery_fee?: number;
       estimated_delivery_time?: string;
+    };
+    locales?: {
+      available: string[];
+      primary: string;
+      is_multilingual?: boolean;
+      current?: string;
+      currency?: string;
     };
   }> {
     try {
@@ -44,6 +52,9 @@ export class ApiMenuRepository implements MenuRepository {
         console.warn('Nenhum parâmetro válido fornecido para busca do menu');
         return { categories: [], products: [] };
       }
+
+      // Locale atual escolhido pelo cliente — a API traduz o conteúdo conforme este valor
+      queryParams.lang = i18n.language;
       
       const response = await apiClient.get<{
         data: {
@@ -65,6 +76,13 @@ export class ApiMenuRepository implements MenuRepository {
             delivery_fee?: number;
             estimated_delivery_time?: string;
           };
+          locales?: {
+            available: string[];
+            primary: string;
+            is_multilingual?: boolean;
+            current?: string;
+            currency?: string;
+          };
         }
       }>('/menu', { params: queryParams });
       
@@ -80,11 +98,15 @@ export class ApiMenuRepository implements MenuRepository {
       
       // Extrair os dados do tenant, se disponíveis
       const tenant = response.data.tenant;
+
+      // Metadados de idioma do tenant (idiomas disponíveis, principal, moeda)
+      const locales = response.data.locales;
       
       return { 
         categories, 
         products,
-        tenant
+        tenant,
+        locales
       };
     } catch (error: any) {
       console.error('ApiMenuRepository - Erro ao buscar menu:', error.message);

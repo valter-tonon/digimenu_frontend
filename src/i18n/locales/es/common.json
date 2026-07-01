@@ -1,0 +1,20 @@
+{
+  "language_name": "Español",
+  "header": {
+    "open": "Abierto",
+    "closed": "Cerrado",
+    "store_open": "Tienda Abierta",
+    "store_closed": "Tienda Cerrada",
+    "default_store_name": "Restaurante",
+    "delivery": "Delivery",
+    "min_order": "Pedido Mínimo",
+    "my_orders": "Mis Pedidos",
+    "my_orders_desc": "Sigue y consulta el historial",
+    "my_addresses": "Mis Direcciones",
+    "my_addresses_desc": "Editar o elegir la principal",
+    "logout": "Salir",
+    "current_context": "Contexto actual",
+    "cart": "Carrito",
+    "user_menu": "Menú del usuario"
+  }
+}

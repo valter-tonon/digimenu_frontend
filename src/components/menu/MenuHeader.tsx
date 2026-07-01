@@ -10,12 +10,14 @@ import {
   ChevronDown,
   Circle
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAppContext } from '@/hooks/useAppContext';
 import { useAuth } from '@/hooks/useAuth';
 import { whatsappAuthService } from '@/services/whatsappAuth';
 import { CompactStoreHeader } from './StoreHeader';
 // import { NotificationBadge } from '../notifications/NotificationBadge';
 import { WaiterCallButton } from './WaiterCallButton';
+import { LanguageSelector } from '@/components/i18n/LanguageSelector';
 import Link from 'next/link';
 
 interface MenuHeaderProps {
@@ -32,6 +34,8 @@ interface MenuHeaderProps {
   minOrderValue?: number;
   tableId?: string | null;
   storeId?: string | null;
+  availableLocales?: string[];
+  primaryLocale?: string;
 }
 
 /** Dados unificados do cliente (auth tradicional + WhatsApp) */
@@ -50,8 +54,11 @@ export function MenuHeader({
   openingHours,
   minOrderValue,
   tableId,
-  storeId
+  storeId,
+  availableLocales,
+  primaryLocale
 }: MenuHeaderProps) {
+  const { t } = useTranslation();
   const { data } = useAppContext();
   const { isAuthenticated: isTraditionalAuth, customer: traditionalCustomer, logoutUser } = useAuth();
   const [profileOpen, setProfileOpen] = useState(false);
@@ -127,7 +134,7 @@ export function MenuHeader({
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const finalStoreName = propStoreName || data?.storeName || 'Restaurante';
+  const finalStoreName = propStoreName || data?.storeName || t('header.default_store_name');
   const finalStoreLogo = propStoreLogo;
 
   const handleLogout = useCallback(async () => {
@@ -186,7 +193,7 @@ export function MenuHeader({
       
       return `Mesa ${tableId}`;
     }
-    return 'Delivery';
+    return t('header.delivery');
   };
 
   const formatTime = (time: string) => {
@@ -220,7 +227,7 @@ export function MenuHeader({
                 }`} 
               />
               <span className={openingHours.is_open ? 'text-green-700' : 'text-red-700'}>
-                {openingHours.is_open ? 'Aberto' : 'Fechado'}
+                {openingHours.is_open ? t('header.open') : t('header.closed')}
               </span>
               <span className="text-gray-500">
                 {formatTime(openingHours.opens_at)} - {formatTime(openingHours.closes_at)}
@@ -238,6 +245,11 @@ export function MenuHeader({
 
           {/* Ações do Header */}
           <div className="flex items-center gap-2">
+            {/* Seletor de idioma - apenas quando o tenant oferece mais de um idioma */}
+            {availableLocales && primaryLocale && (
+              <LanguageSelector available={availableLocales} primary={primaryLocale} />
+            )}
+
             {/* Notificações desativadas - notificações serão via WhatsApp */}
             {/* {isUserAuthenticated && (
               <NotificationBadge storeId={storeId || undefined} tableId={tableId || undefined} />
@@ -258,7 +270,7 @@ export function MenuHeader({
             <button
               onClick={onCartClick}
               className="relative p-2 text-gray-600 hover:text-amber-500 transition-colors"
-              aria-label="Carrinho"
+              aria-label={t('header.cart')}
             >
               <ShoppingCart className="h-6 w-6" />
               
@@ -276,7 +288,7 @@ export function MenuHeader({
                 <button
                   onClick={() => setProfileOpen(!profileOpen)}
                   className="flex items-center gap-2 p-2 text-gray-600 hover:text-amber-500 transition-colors rounded-lg hover:bg-gray-50"
-                  aria-label="Menu do usuário"
+                  aria-label={t('header.user_menu')}
                 >
                   <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center">
                     <User className="h-4 w-4 text-amber-600" />
@@ -304,7 +316,7 @@ export function MenuHeader({
                             <p className="text-sm font-medium text-amber-800">
                               {getCurrentContext()}
                             </p>
-                            <p className="text-xs text-amber-600">Contexto atual</p>
+                            <p className="text-xs text-amber-600">{t('header.current_context')}</p>
                           </div>
                         </div>
                       </div>
@@ -323,7 +335,7 @@ export function MenuHeader({
                             <p className={`text-sm font-medium ${
                               openingHours.is_open ? 'text-green-700' : 'text-red-700'
                             }`}>
-                              {openingHours.is_open ? 'Loja Aberta' : 'Loja Fechada'}
+                              {openingHours.is_open ? t('header.store_open') : t('header.store_closed')}
                             </p>
                             <p className="text-xs text-gray-600">
                               {formatTime(openingHours.opens_at)} - {formatTime(openingHours.closes_at)}
@@ -340,7 +352,7 @@ export function MenuHeader({
                           <Clock className="w-3 h-3 text-blue-600" />
                           <div>
                             <p className="text-sm font-medium text-blue-700">
-                              Pedido Mínimo
+                              {t('header.min_order')}
                             </p>
                             <p className="text-xs text-blue-600">
                               R$ {minOrderValue.toFixed(2).replace('.', ',')}
@@ -383,8 +395,8 @@ export function MenuHeader({
                       >
                         <Clock className="w-4 h-4" />
                         <div>
-                          <span className="block">Meus Pedidos</span>
-                          <span className="block text-xs text-gray-400">Acompanhe e veja o histórico</span>
+                          <span className="block">{t('header.my_orders')}</span>
+                          <span className="block text-xs text-gray-400">{t('header.my_orders_desc')}</span>
                         </div>
                       </Link>
 
@@ -395,8 +407,8 @@ export function MenuHeader({
                       >
                         <MapPin className="w-4 h-4" />
                         <div>
-                          <span className="block">Meus Endereços</span>
-                          <span className="block text-xs text-gray-400">Editar ou escolher o principal</span>
+                          <span className="block">{t('header.my_addresses')}</span>
+                          <span className="block text-xs text-gray-400">{t('header.my_addresses_desc')}</span>
                         </div>
                       </Link>
 
@@ -409,7 +421,7 @@ export function MenuHeader({
                         className="flex items-center gap-3 w-full px-4 py-3 text-red-600 hover:bg-red-50 transition-colors rounded-md"
                       >
                         <LogOut className="w-4 h-4" />
-                        <span>Sair</span>
+                        <span>{t('header.logout')}</span>
                       </button>
                     </div>
                   </div>

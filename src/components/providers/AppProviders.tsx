@@ -12,6 +12,7 @@ import { ProviderErrorBoundary } from '@/components/error-boundaries/ProviderErr
 import { GlobalErrorBoundary } from '@/components/error-boundaries/GlobalErrorBoundary';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { UIStateProvider } from '@/infrastructure/context/UIStateContext';
+import { I18nProvider } from '@/components/providers/I18nProvider';
 
 interface AppProvidersProps {
   children: ReactNode;
@@ -46,6 +47,7 @@ export function AppProviders({
   deliveryFee = 0,
 }: AppProvidersProps) {
   return (
+    <I18nProvider>
     <GlobalErrorBoundary>
       {/* Performance monitoring should be at the top level */}
       <PerformanceProvider>
@@ -121,6 +123,7 @@ export function AppProviders({
         </AuthProvider>
       </PerformanceProvider>
     </GlobalErrorBoundary>
+    </I18nProvider>
   );
 }
 

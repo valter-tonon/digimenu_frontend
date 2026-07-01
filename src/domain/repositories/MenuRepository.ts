@@ -21,5 +21,12 @@ export interface MenuRepository {
       delivery_fee?: number; // taxa de entrega
       estimated_delivery_time?: string; // tempo estimado de entrega
     };
+    locales?: {
+      available: string[];
+      primary: string;
+      is_multilingual?: boolean;
+      current?: string;
+      currency?: string;
+    };
   }>;
 } 
