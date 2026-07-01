@@ -49,5 +49,38 @@
       "outside_hours": "Tienda cerrada en este momento. Abre a las {{open}}.",
       "view_only": "Tienda cerrada en este momento. Puedes ver el menú, pero solo podrás hacer pedidos a partir de las {{open}}."
     }
+  },
+  "cart": {
+    "title_summary": "Resumen del pedido",
+    "title_delivery": "Datos de entrega",
+    "title_confirmation": "Confirmar pedido",
+    "no_category": "Sin categoría",
+    "empty": "Tu carrito está vacío",
+    "observation_label": "Obs.:",
+    "remove": "Quitar",
+    "total": "Total:",
+    "min_order": "El valor mínimo del pedido es {{min}}. Agrega {{remaining}} más para continuar.",
+    "close": "Cerrar",
+    "continue": "Continuar",
+    "back": "Volver",
+    "processing": "Procesando...",
+    "finish_order": "Finalizar pedido",
+    "full_name": "Nombre completo",
+    "phone": "Teléfono",
+    "full_address": "Dirección completa",
+    "payment_method": "Forma de pago",
+    "payment": {
+      "money": "Efectivo",
+      "credit": "Tarjeta de crédito",
+      "debit": "Tarjeta de débito",
+      "pix": "PIX"
+    },
+    "review": {
+      "name": "Nombre:",
+      "phone": "Teléfono:",
+      "address": "Dirección:",
+      "payment": "Pago:"
+    },
+    "finish_error": "Error al finalizar el pedido. Por favor, inténtalo de nuevo."
   }
 }

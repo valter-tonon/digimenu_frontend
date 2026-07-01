@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useMenu } from '@/infrastructure/context/MenuContext';
 
 interface OrderSummaryProps {
@@ -25,6 +26,7 @@ interface CartItem {
 }
 
 export function OrderSummary({ onClose, isDelivery = false, isStoreOpen = true, minOrderValue = 0 }: OrderSummaryProps) {
+  const { t } = useTranslation();
   const menu = useMenu();
   const { cartItems, formatPrice, removeFromCart } = menu;
   const [isRemoving, setIsRemoving] = useState<Record<string, boolean>>({});
@@ -60,7 +62,7 @@ export function OrderSummary({ onClose, isDelivery = false, isStoreOpen = true, 
 
   // Agrupar itens por categoria para melhor visualização
   const itemsByCategory = cartItems.reduce((acc: Record<string, CartItem[]>, item: CartItem) => {
-    const categoryName = item.categoryName || 'Sem categoria';
+    const categoryName = item.categoryName || t('cart.no_category');
     
     if (!acc[categoryName]) {
       acc[categoryName] = [];
@@ -129,7 +131,7 @@ export function OrderSummary({ onClose, isDelivery = false, isStoreOpen = true, 
       onClose();
     } catch (error) {
       console.error('Erro ao finalizar pedido:', error);
-      alert('Erro ao finalizar o pedido. Por favor, tente novamente.');
+      alert(t('cart.finish_error'));
     } finally {
       setIsProcessing(false);
     }
@@ -141,9 +143,9 @@ export function OrderSummary({ onClose, isDelivery = false, isStoreOpen = true, 
       
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">
-            {step === 'cart' && 'Resumo do Pedido'}
-            {step === 'delivery' && 'Informações de Entrega'}
-            {step === 'confirmation' && 'Confirmar Pedido'}
+            {step === 'cart' && t('cart.title_summary')}
+            {step === 'delivery' && t('cart.title_delivery')}
+            {step === 'confirmation' && t('cart.title_confirmation')}
           </h2>
           <button 
             onClick={onClose}
@@ -160,7 +162,7 @@ export function OrderSummary({ onClose, isDelivery = false, isStoreOpen = true, 
             <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
-            <p className="text-gray-600">Seu carrinho está vazio</p>
+            <p className="text-gray-600">{t('cart.empty')}</p>
           </div>
         ) : (
           <>
@@ -189,7 +191,7 @@ export function OrderSummary({ onClose, isDelivery = false, isStoreOpen = true, 
                               )}
                               {item.observation && (
                                 <p className="mt-1 ml-6 text-sm text-gray-600 italic">
-                                  Obs: {item.observation}
+                                  {t('cart.observation_label')} {item.observation}
                                 </p>
                               )}
                             </div>
@@ -207,7 +209,7 @@ export function OrderSummary({ onClose, isDelivery = false, isStoreOpen = true, 
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                   </svg>
                                 )}
-                                Remover
+                                {t('cart.remove')}
                               </button>
                             </div>
                           </div>
@@ -219,7 +221,7 @@ export function OrderSummary({ onClose, isDelivery = false, isStoreOpen = true, 
 
                 <div className="mt-6 pt-4 border-t">
                   <div className="flex justify-between items-center font-bold text-lg">
-                    <span>Total:</span>
+                    <span>{t('cart.total')}</span>
                     <span>{formatPrice(total)}</span>
                   </div>
                   
@@ -231,8 +233,7 @@ export function OrderSummary({ onClose, isDelivery = false, isStoreOpen = true, 
                           <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                         </svg>
                         <span>
-                          Valor mínimo para pedido é {formatPrice(minOrderValue)}. 
-                          Adicione mais {formatPrice(minOrderValue - total)} para continuar.
+                          {t('cart.min_order', { min: formatPrice(minOrderValue), remaining: formatPrice(minOrderValue - total) })}
                         </span>
                       </div>
                     </div>
@@ -244,7 +245,7 @@ export function OrderSummary({ onClose, isDelivery = false, isStoreOpen = true, 
                     onClick={onClose}
                     className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-md text-gray-800 transition-colors mr-2"
                   >
-                    Fechar
+                    {t('cart.close')}
                   </button>
                   {isDelivery && (
                     <button
@@ -256,7 +257,7 @@ export function OrderSummary({ onClose, isDelivery = false, isStoreOpen = true, 
                           : 'bg-gray-400 cursor-not-allowed'
                       }`}
                     >
-                      Continuar
+                      {t('cart.continue')}
                     </button>
                   )}
                   {!isDelivery && (
@@ -272,10 +273,10 @@ export function OrderSummary({ onClose, isDelivery = false, isStoreOpen = true, 
                       {isProcessing ? (
                         <span className="flex items-center">
                           <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                          Processando...
+                          {t('cart.processing')}
                         </span>
                       ) : (
-                        'Finalizar Pedido'
+                        t('cart.finish_order')
                       )}
                     </button>
                   )}
@@ -288,7 +289,7 @@ export function OrderSummary({ onClose, isDelivery = false, isStoreOpen = true, 
                 <div className="space-y-4">
                   <div>
                     <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                      Nome Completo
+                      {t('cart.full_name')}
                     </label>
                     <input
                       type="text"
@@ -303,7 +304,7 @@ export function OrderSummary({ onClose, isDelivery = false, isStoreOpen = true, 
                   
                   <div>
                     <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                      Telefone
+                      {t('cart.phone')}
                     </label>
                     <input
                       type="tel"
@@ -318,7 +319,7 @@ export function OrderSummary({ onClose, isDelivery = false, isStoreOpen = true, 
                   
                   <div>
                     <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
-                      Endereço Completo
+                      {t('cart.full_address')}
                     </label>
                     <textarea
                       id="address"
@@ -333,7 +334,7 @@ export function OrderSummary({ onClose, isDelivery = false, isStoreOpen = true, 
                   
                   <div>
                     <label htmlFor="paymentMethod" className="block text-sm font-medium text-gray-700 mb-1">
-                      Forma de Pagamento
+                      {t('cart.payment_method')}
                     </label>
                     <select
                       id="paymentMethod"
@@ -342,10 +343,10 @@ export function OrderSummary({ onClose, isDelivery = false, isStoreOpen = true, 
                       onChange={handleCustomerInfoChange}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
                     >
-                      <option value="money">Dinheiro</option>
-                      <option value="credit">Cartão de Crédito</option>
-                      <option value="debit">Cartão de Débito</option>
-                      <option value="pix">PIX</option>
+                      <option value="money">{t('cart.payment.money')}</option>
+                      <option value="credit">{t('cart.payment.credit')}</option>
+                      <option value="debit">{t('cart.payment.debit')}</option>
+                      <option value="pix">{t('cart.payment.pix')}</option>
                     </select>
                   </div>
                 </div>
@@ -355,7 +356,7 @@ export function OrderSummary({ onClose, isDelivery = false, isStoreOpen = true, 
                     onClick={handlePreviousStep}
                     className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-md text-gray-800 transition-colors mr-2"
                   >
-                    Voltar
+                    {t('cart.back')}
                   </button>
                   <button
                     onClick={handleNextStep}
@@ -366,7 +367,7 @@ export function OrderSummary({ onClose, isDelivery = false, isStoreOpen = true, 
                         : 'bg-gray-400 cursor-not-allowed'
                     }`}
                   >
-                    Continuar
+                    {t('cart.continue')}
                   </button>
                 </div>
               </>
@@ -376,7 +377,7 @@ export function OrderSummary({ onClose, isDelivery = false, isStoreOpen = true, 
               <>
                 <div className="space-y-4">
                   <div className="border-b pb-4">
-                    <h3 className="font-medium text-gray-700 mb-2">Resumo do Pedido</h3>
+                    <h3 className="font-medium text-gray-700 mb-2">{t('cart.title_summary')}</h3>
                     <div className="space-y-3">
                       {cartItems.map((item: CartItem) => (
                         <div key={item.id}>
@@ -394,7 +395,7 @@ export function OrderSummary({ onClose, isDelivery = false, isStoreOpen = true, 
                             </ul>
                           )}
                           {item.observation && (
-                            <p className="mt-1 ml-6 text-sm text-gray-500 italic">Obs: {item.observation}</p>
+                            <p className="mt-1 ml-6 text-sm text-gray-500 italic">{t('cart.observation_label')} {item.observation}</p>
                           )}
                         </div>
                       ))}
@@ -403,17 +404,13 @@ export function OrderSummary({ onClose, isDelivery = false, isStoreOpen = true, 
                   
                   {isDelivery && (
                     <div className="border-b pb-4">
-                      <h3 className="font-medium text-gray-700 mb-2">Informações de Entrega</h3>
+                      <h3 className="font-medium text-gray-700 mb-2">{t('cart.title_delivery')}</h3>
                       <div className="space-y-1 text-sm">
-                        <p><strong>Nome:</strong> {customerInfo.name}</p>
-                        <p><strong>Telefone:</strong> {customerInfo.phone}</p>
-                        <p><strong>Endereço:</strong> {customerInfo.address}</p>
+                        <p><strong>{t('cart.review.name')}</strong> {customerInfo.name}</p>
+                        <p><strong>{t('cart.review.phone')}</strong> {customerInfo.phone}</p>
+                        <p><strong>{t('cart.review.address')}</strong> {customerInfo.address}</p>
                         <p>
-                          <strong>Pagamento:</strong> {
-                            customerInfo.paymentMethod === 'money' ? 'Dinheiro' :
-                            customerInfo.paymentMethod === 'credit' ? 'Cartão de Crédito' :
-                            customerInfo.paymentMethod === 'debit' ? 'Cartão de Débito' : 'PIX'
-                          }
+                          <strong>{t('cart.review.payment')}</strong> {t(`cart.payment.${customerInfo.paymentMethod}`)}
                         </p>
                       </div>
                     </div>
@@ -421,7 +418,7 @@ export function OrderSummary({ onClose, isDelivery = false, isStoreOpen = true, 
                   
                   <div className="pt-2">
                     <div className="flex justify-between items-center font-bold text-lg">
-                      <span>Total:</span>
+                      <span>{t('cart.total')}</span>
                       <span>{formatPrice(total)}</span>
                     </div>
                     
@@ -433,8 +430,7 @@ export function OrderSummary({ onClose, isDelivery = false, isStoreOpen = true, 
                             <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                           </svg>
                           <span>
-                            Valor mínimo para pedido é {formatPrice(minOrderValue)}. 
-                            Adicione mais {formatPrice(minOrderValue - total)} para continuar.
+                            {t('cart.min_order', { min: formatPrice(minOrderValue), remaining: formatPrice(minOrderValue - total) })}
                           </span>
                         </div>
                       </div>
@@ -447,7 +443,7 @@ export function OrderSummary({ onClose, isDelivery = false, isStoreOpen = true, 
                     onClick={handlePreviousStep}
                     className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-md text-gray-800 transition-colors mr-2"
                   >
-                    Voltar
+                    {t('cart.back')}
                   </button>
                   <button
                     onClick={handleFinishOrder}
@@ -461,10 +457,10 @@ export function OrderSummary({ onClose, isDelivery = false, isStoreOpen = true, 
                     {isProcessing ? (
                       <span className="flex items-center">
                         <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                        Processando...
+                        {t('cart.processing')}
                       </span>
                     ) : (
-                      'Finalizar Pedido'
+                      t('cart.finish_order')
                     )}
                   </button>
                 </div>
