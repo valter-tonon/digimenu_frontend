@@ -1,1 +1,20 @@
-{ "language_name": "English" }
+{
+  "language_name": "English",
+  "header": {
+    "open": "Open",
+    "closed": "Closed",
+    "store_open": "Store Open",
+    "store_closed": "Store Closed",
+    "default_store_name": "Restaurant",
+    "delivery": "Delivery",
+    "min_order": "Minimum Order",
+    "my_orders": "My Orders",
+    "my_orders_desc": "Track and view history",
+    "my_addresses": "My Addresses",
+    "my_addresses_desc": "Edit or choose the default",
+    "logout": "Log out",
+    "current_context": "Current context",
+    "cart": "Cart",
+    "user_menu": "User menu"
+  }
+}

@@ -1,1 +1,20 @@
-{ "language_name": "Português" }
+{
+  "language_name": "Português",
+  "header": {
+    "open": "Aberto",
+    "closed": "Fechado",
+    "store_open": "Loja Aberta",
+    "store_closed": "Loja Fechada",
+    "default_store_name": "Restaurante",
+    "delivery": "Delivery",
+    "min_order": "Pedido Mínimo",
+    "my_orders": "Meus Pedidos",
+    "my_orders_desc": "Acompanhe e veja o histórico",
+    "my_addresses": "Meus Endereços",
+    "my_addresses_desc": "Editar ou escolher o principal",
+    "logout": "Sair",
+    "current_context": "Contexto atual",
+    "cart": "Carrinho",
+    "user_menu": "Menu do usuário"
+  }
+}
