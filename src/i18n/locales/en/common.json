@@ -16,5 +16,38 @@
     "current_context": "Current context",
     "cart": "Cart",
     "user_menu": "User menu"
+  },
+  "menu": {
+    "search_placeholder": "Search products, categories or tags...",
+    "search_products": "Search products...",
+    "filters": "Filters",
+    "clear": "Clear",
+    "only_featured": "Featured only",
+    "only_promotional": "Promotional only",
+    "only_popular": "Popular only",
+    "price_range": "Price range",
+    "min": "Min",
+    "max": "Max",
+    "results": {
+      "showing_prefix": "Showing",
+      "of": "of",
+      "products": "products",
+      "none_with_filters": "No products found with the applied filters",
+      "search": "Search",
+      "featured": "Featured",
+      "promotional": "Promotional",
+      "popular": "Popular",
+      "price": "Price"
+    },
+    "footer": {
+      "rights": "All rights reserved"
+    },
+    "closed": {
+      "temporarily": "Store temporarily closed.",
+      "normal_hours": " Regular hours: {{open}} - {{close}}",
+      "day_off": "The store is closed today.",
+      "outside_hours": "Store currently closed. Opens at {{open}}.",
+      "view_only": "Store currently closed. You can browse the menu, but orders are only available from {{open}}."
+    }
   }
 }

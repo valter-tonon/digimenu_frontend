@@ -273,6 +273,7 @@ function MenuContent({
   } | null;
   locales: MenuLocales | null;
 }) {
+  const { t } = useTranslation();
   // Agora podemos usar o hook useMenu com segurança
   const { cartItems } = useMenu();
 
@@ -377,7 +378,7 @@ function MenuContent({
         <MenuHeader
           cartItemsCount={cartItemsCount}
           onCartClick={handleCartClick}
-          storeName={storeName || storeSlug || 'Restaurante'}
+          storeName={storeName || storeSlug || t('header.default_store_name')}
           storeLogo={storeLogo || undefined}
           openingHours={tenantData?.opening_hours}
           minOrderValue={tenantData?.min_order_value || undefined}
@@ -399,12 +400,12 @@ function MenuContent({
             </svg>
             <p className="text-sm text-red-600">
               {tenantData.opening_hours.close_reason === 'temporarily_closed'
-                ? `Loja temporariamente fechada.${tenantData.opening_hours.opens_at ? ` Horário normal: ${tenantData.opening_hours.opens_at.replace(':', 'h')} - ${tenantData.opening_hours.closes_at.replace(':', 'h')}` : ''}`
+                ? `${t('menu.closed.temporarily')}${tenantData.opening_hours.opens_at ? t('menu.closed.normal_hours', { open: tenantData.opening_hours.opens_at.replace(':', 'h'), close: tenantData.opening_hours.closes_at.replace(':', 'h') }) : ''}`
                 : tenantData.opening_hours.close_reason === 'day_off'
-                  ? 'Loja não abre hoje.'
+                  ? t('menu.closed.day_off')
                   : tenantData.opening_hours.close_reason === 'outside_hours'
-                    ? `Loja fechada no momento. Abre às ${tenantData.opening_hours.opens_at.replace(':', 'h')}.`
-                    : `Loja fechada no momento. Você pode ver o cardápio, mas só poderá fazer pedidos a partir das ${tenantData.opening_hours.opens_at}.`
+                    ? t('menu.closed.outside_hours', { open: tenantData.opening_hours.opens_at.replace(':', 'h') })
+                    : t('menu.closed.view_only', { open: tenantData.opening_hours.opens_at })
               }
             </p>
           </div>
@@ -417,7 +418,7 @@ function MenuContent({
         <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center justify-center">
           <SearchBar
             onSearch={setSearchTerm}
-            placeholder="Buscar produtos, categorias ou tags..."
+            placeholder={t('menu.search_placeholder')}
             className="w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl"
           />
           <FilterBar
@@ -474,7 +475,7 @@ function MenuContent({
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="mb-6 md:mb-0">
               <StoreHeader
-                storeName={storeName || storeSlug || 'Restaurante'}
+                storeName={storeName || storeSlug || t('header.default_store_name')}
                 storeLogo={storeLogo}
                 className="text-white"
               />
@@ -506,7 +507,7 @@ function MenuContent({
                     className="h-8 w-auto"
                   />
                 </div>
-                <p className="text-sm text-gray-400">© {new Date().getFullYear()} Todos os direitos reservados</p>
+                <p className="text-sm text-gray-400">© {new Date().getFullYear()} {t('menu.footer.rights')}</p>
               </div>
             </div>
           </div>

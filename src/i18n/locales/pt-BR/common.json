@@ -16,5 +16,38 @@
     "current_context": "Contexto atual",
     "cart": "Carrinho",
     "user_menu": "Menu do usuário"
+  },
+  "menu": {
+    "search_placeholder": "Buscar produtos, categorias ou tags...",
+    "search_products": "Buscar produtos...",
+    "filters": "Filtros",
+    "clear": "Limpar",
+    "only_featured": "Apenas em destaque",
+    "only_promotional": "Apenas promocionais",
+    "only_popular": "Apenas populares",
+    "price_range": "Faixa de preço",
+    "min": "Mín",
+    "max": "Máx",
+    "results": {
+      "showing_prefix": "Mostrando",
+      "of": "de",
+      "products": "produtos",
+      "none_with_filters": "Nenhum produto encontrado com os filtros aplicados",
+      "search": "Busca",
+      "featured": "Em destaque",
+      "promotional": "Promocionais",
+      "popular": "Populares",
+      "price": "Preço"
+    },
+    "footer": {
+      "rights": "Todos os direitos reservados"
+    },
+    "closed": {
+      "temporarily": "Loja temporariamente fechada.",
+      "normal_hours": " Horário normal: {{open}} - {{close}}",
+      "day_off": "Loja não abre hoje.",
+      "outside_hours": "Loja fechada no momento. Abre às {{open}}.",
+      "view_only": "Loja fechada no momento. Você pode ver o cardápio, mas só poderá fazer pedidos a partir das {{open}}."
+    }
   }
 }

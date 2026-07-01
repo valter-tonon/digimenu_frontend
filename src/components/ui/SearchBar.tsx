@@ -2,6 +2,7 @@
 
 import { Search, X } from 'lucide-react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
@@ -9,8 +10,10 @@ interface SearchBarProps {
   className?: string;
 }
 
-export function SearchBar({ onSearch, placeholder = "Buscar produtos...", className = '' }: SearchBarProps) {
+export function SearchBar({ onSearch, placeholder, className = '' }: SearchBarProps) {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
+  const resolvedPlaceholder = placeholder ?? t('menu.search_products');
 
   const handleSearch = (value: string) => {
     setQuery(value);
@@ -30,7 +33,7 @@ export function SearchBar({ onSearch, placeholder = "Buscar produtos...", classN
           type="text"
           value={query}
           onChange={(e) => handleSearch(e.target.value)}
-          placeholder={placeholder}
+          placeholder={resolvedPlaceholder}
           className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all duration-200 text-gray-900 placeholder-gray-500"
         />
         {query && (

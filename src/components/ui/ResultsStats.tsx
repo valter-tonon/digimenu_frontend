@@ -1,6 +1,6 @@
 'use client';
 
-import { Product } from '@/domain/entities/Product';
+import { useTranslation } from 'react-i18next';
 
 interface ResultsStatsProps {
   totalProducts: number;
@@ -20,6 +20,7 @@ export function ResultsStats({
   searchTerm, 
   activeFilters 
 }: ResultsStatsProps) {
+  const { t } = useTranslation();
   const hasActiveFilters = searchTerm || 
     (activeFilters && (
       activeFilters.onlyFeatured || 
@@ -34,15 +35,15 @@ export function ResultsStats({
   const activeFiltersList = [];
   
   if (searchTerm) {
-    activeFiltersList.push(`Busca: "${searchTerm}"`);
+    activeFiltersList.push(`${t('menu.results.search')}: "${searchTerm}"`);
   }
   
   if (activeFilters) {
-    if (activeFilters.onlyFeatured) activeFiltersList.push('Em destaque');
-    if (activeFilters.onlyPromotional) activeFiltersList.push('Promocionais');
-    if (activeFilters.onlyPopular) activeFiltersList.push('Populares');
+    if (activeFilters.onlyFeatured) activeFiltersList.push(t('menu.results.featured'));
+    if (activeFilters.onlyPromotional) activeFiltersList.push(t('menu.results.promotional'));
+    if (activeFilters.onlyPopular) activeFiltersList.push(t('menu.results.popular'));
     if (activeFilters.priceRange.min > 0 || activeFilters.priceRange.max < 1000) {
-      activeFiltersList.push(`Preço: R$ ${activeFilters.priceRange.min} - R$ ${activeFilters.priceRange.max}`);
+      activeFiltersList.push(`${t('menu.results.price')}: R$ ${activeFilters.priceRange.min} - R$ ${activeFilters.priceRange.max}`);
     }
   }
 
@@ -51,8 +52,9 @@ export function ResultsStats({
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
         <div>
           <p className="text-sm text-gray-700">
-            Mostrando <span className="font-medium text-gray-900">{filteredProducts}</span> de{' '}
-            <span className="font-medium text-gray-900">{totalProducts}</span> produtos
+            {t('menu.results.showing_prefix')}{' '}
+            <span className="font-medium text-gray-900">{filteredProducts}</span> {t('menu.results.of')}{' '}
+            <span className="font-medium text-gray-900">{totalProducts}</span> {t('menu.results.products')}
           </p>
           
           {activeFiltersList.length > 0 && (
@@ -72,7 +74,7 @@ export function ResultsStats({
         {filteredProducts === 0 && (
           <div className="text-center">
             <p className="text-sm text-gray-600">
-              Nenhum produto encontrado com os filtros aplicados
+              {t('menu.results.none_with_filters')}
             </p>
           </div>
         )}

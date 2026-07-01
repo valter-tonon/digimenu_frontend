@@ -2,6 +2,7 @@
 
 import { Filter, X } from 'lucide-react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface FilterBarProps {
   onFilterChange: (filters: FilterOptions) => void;
@@ -19,6 +20,7 @@ interface FilterOptions {
 }
 
 export function FilterBar({ onFilterChange, className = '' }: FilterBarProps) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [filters, setFilters] = useState<FilterOptions>({
     onlyFeatured: false,
@@ -56,7 +58,7 @@ export function FilterBar({ onFilterChange, className = '' }: FilterBarProps) {
         className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-gray-700 hover:text-gray-900"
       >
         <Filter className="w-4 h-4 text-gray-700" />
-        <span className="font-medium">Filtros</span>
+        <span className="font-medium">{t('menu.filters')}</span>
         {activeFiltersCount > 0 && (
           <span className="bg-amber-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
             {activeFiltersCount}
@@ -67,12 +69,12 @@ export function FilterBar({ onFilterChange, className = '' }: FilterBarProps) {
       {isOpen && (
         <div className="absolute top-full left-0 mt-2 w-64 bg-white border border-gray-300 rounded-lg shadow-lg z-50 p-4">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="font-semibold text-gray-900">Filtros</h3>
+            <h3 className="font-semibold text-gray-900">{t('menu.filters')}</h3>
             <button
               onClick={clearFilters}
               className="text-sm text-gray-600 hover:text-gray-800 font-medium"
             >
-              Limpar
+              {t('menu.clear')}
             </button>
           </div>
 
@@ -86,7 +88,7 @@ export function FilterBar({ onFilterChange, className = '' }: FilterBarProps) {
                   onChange={(e) => handleFilterChange({ onlyFeatured: e.target.checked })}
                   className="mr-2"
                 />
-                <span className="text-sm text-gray-700">Apenas em destaque</span>
+                <span className="text-sm text-gray-700">{t('menu.only_featured')}</span>
               </label>
               
               <label className="flex items-center">
@@ -96,7 +98,7 @@ export function FilterBar({ onFilterChange, className = '' }: FilterBarProps) {
                   onChange={(e) => handleFilterChange({ onlyPromotional: e.target.checked })}
                   className="mr-2"
                 />
-                <span className="text-sm text-gray-700">Apenas promocionais</span>
+                <span className="text-sm text-gray-700">{t('menu.only_promotional')}</span>
               </label>
               
               <label className="flex items-center">
@@ -106,19 +108,19 @@ export function FilterBar({ onFilterChange, className = '' }: FilterBarProps) {
                   onChange={(e) => handleFilterChange({ onlyPopular: e.target.checked })}
                   className="mr-2"
                 />
-                <span className="text-sm text-gray-700">Apenas populares</span>
+                <span className="text-sm text-gray-700">{t('menu.only_popular')}</span>
               </label>
             </div>
 
             {/* Filtro de preço */}
             <div>
               <label className="block text-sm font-medium text-gray-800 mb-2">
-                Faixa de preço
+                {t('menu.price_range')}
               </label>
               <div className="flex gap-2">
                 <input
                   type="number"
-                  placeholder="Min"
+                  placeholder={t('menu.min')}
                   value={filters.priceRange.min}
                   onChange={(e) => handleFilterChange({
                     priceRange: { ...filters.priceRange, min: Number(e.target.value) }
@@ -128,7 +130,7 @@ export function FilterBar({ onFilterChange, className = '' }: FilterBarProps) {
                 <span className="text-gray-500">-</span>
                 <input
                   type="number"
-                  placeholder="Max"
+                  placeholder={t('menu.max')}
                   value={filters.priceRange.max}
                   onChange={(e) => handleFilterChange({
                     priceRange: { ...filters.priceRange, max: Number(e.target.value) }
