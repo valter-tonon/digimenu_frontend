@@ -21,6 +21,15 @@ import { Category } from '@/domain/entities/Category';
 import { Product } from '@/domain/entities/Product';
 import { StoreStatusProvider } from '@/infrastructure/context/StoreStatusContext';
 import { useCartStore } from '@/store/cart-store';
+import { useTranslation } from 'react-i18next';
+
+interface MenuLocales {
+  available: string[];
+  primary: string;
+  is_multilingual?: boolean;
+  current?: string;
+  currency?: string;
+}
 
 // Componente de carregamento para o Suspense
 function MenuLoading() {
@@ -81,7 +90,13 @@ function MenuPage({ storeId }: { storeId: string }) {
     delivery_fee?: number;
     estimated_delivery_time?: string;
   } | null>(null);
-  const hasLoadedMenu = useRef(false);
+  const [localesData, setLocalesData] = useState<MenuLocales | null>(null);
+  // Guarda a última combinação carregada (inclui o locale) para permitir recarregar ao trocar idioma
+  const lastLoadedKey = useRef<string | null>(null);
+
+  // Locale atual — usado para re-buscar o menu (conteúdo traduzido) quando o cliente troca o idioma
+  const { i18n } = useTranslation();
+  const currentLang = i18n.language;
 
   // Extrair dados do contexto
   // Nota: useAppContext ainda pode ser útil para tableId e isDelivery, mas storeId vem da URL agora
@@ -89,8 +104,13 @@ function MenuPage({ storeId }: { storeId: string }) {
 
   // useEffect para carregar menu
   useEffect(() => {
-    // Ignorar verificação de isValid do contexto se tivermos storeId da URL
-    if (hasLoadedMenu.current || !storeId) {
+    if (!storeId) {
+      return;
+    }
+
+    // Recarrega sempre que loja/mesa/delivery OU o idioma mudarem
+    const loadKey = `${storeId}|${tableId || ''}|${isDelivery}|${currentLang}`;
+    if (lastLoadedKey.current === loadKey) {
       return;
     }
 
@@ -118,8 +138,13 @@ function MenuPage({ storeId }: { storeId: string }) {
           setTenantData(menuData.tenant);
         }
 
+        // Armazenar metadados de idioma do tenant
+        if (menuData.locales) {
+          setLocalesData(menuData.locales);
+        }
+
         setLoading(false);
-        hasLoadedMenu.current = true;
+        lastLoadedKey.current = loadKey;
       } catch (error) {
         console.error('Erro ao carregar o menu:', error);
         setError('Não foi possível carregar o menu. Por favor, tente novamente mais tarde.');
@@ -128,7 +153,7 @@ function MenuPage({ storeId }: { storeId: string }) {
     };
 
     loadMenu();
-  }, [storeId, tableId, isDelivery, menuRepository]);
+  }, [storeId, tableId, isDelivery, menuRepository, currentLang]);
 
   if (loading || (!tenantData && !error)) {
     return <MenuLoading />;
@@ -191,6 +216,7 @@ function MenuPage({ storeId }: { storeId: string }) {
             tableId={tableId}
             isDelivery={isDelivery}
             tenantData={tenantData}
+            locales={localesData}
           />
         </StoreStatusProvider>
       </LayoutProvider>
@@ -213,7 +239,8 @@ function MenuContent({
   storeSlug,
   tableId,
   isDelivery,
-  tenantData
+  tenantData,
+  locales
 }: {
   categories: Category[];
   products: Product[];
@@ -244,6 +271,7 @@ function MenuContent({
     delivery_fee?: number;
     estimated_delivery_time?: string;
   } | null;
+  locales: MenuLocales | null;
 }) {
   // Agora podemos usar o hook useMenu com segurança
   const { cartItems } = useMenu();
@@ -355,6 +383,8 @@ function MenuContent({
           minOrderValue={tenantData?.min_order_value || undefined}
           tableId={tableId}
           storeId={storeSlug}
+          availableLocales={locales?.is_multilingual ? locales?.available : undefined}
+          primaryLocale={locales?.primary}
         />
 
         {/* TODO: Seletor de layout removido - tema será configurado no painel admin */}

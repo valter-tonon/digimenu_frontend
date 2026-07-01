@@ -16,6 +16,7 @@ import { whatsappAuthService } from '@/services/whatsappAuth';
 import { CompactStoreHeader } from './StoreHeader';
 // import { NotificationBadge } from '../notifications/NotificationBadge';
 import { WaiterCallButton } from './WaiterCallButton';
+import { LanguageSelector } from '@/components/i18n/LanguageSelector';
 import Link from 'next/link';
 
 interface MenuHeaderProps {
@@ -32,6 +33,8 @@ interface MenuHeaderProps {
   minOrderValue?: number;
   tableId?: string | null;
   storeId?: string | null;
+  availableLocales?: string[];
+  primaryLocale?: string;
 }
 
 /** Dados unificados do cliente (auth tradicional + WhatsApp) */
@@ -50,7 +53,9 @@ export function MenuHeader({
   openingHours,
   minOrderValue,
   tableId,
-  storeId
+  storeId,
+  availableLocales,
+  primaryLocale
 }: MenuHeaderProps) {
   const { data } = useAppContext();
   const { isAuthenticated: isTraditionalAuth, customer: traditionalCustomer, logoutUser } = useAuth();
@@ -238,6 +243,11 @@ export function MenuHeader({
 
           {/* Ações do Header */}
           <div className="flex items-center gap-2">
+            {/* Seletor de idioma - apenas quando o tenant oferece mais de um idioma */}
+            {availableLocales && primaryLocale && (
+              <LanguageSelector available={availableLocales} primary={primaryLocale} />
+            )}
+
             {/* Notificações desativadas - notificações serão via WhatsApp */}
             {/* {isUserAuthenticated && (
               <NotificationBadge storeId={storeId || undefined} tableId={tableId || undefined} />
