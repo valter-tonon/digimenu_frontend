@@ -284,7 +284,7 @@ describe('ProductCard', () => {
       );
 
       const productImage = screen.getByAltText('Pizza Margherita');
-      expect(productImage).toHaveAttribute('src', '/placeholder-product.jpg');
+      expect(productImage).toHaveAttribute('src', '/images/placeholder.svg');
     });
 
     it('should use product image when available', () => {

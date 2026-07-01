@@ -41,7 +41,7 @@ export function LazyImage({
   objectFit = 'cover',
   onLoad,
   onError,
-  fallbackSrc = '/images/placeholder.jpg'
+  fallbackSrc = '/images/placeholder.svg'
 }: LazyImageProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);

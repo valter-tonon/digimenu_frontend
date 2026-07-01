@@ -37,7 +37,7 @@ export function ProductCard({
         {/* Imagem do produto */}
         <div className="aspect-square relative overflow-hidden">
           <Image
-            src={product.image || '/placeholder-product.jpg'}
+            src={product.image || '/images/placeholder.svg'}
             alt={product.name}
             fill
             className="object-cover"

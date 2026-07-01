@@ -548,7 +548,7 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
               >
                 <div className="w-full h-40 relative">
                   <img
-                    src={product.image || 'https://via.placeholder.com/400?text=Sem+Imagem'}
+                    src={product.image || '/images/placeholder.svg'}
                     alt={product.name || 'Produto sem nome'}
                     className="w-full h-full object-cover"
                     onClick={() => openProductDetails(product)}
@@ -650,7 +650,7 @@ export function ProductList({ products, selectedCategoryId, onCartItemsChange, s
 
               <div className="mb-6">
                 <img
-                  src={selectedProduct.image || 'https://via.placeholder.com/400x300?text=Sem+Imagem'}
+                  src={selectedProduct.image || '/images/placeholder.svg'}
                   alt={selectedProduct.name}
                   className="w-full h-64 object-cover rounded-lg"
                 />
