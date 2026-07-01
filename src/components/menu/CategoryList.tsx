@@ -3,6 +3,7 @@
 import { Category } from '@/domain/entities/Category';
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface CategoryListProps {
   categories: Category[];
@@ -38,6 +39,7 @@ const getCategoryIcon = (categoryName: string): { emoji: string; bgColor: string
 };
 
 export function CategoryList({ categories, onSelectCategory, selectedCategoryId }: CategoryListProps) {
+  const { t } = useTranslation();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -97,7 +99,7 @@ export function CategoryList({ categories, onSelectCategory, selectedCategoryId 
   if (!validCategories.length) {
     return (
               <div className="text-center py-4">
-          <p className="text-gray-700">Nenhuma categoria disponível.</p>
+          <p className="text-gray-700">{t('categories.none')}</p>
         <div className="flex justify-center mt-4">
           <div className="flex space-x-4">
             {Array.from({ length: 4 }).map((_, index) => (
@@ -119,7 +121,7 @@ export function CategoryList({ categories, onSelectCategory, selectedCategoryId 
         <button
           onClick={scrollLeft}
           className="absolute left-0 top-1/2 -translate-y-1/2 z-scroll-buttons scroll-button rounded-full p-2 transition-all"
-          aria-label="Rolar categorias para a esquerda"
+          aria-label={t('categories.scroll_left')}
         >
           <ChevronLeft className="w-5 h-5 text-gray-600" />
         </button>
@@ -130,7 +132,7 @@ export function CategoryList({ categories, onSelectCategory, selectedCategoryId 
         <button
           onClick={scrollRight}
           className="absolute right-0 top-1/2 -translate-y-1/2 z-scroll-buttons scroll-button rounded-full p-2 transition-all"
-          aria-label="Rolar categorias para a direita"
+          aria-label={t('categories.scroll_right')}
         >
           <ChevronRight className="w-5 h-5 text-gray-600" />
         </button>
@@ -158,7 +160,7 @@ export function CategoryList({ categories, onSelectCategory, selectedCategoryId 
               ? 'text-primary font-semibold' 
               : 'text-gray-700'
           }`}>
-            Todos
+            {t('categories.all')}
           </span>
         </div>
         

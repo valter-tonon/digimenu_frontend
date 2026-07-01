@@ -20,6 +20,37 @@
   "menu": {
     "search_placeholder": "Buscar productos, categorías o etiquetas...",
     "search_products": "Buscar productos...",
+    "no_products": "No hay productos disponibles.",
+    "none_with_selected_filters": "No se encontraron productos para los filtros seleccionados.",
+    "product_no_name": "Producto sin nombre",
+    "badge_featured": "Destacado",
+    "badge_popular": "Popular",
+    "additionals_available": "{{count}} adicionales disponibles",
+    "view_details": "Ver detalles",
+    "product": {
+      "description": "Descripción",
+      "no_description": "Sin descripción disponible.",
+      "additionals": "Adicionales",
+      "select_additionals": "Selecciona los adicionales que desees:",
+      "observation": "Observación",
+      "observation_hint": "¿Alguna observación para este artículo? (opcional)",
+      "observation_placeholder": "Ej.: Sin cebolla, bien cocido, salsa aparte...",
+      "quantity": "Cantidad",
+      "price": "Precio",
+      "cancel": "Cancelar",
+      "add_to_cart": "Agregar al carrito",
+      "store_closed": "Tienda cerrada"
+    },
+    "tags": {
+      "vegetarian": "Vegetariano",
+      "vegan": "Vegano",
+      "gluten_free": "Sin gluten",
+      "lactose_free": "Sin lactosa",
+      "spicy": "Picante",
+      "organic": "Orgánico",
+      "promotion": "Promoción",
+      "new": "Nuevo"
+    },
     "filters": "Filtros",
     "clear": "Limpiar",
     "only_featured": "Solo destacados",
@@ -81,6 +112,63 @@
       "address": "Dirección:",
       "payment": "Pago:"
     },
-    "finish_error": "Error al finalizar el pedido. Por favor, inténtalo de nuevo."
+    "finish_error": "Error al finalizar el pedido. Por favor, inténtalo de nuevo.",
+    "your_cart": "Tu carrito",
+    "close_panel": "Cerrar panel",
+    "empty_title": "Carrito vacío",
+    "empty_now": "Tu carrito está vacío en este momento.",
+    "continue_shopping": "Seguir comprando",
+    "additionals": "Adicionales:",
+    "subtotal": "Subtotal",
+    "delivery_note": "Envío y tasas calculados en el checkout.",
+    "table_note": "El pedido se agregará a tu cuenta.",
+    "sending": "Enviando...",
+    "go_to_checkout": "Ir al checkout",
+    "send_order": "Enviar pedido",
+    "store_closed": "Tienda cerrada"
+  },
+  "toasts": {
+    "cart_cleared_invalid": "El carrito se vació por un formato inválido. Agrega los productos de nuevo.",
+    "store_closed_add": "Tienda cerrada. No es posible agregar artículos al carrito en este momento.",
+    "store_closed_finish": "Tienda cerrada. No es posible finalizar pedidos en este momento.",
+    "store_id_missing": "Error: Identificador de la tienda no encontrado",
+    "items_added": "¡Artículos agregados a tu cuenta!",
+    "order_sent": "¡Pedido enviado con éxito!"
+  },
+  "feedback": {
+    "success_title": "✓ ¡Éxito!",
+    "error_title": "✗ ¡Error!",
+    "order_number": "Número del pedido:",
+    "close": "Cerrar",
+    "finish_error": "Error al finalizar el pedido",
+    "finish_error_with": "Error al finalizar el pedido: {{message}}",
+    "try_again_later": "Inténtalo de nuevo más tarde",
+    "store_id_not_found": "Identificador de la tienda no encontrado",
+    "table_id_not_found": "Identificador de la mesa no encontrado"
+  },
+  "categories": {
+    "none": "No hay categorías disponibles.",
+    "all": "Todos",
+    "scroll_left": "Desplazar categorías a la izquierda",
+    "scroll_right": "Desplazar categorías a la derecha"
+  },
+  "table": {
+    "order_status": "Estado del pedido",
+    "order_number": "Pedido n.º {{id}}",
+    "status": {
+      "pending": "Pendiente",
+      "preparing": "Preparando",
+      "ready": "Listo",
+      "delivered": "Entregado"
+    },
+    "total": "Total:",
+    "no_orders": "No se encontraron pedidos para esta mesa.",
+    "close": "Cerrar",
+    "status_unavailable": "Función de verificación de estado temporalmente no disponible",
+    "call_waiter": "Llamar al camarero",
+    "call_waiter_title": "Llamar al camarero",
+    "calling": "Llamando...",
+    "waiter_called": "¡Camarero llamado! Estará en tu mesa en breve.",
+    "waiter_error": "No se pudo llamar al camarero. Inténtalo de nuevo."
   }
 }

@@ -20,6 +20,37 @@
   "menu": {
     "search_placeholder": "Buscar produtos, categorias ou tags...",
     "search_products": "Buscar produtos...",
+    "no_products": "Nenhum produto disponível.",
+    "none_with_selected_filters": "Nenhum produto encontrado para os filtros selecionados.",
+    "product_no_name": "Produto sem nome",
+    "badge_featured": "Destaque",
+    "badge_popular": "Popular",
+    "additionals_available": "{{count}} adicionais disponíveis",
+    "view_details": "Ver detalhes",
+    "product": {
+      "description": "Descrição",
+      "no_description": "Sem descrição disponível.",
+      "additionals": "Adicionais",
+      "select_additionals": "Selecione os adicionais desejados:",
+      "observation": "Observação",
+      "observation_hint": "Alguma observação para este item? (opcional)",
+      "observation_placeholder": "Ex: Sem cebola, bem passado, molho à parte...",
+      "quantity": "Quantidade",
+      "price": "Preço",
+      "cancel": "Cancelar",
+      "add_to_cart": "Adicionar ao carrinho",
+      "store_closed": "Restaurante Fechado"
+    },
+    "tags": {
+      "vegetarian": "Vegetariano",
+      "vegan": "Vegano",
+      "gluten_free": "Sem Glúten",
+      "lactose_free": "Sem Lactose",
+      "spicy": "Picante",
+      "organic": "Orgânico",
+      "promotion": "Promoção",
+      "new": "Novo"
+    },
     "filters": "Filtros",
     "clear": "Limpar",
     "only_featured": "Apenas em destaque",
@@ -81,6 +112,63 @@
       "address": "Endereço:",
       "payment": "Pagamento:"
     },
-    "finish_error": "Erro ao finalizar o pedido. Por favor, tente novamente."
+    "finish_error": "Erro ao finalizar o pedido. Por favor, tente novamente.",
+    "your_cart": "Seu carrinho",
+    "close_panel": "Fechar painel",
+    "empty_title": "Carrinho vazio",
+    "empty_now": "Seu carrinho está vazio no momento.",
+    "continue_shopping": "Continuar comprando",
+    "additionals": "Adicionais:",
+    "subtotal": "Subtotal",
+    "delivery_note": "Frete e taxas calculados no checkout.",
+    "table_note": "Pedido será adicionado à sua conta.",
+    "sending": "Enviando...",
+    "go_to_checkout": "Ir para checkout",
+    "send_order": "Enviar pedido",
+    "store_closed": "Restaurante Fechado"
+  },
+  "toasts": {
+    "cart_cleared_invalid": "Carrinho foi limpo devido a formato inválido. Adicione os produtos novamente.",
+    "store_closed_add": "Restaurante fechado. Não é possível adicionar itens ao carrinho no momento.",
+    "store_closed_finish": "Restaurante fechado. Não é possível finalizar pedidos no momento.",
+    "store_id_missing": "Erro: Identificador da loja não encontrado",
+    "items_added": "Itens adicionados à sua conta!",
+    "order_sent": "Pedido enviado com sucesso!"
+  },
+  "feedback": {
+    "success_title": "✓ Sucesso!",
+    "error_title": "✗ Erro!",
+    "order_number": "Número do pedido:",
+    "close": "Fechar",
+    "finish_error": "Erro ao finalizar o pedido",
+    "finish_error_with": "Erro ao finalizar o pedido: {{message}}",
+    "try_again_later": "Tente novamente mais tarde",
+    "store_id_not_found": "Identificador da loja não encontrado",
+    "table_id_not_found": "Identificador da mesa não encontrado"
+  },
+  "categories": {
+    "none": "Nenhuma categoria disponível.",
+    "all": "Todos",
+    "scroll_left": "Rolar categorias para a esquerda",
+    "scroll_right": "Rolar categorias para a direita"
+  },
+  "table": {
+    "order_status": "Status do Pedido",
+    "order_number": "Pedido #{{id}}",
+    "status": {
+      "pending": "Pendente",
+      "preparing": "Preparando",
+      "ready": "Pronto",
+      "delivered": "Entregue"
+    },
+    "total": "Total:",
+    "no_orders": "Nenhum pedido encontrado para esta mesa.",
+    "close": "Fechar",
+    "status_unavailable": "Funcionalidade de verificação de status temporariamente indisponível",
+    "call_waiter": "Chamar Garçom",
+    "call_waiter_title": "Chamar garçom",
+    "calling": "Chamando...",
+    "waiter_called": "Garçom chamado! Ele estará na sua mesa em breve.",
+    "waiter_error": "Não foi possível chamar o garçom. Tente novamente."
   }
 }

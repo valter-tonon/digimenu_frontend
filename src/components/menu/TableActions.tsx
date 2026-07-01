@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '@/infrastructure/api/apiClient';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 interface TableActionsProps {
   storeId: string;
@@ -28,6 +29,7 @@ interface OrderStatusResponse {
 }
 
 export function TableActions({ storeId, tableId }: TableActionsProps) {
+  const { t } = useTranslation();
   const [isLoadingStatus, setIsLoadingStatus] = useState(false);
   const [orderStatus, setOrderStatus] = useState<OrderStatusResponse | null>(null);
   const [showOrderStatus, setShowOrderStatus] = useState(false);
@@ -64,7 +66,7 @@ export function TableActions({ storeId, tableId }: TableActionsProps) {
       console.log('Verificando status para:', { storeId, tableId });
       // TODO: Implementar verificação de status quando a API estiver disponível
       // Por enquanto, mostrar mensagem informativa
-      toast.error('Funcionalidade de verificação de status temporariamente indisponível');
+      toast.error(t('table.status_unavailable'));
       setShowOrderStatus(false);
     } catch (error) {
       console.error('Erro ao verificar status do pedido:', error);
@@ -86,14 +88,14 @@ export function TableActions({ storeId, tableId }: TableActionsProps) {
       {showOrderStatus && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-modal">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h2 className="text-xl font-bold mb-4">Status do Pedido</h2>
+            <h2 className="text-xl font-bold mb-4">{t('table.order_status')}</h2>
             
             {orderStatus && orderStatus.orders && orderStatus.orders.length > 0 ? (
               <div className="space-y-4">
                 {orderStatus.orders.map((order) => (
                   <div key={order.id} className="border rounded-lg p-3">
                     <div className="flex justify-between items-center mb-2">
-                      <span className="font-semibold">Pedido #{order.id}</span>
+                      <span className="font-semibold">{t('table.order_number', { id: order.id })}</span>
                       <span className={`px-2 py-1 rounded-full text-xs font-bold ${
                         order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                         order.status === 'preparing' ? 'bg-blue-100 text-blue-800' :
@@ -101,10 +103,10 @@ export function TableActions({ storeId, tableId }: TableActionsProps) {
                         order.status === 'delivered' ? 'bg-purple-100 text-purple-800' :
                         'bg-gray-100 text-gray-800'
                       }`}>
-                        {order.status === 'pending' ? 'Pendente' :
-                         order.status === 'preparing' ? 'Preparando' :
-                         order.status === 'ready' ? 'Pronto' :
-                         order.status === 'delivered' ? 'Entregue' :
+                        {order.status === 'pending' ? t('table.status.pending') :
+                         order.status === 'preparing' ? t('table.status.preparing') :
+                         order.status === 'ready' ? t('table.status.ready') :
+                         order.status === 'delivered' ? t('table.status.delivered') :
                          order.status}
                       </span>
                     </div>
@@ -119,14 +121,14 @@ export function TableActions({ storeId, tableId }: TableActionsProps) {
                     </div>
                     
                     <div className="mt-3 pt-2 border-t flex justify-between font-semibold">
-                      <span>Total:</span>
+                      <span>{t('table.total')}</span>
                       <span>R$ {parseFloat(order.total_price).toFixed(2)}</span>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-gray-600">Nenhum pedido encontrado para esta mesa.</p>
+              <p className="text-gray-600">{t('table.no_orders')}</p>
             )}
             
             <div className="mt-6 flex justify-end">
@@ -134,7 +136,7 @@ export function TableActions({ storeId, tableId }: TableActionsProps) {
                 onClick={closeStatusModal}
                 className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-md text-gray-800 transition-colors"
               >
-                Fechar
+                {t('table.close')}
               </button>
             </div>
           </div>

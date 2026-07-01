@@ -20,6 +20,37 @@
   "menu": {
     "search_placeholder": "Search products, categories or tags...",
     "search_products": "Search products...",
+    "no_products": "No products available.",
+    "none_with_selected_filters": "No products found for the selected filters.",
+    "product_no_name": "Unnamed product",
+    "badge_featured": "Featured",
+    "badge_popular": "Popular",
+    "additionals_available": "{{count}} add-ons available",
+    "view_details": "View details",
+    "product": {
+      "description": "Description",
+      "no_description": "No description available.",
+      "additionals": "Add-ons",
+      "select_additionals": "Select the add-ons you want:",
+      "observation": "Note",
+      "observation_hint": "Any note for this item? (optional)",
+      "observation_placeholder": "E.g.: No onion, well done, sauce on the side...",
+      "quantity": "Quantity",
+      "price": "Price",
+      "cancel": "Cancel",
+      "add_to_cart": "Add to cart",
+      "store_closed": "Store Closed"
+    },
+    "tags": {
+      "vegetarian": "Vegetarian",
+      "vegan": "Vegan",
+      "gluten_free": "Gluten-free",
+      "lactose_free": "Lactose-free",
+      "spicy": "Spicy",
+      "organic": "Organic",
+      "promotion": "Promotion",
+      "new": "New"
+    },
     "filters": "Filters",
     "clear": "Clear",
     "only_featured": "Featured only",
@@ -81,6 +112,63 @@
       "address": "Address:",
       "payment": "Payment:"
     },
-    "finish_error": "Error placing the order. Please try again."
+    "finish_error": "Error placing the order. Please try again.",
+    "your_cart": "Your cart",
+    "close_panel": "Close panel",
+    "empty_title": "Empty cart",
+    "empty_now": "Your cart is currently empty.",
+    "continue_shopping": "Continue shopping",
+    "additionals": "Add-ons:",
+    "subtotal": "Subtotal",
+    "delivery_note": "Shipping and fees calculated at checkout.",
+    "table_note": "The order will be added to your tab.",
+    "sending": "Sending...",
+    "go_to_checkout": "Go to checkout",
+    "send_order": "Send order",
+    "store_closed": "Store Closed"
+  },
+  "toasts": {
+    "cart_cleared_invalid": "Cart was cleared due to an invalid format. Please add the products again.",
+    "store_closed_add": "Store closed. You cannot add items to the cart right now.",
+    "store_closed_finish": "Store closed. You cannot place orders right now.",
+    "store_id_missing": "Error: Store identifier not found",
+    "items_added": "Items added to your tab!",
+    "order_sent": "Order sent successfully!"
+  },
+  "feedback": {
+    "success_title": "✓ Success!",
+    "error_title": "✗ Error!",
+    "order_number": "Order number:",
+    "close": "Close",
+    "finish_error": "Error placing the order",
+    "finish_error_with": "Error placing the order: {{message}}",
+    "try_again_later": "Please try again later",
+    "store_id_not_found": "Store identifier not found",
+    "table_id_not_found": "Table identifier not found"
+  },
+  "categories": {
+    "none": "No categories available.",
+    "all": "All",
+    "scroll_left": "Scroll categories left",
+    "scroll_right": "Scroll categories right"
+  },
+  "table": {
+    "order_status": "Order Status",
+    "order_number": "Order #{{id}}",
+    "status": {
+      "pending": "Pending",
+      "preparing": "Preparing",
+      "ready": "Ready",
+      "delivered": "Delivered"
+    },
+    "total": "Total:",
+    "no_orders": "No orders found for this table.",
+    "close": "Close",
+    "status_unavailable": "Status check feature temporarily unavailable",
+    "call_waiter": "Call Waiter",
+    "call_waiter_title": "Call waiter",
+    "calling": "Calling...",
+    "waiter_called": "Waiter called! They will be at your table shortly.",
+    "waiter_error": "Could not call the waiter. Please try again."
   }
 }

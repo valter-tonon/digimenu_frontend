@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Bell, Loader2 } from 'lucide-react';
 import { callWaiter } from '@/services/api';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 interface WaiterCallButtonProps {
   storeId: string;
@@ -21,6 +22,7 @@ export function WaiterCallButton({
   className = '', 
   variant = 'floating' 
 }: WaiterCallButtonProps & WaiterCallButtonVariant) {
+  const { t } = useTranslation();
   const [isCalling, setIsCalling] = useState(false);
 
   const handleCallWaiter = async () => {
@@ -37,14 +39,14 @@ export function WaiterCallButton({
 
       await callWaiter(data);
       
-      toast.success('Garçom chamado! Ele estará na sua mesa em breve.', {
+      toast.success(t('table.waiter_called'), {
         duration: 4000,
         icon: '🛎️',
       });
       
     } catch (error) {
       console.error('Erro ao chamar garçom:', error);
-      toast.error('Não foi possível chamar o garçom. Tente novamente.', {
+      toast.error(t('table.waiter_error'), {
         duration: 4000,
       });
     } finally {
@@ -84,8 +86,8 @@ export function WaiterCallButton({
       onClick={handleCallWaiter}
       disabled={isCalling}
       className={getButtonStyles()}
-      title="Chamar garçom"
-      aria-label="Chamar garçom"
+      title={t('table.call_waiter_title')}
+      aria-label={t('table.call_waiter_title')}
     >
       {isCalling ? (
         <Loader2 className={`${getIconSize()} animate-spin`} />
@@ -94,7 +96,7 @@ export function WaiterCallButton({
       )}
       {variant === 'header' && (
         <span className="hidden sm:inline">
-          {isCalling ? 'Chamando...' : 'Chamar Garçom'}
+          {isCalling ? t('table.calling') : t('table.call_waiter')}
         </span>
       )}
     </button>
